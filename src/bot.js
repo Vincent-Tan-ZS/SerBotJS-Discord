@@ -1,5 +1,9 @@
 require('dotenv').config();
 
+var http = require('http')
+
+http.createServer(function(request, response) {}).listen(process.env.PORT)
+
 const Discord = require('discord.js'),
     EventManager = require('./events.js'),
     Commands = require('./commands.js'),
