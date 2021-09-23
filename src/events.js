@@ -1,4 +1,5 @@
-const r6api = require('r6api')({ email: "wicakig123@laklica.com", password: "321gikaciw" });
+const R6API = require('r6api.js').default;
+const r6api = new R6API({ email: "wicakig123@laklica.com", password: "321gikaciw" });
 const serbot = require('./setup');
 const Covid = require('novelcovid');
 
@@ -306,44 +307,43 @@ class EventManager {
     static async retrieveR6Stats(message, channel) {
         let Handlers = serbot.Handlers;
 
-        let sentMessage = null;
-
         let username = message[1];
         let platforms = new Array("uplay", "xbl", "psn");
+        let selectedPlatform;
         let platformTexts = new Array("PC", "XBOX", "PS");
         let platformText;
-        let id;
-        let level;
-        let stats;
-        let rank;
+        let r6user;
         let statsFound = false;
 
-        channel.send("Attempting to retrieve, please wait...").then((msg) => {
-            sentMessage = msg;
-        });
+        // Attempt retrieve message
+        let sentMessage = await channel.send("Attempting to retrieve, please wait...");
 
-        for (let i = 0; i < platforms.length; ++i) {
+        // Attempt find username
+        for (const platform of platforms) {
             try {
-                id = await r6api.getId(platforms[i], username);
-                stats = await r6api.getStats(platforms[i], id[0].id);
-                level = await r6api.getLevel(platforms[i], id[0].id);
-                rank = await r6api.getRank(platforms[i], id[0].id);
-                platformText = platformTexts[i];
-
-                statsFound = (id.length > 0 && stats.length > 0 && level.length > 0 && rank.length > 0);
+                r6user = await r6api.findByUsername(platform, username);
+                selectedPlatform = platform;
+                platformText = platformTexts[platforms.indexOf(platform)];
+                statsFound = true;
                 break;
             } catch (e) {
                 statsFound = false;
             }
         }
 
+        // If stats doesn't exist
         if (!statsFound) {
             let embed = Handlers.createErrorEmbed("R6 Stats", `Unable to find statistics for ${username}`)
             sentMessage.edit("", embed);
             return;
         }
 
-        let r6Stats = this.scrapeR6Stats(id, stats, level, rank);
+        let id = r6user[0].id;
+        let stats = await r6api.getStats(selectedPlatform, id);
+        let level = (await r6api.getProgression(selectedPlatform, id))[0].level;
+        let ranks = await r6api.getRanks(selectedPlatform, id);
+
+        let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
 
         let embed = Handlers.createBasicEmbed(`Operation: ${r6Stats.seasonName}`, `**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`);
 
@@ -354,30 +354,30 @@ class EventManager {
     }
 
     // Helper functions
-    static scrapeR6Stats(id, stats, level, rank) {
-        let userId = id[0].id;
-        let userAvatarURL = `https://ubisoft-avatars.akamaized.net/${userId}/default_256_256.png`;
-        let seasons = typeof(rank[0].seasons) == 'object' ? rank[0].seasons : rank[0].seasons[rank[0].seasons.length - 1];
+    static scrapeR6Stats(r6user, stats, level, ranks) {
+        let userId = r6user.id;
+        let userAvatarURL = r6user.avatar['500'];
+        let seasons = typeof(ranks[0].seasons) == 'object' ? ranks[0].seasons : ranks[0].seasons[ranks[0].seasons.length - 1];
         let seasonId = Object.keys(seasons).sort()[0];
         let season = seasons[seasonId];
-        let seasonRegion = season.regions['ncsa'];
+        let seasonalStats = season.regions['ncsa'].boards.pvp_ranked;
         let pvpStats = stats[0].pvp;
 
         return Object({
             "id": userId,
             "avatarURL": userAvatarURL,
-            "level": level[0].level,
-            "seasonName": season.name,
-            "seasonMMR": parseInt(seasonRegion.current.mmr).toLocaleString(),
-            "seasonRankURL": seasonRegion.current.image,
+            "level": level,
+            "seasonName": season.seasonName || serbot.config.currentR6Season,
+            "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
+            "seasonRankURL": seasonalStats.current.icon,
             "overallWR": this.getRatio(pvpStats.general.wins, pvpStats.general.wins + pvpStats.general.losses, true).toFixed(2),
             "overallKD": this.getRatio(pvpStats.general.kills, pvpStats.general.deaths, false).toFixed(2),
-            "casualWR": this.getRatio(pvpStats.queue.casual.wins, pvpStats.queue.casual.wins + pvpStats.queue.casual.losses, true).toFixed(2),
-            "casualKD": this.getRatio(pvpStats.queue.casual.kills, pvpStats.queue.casual.deaths, false).toFixed(2),
-            "rankedWR": this.getRatio(pvpStats.queue.ranked.wins, pvpStats.queue.ranked.wins + pvpStats.queue.ranked.losses, true).toFixed(2),
-            "rankedKD": this.getRatio(pvpStats.queue.ranked.kills, pvpStats.queue.ranked.deaths, false).toFixed(2),
-            "seasonWR": this.getRatio(seasonRegion.wins, seasonRegion.wins + seasonRegion.losses, true).toFixed(2),
-            "seasonKD": this.getRatio(seasonRegion.kills, seasonRegion.deaths, false).toFixed(2),
+            "casualWR": this.getRatio(pvpStats.queues.casual.wins, pvpStats.queues.casual.wins + pvpStats.queues.casual.losses, true).toFixed(2),
+            "casualKD": this.getRatio(pvpStats.queues.casual.kills, pvpStats.queues.casual.deaths, false).toFixed(2),
+            "rankedWR": this.getRatio(pvpStats.queues.ranked.wins, pvpStats.queues.ranked.wins + pvpStats.queues.ranked.losses, true).toFixed(2),
+            "rankedKD": this.getRatio(pvpStats.queues.ranked.kills, pvpStats.queues.ranked.deaths, false).toFixed(2),
+            "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
+            "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2),
         });
     }
 
