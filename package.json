@@ -15,7 +15,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@discordjs/opus": "^0.5.3",
+        "@discordjs/opus": "^0.6.0",
         "@szmarczak/http-timer": "^5.0.1",
         "bufferutil": "^4.0.3",
         "discord.js": "^12.5.3",
