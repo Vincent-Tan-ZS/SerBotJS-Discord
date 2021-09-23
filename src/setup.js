@@ -6,6 +6,8 @@ const Discord = require('discord.js'),
     client = new Discord.Client(),
     config = require('../config.json')
 
+config.token = process.env.SERBOTJS_BOT_TOKEN;
+
 const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly: false, leaveOnStop: false });
 
 //#region Distube EventListener
