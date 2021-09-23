@@ -322,10 +322,13 @@ class EventManager {
         for (const platform of platforms) {
             try {
                 r6user = await r6api.findByUsername(platform, username);
-                selectedPlatform = platform;
-                platformText = platformTexts[platforms.indexOf(platform)];
-                statsFound = true;
-                break;
+
+                if (r6user.length > 0) {
+                    selectedPlatform = platform;
+                    platformText = platformTexts[platforms.indexOf(platform)];
+                    statsFound = true;
+                    break;
+                }
             } catch (e) {
                 statsFound = false;
             }
