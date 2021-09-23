@@ -23,7 +23,7 @@
         "dotenv": "^10.0.0",
         "ffmpeg-static": "^4.4.0",
         "novelcovid": "^3.0.2",
-        "r6api.js": "^1.7.0",
+        "r6api": "^1.12.2",
         "utf-8-validate": "^5.0.5",
         "ytdl-core": "^4.9.1"
     }

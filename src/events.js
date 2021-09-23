@@ -1,5 +1,4 @@
-const R6API = require('r6api.js');
-const r6api = new R6API('wicakig123@laklica.com', '321gikaciw');
+const r6api = require('r6api')({ email: "wicakig123@laklica.com", password: "321gikaciw" });
 const serbot = require('./setup');
 const Covid = require('novelcovid');
 
