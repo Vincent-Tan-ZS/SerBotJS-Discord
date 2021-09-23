@@ -4,12 +4,7 @@ const Discord = require('discord.js'),
     DisTube = require('distube'),
     Handlers = require('./handlers.js'),
     client = new Discord.Client(),
-    config = {
-        prefix: "ser",
-        token: process.env.SERBOTJS_BOT_TOKEN,
-        embedColor: '#11116B',
-        embedPauseIconURL: 'https://p7.hiclipart.com/preview/362/566/476/creative-commons-license-public-domain-wikimedia-commons-pause-icon.jpg'
-    };
+    config = require('../config.json')
 
 const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly: false, leaveOnStop: false });
 
