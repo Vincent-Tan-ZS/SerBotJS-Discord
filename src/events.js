@@ -1,13 +1,15 @@
 const R6API = require('r6api.js');
 const r6api = new R6API('wicakig123@laklica.com', '321gikaciw');
+const serbot = require('./setup');
+const Covid = require('novelcovid');
 
 class EventManager {
-    constructor() {
-
-    }
+    constructor() {}
 
     // Determine Command Functions : boolean
-    static messageIsAdmin(cmds, Discord, message) {
+    static messageIsAdmin(cmds, message) {
+        let Discord = serbot.Discord;
+
         let msgMember = message.member;
         if (!msgMember.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return false;
 
@@ -25,29 +27,30 @@ class EventManager {
         return cmds.includes(msgCommand);
     }
 
-    static messageIsMusicAction(Commands, message) {
+    static messageIsMusicAction(message) {
+        let Commands = serbot.Commands;
+
         return Commands.musicJoinCommands.includes(message) ||
             Commands.musicPauseCommands.includes(message) ||
             Commands.musicResumeCommands.includes(message) ||
             Commands.musicSkipCommands.includes(message) ||
             Commands.musicStopCommands.includes(message) ||
             Commands.musicLeaveCommands.includes(message) ||
-            Commands.musicQueueCommands.includes(message);
+            Commands.musicQueueCommands.includes(message) ||
+            Commands.musicClearCommands.includes(message);
     }
 
     // Command List Action
-    static sendCommandList(Discord, Commands, config, message) {
+    static sendCommandList(message) {
+        let Commands = serbot.Commands;
+        let Handlers = serbot.Handlers;
         let description = "";
 
-        for (let i = 0; i < Commands.dictionaries.length; ++i) {
-            let dictionary = Commands.dictionaries[i];
+        Commands.dictionaries.forEach((dictionary) => {
             description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
-        }
+        });
 
-        let embed = new Discord.MessageEmbed()
-            .setTitle("Command List")
-            .setColor(config.embedColor)
-            .setDescription(description);
+        let embed = Handlers.createBasicEmbed("Command List", description);
         message.channel.send(embed);
     }
 
@@ -70,26 +73,124 @@ class EventManager {
         }
     }
 
-    // Music Actions
-    static playMusic(distube, Discord, config, message, commands) {
+    // Covid Actions
+    static getCovidCases(message, commands) {
+        let Handlers = serbot.Handlers;
+
         commands.shift();
-        distube.play(message, commands.join(" ")).then(() => {
-            let queue = distube.getQueue(message);
-            let song = queue.songs[queue.songs.length - 1];
-            let msgAuthor = message.author;
-            let embed = new Discord.MessageEmbed()
-                .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
-                .setTitle(song.name)
-                .setColor(config.embedColor)
-                .setFooter(` | ${song.formattedDuration}`, config.embedPauseIconURL);
+        let countryName = commands[0];
+        let countryData = { name: countryName, flag: "" };
+        let todayData = { cases: 0, deaths: 0, recovered: 0 };
+        let yesterdayData = { cases: 0, deaths: 0, recovered: 0 };
+
+        Promise.all([
+            Covid.countries({ country: countryName }).then((result) => {
+                todayData.cases = result.todayCases;
+                todayData.deaths = result.todayDeaths;
+                todayData.recovered = result.todayRecovered;
+                countryData.name = result.country;
+                countryData.flag = result.countryInfo.flag;
+            }),
+            Covid.yesterday.countries({ country: countryName }).then((result) => {
+                yesterdayData.cases = result.todayCases;
+                yesterdayData.deaths = result.todayDeaths;
+                yesterdayData.recovered = result.todayRecovered;
+            })
+        ]).then(() => {
+            let embed = Handlers.createBasicEmbed(countryData.name, "Cases / Deaths / Recovered");
+            embed.setThumbnail(countryData.flag)
+                .addFields({ name: 'Today', value: `${todayData.cases} / ${todayData.deaths} / ${todayData.recovered}` }, { name: 'Yesterday', value: `${yesterdayData.cases} / ${yesterdayData.deaths} / ${yesterdayData.recovered}` });
             message.channel.send(embed);
         });
     }
 
-    static removeMusic(distube, Discord, config, message, commands) {
+    // Local Music Actions
+    static async playLocalMusic(message, commands) {
+        let Handlers = serbot.Handlers;
+
+        let Discord = serbot.Discord;
+        let Distube = serbot.distube;
+        let Config = serbot.config;
+
+        commands.shift();
+        let fileIndex = commands[0];
+
+        var fs = require('fs');
+        var files = fs.readdirSync("C:/Users/vintz/Downloads/Music");
+        var musicFiles = files.filter(x => x.toLowerCase().substring(x.length - 4).includes(".mp3")).map(x => x.substr(0, x.lastIndexOf(".mp3")));
+
+        let embed = Handlers.createErrorEmbed("Song Not Found", `There is only a total of ${musicFiles.length} songs in the directory`);
+
+        let musicIDList = [];
+
+        if (fileIndex.toLowerCase() == "random") {
+            fileIndex = Math.floor(Math.random() * musicFiles.length) + 1;
+            musicIDList.push(fileIndex);
+        } else if (fileIndex.toLowerCase() == "random10") {
+            while (musicIDList.length < 10) {
+                let newRandomId = Math.floor(Math.random() * musicFiles.length) + 1;
+                if (!musicIDList.includes(newRandomId)) {
+                    musicIDList.push(newRandomId);
+                }
+            }
+        } else {
+            fileIndex = Number(fileIndex) - 1;
+            musicIDList.push(fileIndex);
+        }
+
+        if (musicIDList.length > 0) {
+            for (var i = 0; i < musicIDList.length; ++i) {
+                let musicID = musicIDList[i];
+
+                if (musicID < musicFiles.length) {
+                    await Distube.play(message, `${musicFiles[musicID]} audio only`).then(() => {
+                        let queue = Distube.getQueue(message);
+                        let song = queue.songs[queue.songs.length - 1];
+                        let msgAuthor = message.author;
+                        embed = new Discord.MessageEmbed()
+                            .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
+                            .setTitle(song.name)
+                            .setColor(Config.embedColor)
+                            .setFooter(` | ${song.formattedDuration}`, Config.embedPauseIconURL);
+                        message.channel.send(embed);
+                    });
+                } else {
+                    message.channel.send(embed);
+                }
+            }
+        }
+    }
+
+    // Music Actions
+    static playMusic(message, commands) {
+        let Discord = serbot.Discord;
+        let Distube = serbot.distube;
+        let Config = serbot.config;
+
+        commands.shift();
+        Distube.play(message, commands.join(" ")).then(() => {
+            let queue = Distube.getQueue(message);
+
+            if (queue != undefined) {
+                let song = queue.songs[queue.songs.length - 1];
+                let msgAuthor = message.author;
+                let embed = new Discord.MessageEmbed()
+                    .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
+                    .setTitle(song.name)
+                    .setColor(Config.embedColor)
+                    .setFooter(` | ${song.formattedDuration}`, Config.embedPauseIconURL);
+                message.channel.send(embed);
+            }
+        });
+    }
+
+    static removeMusic(message, commands) {
+        let Distube = serbot.distube;
+        let Handlers = serbot.Handlers;
+
         let queueRemoveIndex = parseInt(commands[1]);
-        let queue = distube.getQueue(message);
-        let isError = this.songRemoveErrorHandler(Discord, config, queue, message, queueRemoveIndex);
+        let queue = Distube.getQueue(message);
+        let isError = this.songRemoveErrorHandler(queue, message, queueRemoveIndex);
 
         if (isError) return;
 
@@ -97,14 +198,18 @@ class EventManager {
         let song = queue.songs[queueRemoveIndex];
         queue.songs.splice(queueRemoveIndex, 1);
 
-        let embed = new Discord.MessageEmbed()
-            .setTitle("Song Removed")
-            .setColor(config.embedColor)
-            .setDescription(song.name);
+        let embed = Handlers.createBasicEmbed("Song Removed", song.name);
         message.channel.send(embed);
     }
 
-    static musicAction(distube, Discord, config, voiceConnection, message, command) {
+    static musicAction(voiceConnection, message, command) {
+        let Discord = serbot.Discord;
+        let Distube = serbot.distube;
+        let Config = serbot.config;
+        let Handlers = serbot.Handlers;
+
+        let queue = Distube.getQueue(message);
+
         switch (command) {
             case "join":
                 if (voiceConnection == null) {
@@ -115,49 +220,95 @@ class EventManager {
                 }
                 break;
             case "pause":
-                if (!distube.isPaused) {
-                    distube.pause(message);
+                if (!Distube.isPaused) {
+                    Distube.pause(message);
                 }
                 break;
             case "resume":
-                if (distube.isPaused) {
-                    distube.resume(message);
+                if (Distube.isPaused) {
+                    Distube.resume(message);
                 }
                 break;
             case "skip":
-                distube.skip(message);
+                Distube.skip(message);
+                message.react('👍');
                 break;
             case "stop":
-                distube.stop(message);
+                Distube.stop(message);
+                break;
+            case "clear":
+                if (queue.songs.length > 0) {
+                    queue.songs = [];
+
+                    let embed = new Discord.MessageEmbed()
+                        .setTitle("Queue Cleared")
+                        .setColor(Config.embedColor);
+                    message.channel.send(embed);
+                }
                 break;
             case "leave":
-                if (distube.isPlaying(message)) {
-                    distube.stop(message);
-                }
                 if (voiceConnection != null) {
-                    voiceConnection.disconnect();
+                    if (Distube.isPlaying("Is Playing")) {
+                        Distube.stop(message);
+                    }
+                    voiceConnection.disconnect()
                 }
                 break;
             case "q":
             case "queue":
-                let queue = distube.getQueue(message);
                 let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
                     queue.songs.map((song, index) => {
                         return `${index + 1}. ${song.name}`;
                     }).join("\n");
 
-                let embed = new Discord.MessageEmbed()
-                    .setTitle('Queue')
-                    .setColor(config.embedColor)
-                    .setDescription(description);
-
+                let embed = Handlers.createBasicEmbed("Queue", description);
                 message.channel.send(embed);
                 break;
         }
     }
 
+    static setQueueFilter(message, commands) {
+        let Commands = serbot.Commands;
+        let Distube = serbot.distube;
+        let Handlers = serbot.Handlers;
+
+        if (!Distube.isPlaying(message)) {
+            message.channel.send(Handlers.createErrorEmbed("Queue Filter", "No song playing"));
+            return;
+        }
+
+        let allowedCommands = Commands.distubeFilterList.concat("list", "ls");
+        commands.shift();
+        let command = commands[0];
+
+        let embed = Handlers.createErrorEmbed("Queue Filter", "Invalid command");
+
+        if (commands.length > 1 || !allowedCommands.includes(command)) {
+            message.channel.send(embed);
+        } else {
+            if (command == "list" || command == "ls") {
+                let description = Commands.distubeFilterList.join("\n");
+                embed = Handlers.createBasicEmbed("Queue Filter List", description);
+            } else {
+                Distube.setFilter(message, command);
+
+                let description = Distube.filters == command ?
+                    `Queue Filter ${command} disabled` :
+                    `Queue Filter ${command} enabled`;
+
+                embed = Handlers.createBasicEmbed("Queue Filter", description);
+                console.log(`${description} by ${message.author.username}`)
+            }
+            message.channel.send(embed);
+        }
+    }
+
     // R6 functions
-    static async retrieveR6Stats(Discord, config, message, channel) {
+    static async retrieveR6Stats(message, channel) {
+        let Handlers = serbot.Handlers;
+
+        let sentMessage = null;
+
         let username = message[1];
         let platforms = new Array("uplay", "xbl", "psn");
         let platformTexts = new Array("PC", "XBOX", "PS");
@@ -168,8 +319,10 @@ class EventManager {
         let rank;
         let statsFound = false;
 
+        channel.send("Attempting to retrieve, please wait...").then((msg) => {
+            sentMessage = msg;
+        });
 
-        channel.send("Attempting to retrieve, please wait...");
         for (let i = 0; i < platforms.length; ++i) {
             try {
                 id = await r6api.getId(platforms[i], username);
@@ -186,24 +339,19 @@ class EventManager {
         }
 
         if (!statsFound) {
-            let embed = new Discord.MessageEmbed()
-                .setTitle("Error: R6 Stats")
-                .setColor(config.embedColor)
-                .setDescription(`Unable to find statistics for ${username}`);
-            channel.send(embed);
+            let embed = Handlers.createErrorEmbed("R6 Stats", `Unable to find statistics for ${username}`)
+            sentMessage.edit("", embed);
             return;
         }
 
         let r6Stats = this.scrapeR6Stats(id, stats, level, rank);
 
-        let embed = new Discord.MessageEmbed()
-            .setAuthor(`${username} [${platformText}]`, r6Stats.avatarURL)
-            .setTitle(`Operation: ${r6Stats.seasonName}`)
-            .setColor(config.embedColor)
+        let embed = Handlers.createBasicEmbed(`Operation: ${r6Stats.seasonName}`, `**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`);
+
+        embed.setAuthor(`${username} [${platformText}]`, r6Stats.avatarURL)
             .setThumbnail(r6Stats.seasonRankURL)
-            .setDescription(`**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`)
             .addFields({ name: '**Overall**', value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: '**Casual**', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: '**Ranked**', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: '**Season**', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` });
-        channel.send(embed);
+        sentMessage.edit("", embed);
     }
 
     // Helper functions
@@ -223,18 +371,18 @@ class EventManager {
             "seasonName": season.name,
             "seasonMMR": parseInt(seasonRegion.current.mmr).toLocaleString(),
             "seasonRankURL": seasonRegion.current.image,
-            "overallWR": this.getPercentage(pvpStats.general.wins, pvpStats.general.losses).toFixed(2),
-            "overallKD": this.getPercentage(pvpStats.general.kills, pvpStats.general.deaths).toFixed(2),
-            "casualWR": this.getPercentage(pvpStats.queue.casual.wins, pvpStats.queue.casual.losses).toFixed(2),
-            "casualKD": this.getPercentage(pvpStats.queue.casual.kills, pvpStats.queue.casual.deaths).toFixed(2),
-            "rankedWR": this.getPercentage(pvpStats.queue.ranked.wins, pvpStats.queue.ranked.losses).toFixed(2),
-            "rankedKD": this.getPercentage(pvpStats.queue.ranked.kills, pvpStats.queue.ranked.deaths).toFixed(2),
-            "seasonWR": this.getPercentage(seasonRegion.wins, seasonRegion.losses).toFixed(2),
-            "seasonKD": this.getPercentage(seasonRegion.kills, seasonRegion.deaths).toFixed(2),
+            "overallWR": this.getRatio(pvpStats.general.wins, pvpStats.general.wins + pvpStats.general.losses, true).toFixed(2),
+            "overallKD": this.getRatio(pvpStats.general.kills, pvpStats.general.deaths, false).toFixed(2),
+            "casualWR": this.getRatio(pvpStats.queue.casual.wins, pvpStats.queue.casual.wins + pvpStats.queue.casual.losses, true).toFixed(2),
+            "casualKD": this.getRatio(pvpStats.queue.casual.kills, pvpStats.queue.casual.deaths, false).toFixed(2),
+            "rankedWR": this.getRatio(pvpStats.queue.ranked.wins, pvpStats.queue.ranked.wins + pvpStats.queue.ranked.losses, true).toFixed(2),
+            "rankedKD": this.getRatio(pvpStats.queue.ranked.kills, pvpStats.queue.ranked.deaths, false).toFixed(2),
+            "seasonWR": this.getRatio(seasonRegion.wins, seasonRegion.wins + seasonRegion.losses, true).toFixed(2),
+            "seasonKD": this.getRatio(seasonRegion.kills, seasonRegion.deaths, false).toFixed(2),
         });
     }
 
-    static getPercentage(numerator, denominator) {
+    static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
         let den = parseFloat(denominator);
 
@@ -242,11 +390,17 @@ class EventManager {
             return 0;
         }
 
+        if (percentage) {
+            return num / den * 100;
+        }
+
         return num / den;
     }
 
-    static songRemoveErrorHandler(Discord, config, queue, message, queueRemoveIndex) {
-        let title = "Error: Song Remove";
+    static songRemoveErrorHandler(queue, message, queueRemoveIndex) {
+        let Handlers = serbot.Handlers;
+
+        let title = "Song Remove";
         let description = "Cannot remove song: ";
         let isError = false;
 
@@ -259,10 +413,7 @@ class EventManager {
         }
 
         if (isError) {
-            let embed = new Discord.MessageEmbed()
-                .setTitle(title)
-                .setColor(config.embedColor)
-                .setDescription(description);
+            let embed = Handlers.createErrorEmbed(title, description);
             message.channel.send(embed);
         }
 
