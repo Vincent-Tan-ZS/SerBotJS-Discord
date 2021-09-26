@@ -55,6 +55,8 @@ client.on('message', (message) => {
                 EventManager.sendCommandList(message);
             } else if (EventManager.messageIsCommandLowerCased(Commands.greetingCommands, messageCommands)) {
                 EventManager.sendGreeting(message);
+            } else if (EventManager.messageIsCommandLowerCased(Commands.sunbreakCommands, messageCommands)) {
+                EventManager.sunbreakCountdown(message);
             } else if (EventManager.messageIsMusicAction(messageCommands)) {
                 let channelId = message.member.voice.channelID;
                 let voiceConnection = client.voice.connections.find(x => x.channel.id == channelId) || null;

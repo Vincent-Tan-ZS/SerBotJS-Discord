@@ -19,6 +19,7 @@ class Commands {
     static r6Commands = new Array("r6");
     static localMusicCommands = new Array("music");
     static covidCommands = new Array("covid");
+    static sunbreakCommands = new Array("sunbreak");
     //#endregion Commands
 
     //#region Commands Description

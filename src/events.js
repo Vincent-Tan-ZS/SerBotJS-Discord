@@ -2,6 +2,7 @@ const R6API = require('r6api.js').default;
 const r6api = new R6API({ email: "wicakig123@laklica.com", password: "321gikaciw" });
 const serbot = require('./setup');
 const Covid = require('novelcovid');
+const moment = require('moment');
 
 class EventManager {
     constructor() {}
@@ -354,6 +355,28 @@ class EventManager {
             .setThumbnail(r6Stats.seasonRankURL)
             .addFields({ name: '**Overall**', value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: '**Casual**', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: '**Ranked**', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: '**Season**', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` });
         sentMessage.edit("", embed);
+    }
+
+    static sunbreakCountdown(message) {
+        let Handlers = serbot.Handlers;
+
+        let sunbreakRelease = moment("20220831");
+        let difference = sunbreakRelease.diff(moment(), 'days');
+
+        let description = difference > 1
+          ? `${difference} days and counting...`
+          : `${difference} day left`;
+
+        let embed = Handlers.createBasicEmbed("Monster Hunter Rise: Sunbreak", "");
+        
+        embed
+          .setURL("https://www.monsterhunter.com/rise-sunbreak/en-uk/")
+          .addFields({name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true},
+          {name: 'Countdown', value: description, inline: true})
+          .setImage("http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg")
+          .setTimestamp();
+
+        message.channel.send(embed);
     }
 
     // Helper functions
