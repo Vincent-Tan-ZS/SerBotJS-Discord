@@ -32,6 +32,8 @@ export default class Commands {
     static localMusicCommands = new Array("music");
     static covidCommands = new Array("covid");
     static sunbreakCommands = new Array("sunbreak");
+    static rhombusCommands = new Array("rhombus");
+    static wikiHowCommands = new Array("wikihow");
     //#endregion Commands
 
     //#region Commands Description
@@ -50,6 +52,8 @@ export default class Commands {
     static musicFilterDescription = "Filters the song queue (replays current song)";
     static r6Description = "Display Rainbow Six: Siege player stats";
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
+    static rhombusDescription = "Creates a rhombus of size n";
+    static wikiHowDescription = "Searches for a WikiHow page";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -68,6 +72,8 @@ export default class Commands {
     static disconnectDictionary = new Command(this.disconnectCommands, this.disconnectDescription, this.disconnectActionResolve);
     static r6Dictionary = new Command(this.r6Commands, this.r6Description, (msg, cmds) => { EventManager.retrieveR6Stats(msg, cmds); });
     static covidDictionary = new Command(this.covidCommands, this.covidDescription, (msg, cmds) => { EventManager.getCovidCases(msg, cmds); });
+    static rhombusDictionary = new Command(this.rhombusCommands, this.rhombusDescription, (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
+    static wikiHowDictionary = new Command(this.wikiHowCommands, this.wikiHowDescription, (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -79,7 +85,8 @@ export default class Commands {
     static dictionaries = new Array(this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.r6Dictionary, this.covidDictionary,
-        this.disconnectDictionary, this.helpDictionary, this.localMusicDictionary, this.sunbreakDictionary);
+        this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary, this.localMusicDictionary,
+        this.sunbreakDictionary);
     //#endregion DictionaryList
 
     //#region Others
@@ -95,7 +102,7 @@ export default class Commands {
     }
 
     static disconnectActionResolve(message) {
-        if (!message.member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return false;
+        if (!message.member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return;
 
         message.channel.send("Logging out...")
             .then(message => client.destroy())

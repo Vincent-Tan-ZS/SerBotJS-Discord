@@ -4,11 +4,12 @@ import moment from 'moment';
 import fs from 'fs';
 import path from 'path';
 
-import { refreshLocalMusicFiles } from './local.js';
+//import { refreshLocalMusicFiles } from './local.js';
 import { distube as Distube } from './setup.js';
 import config from './config.js';
 import Commands from './commands.js';
 import Handlers from './handlers.js';
+import { wikihow } from './wikihow.js';
 
 const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -91,7 +92,7 @@ export default class EventManager {
 
         if (fileIndex.toLowerCase() == "refresh") {
             refreshLocalMusicFiles();
-        } else if (fileIndex == "random" || Number.parseInt(fileIndex) > 0) {
+        } else if (fileIndex == "random" || !Number.isNaN(fileIndex)) {
             let musicTxt = path.resolve(process.cwd(), "./txt/music.txt");
             var data = fs.readFileSync(musicTxt).toString();
             songList = data.split("\n");
@@ -261,8 +262,6 @@ export default class EventManager {
         commands.shift();
         let command = commands[0];
 
-        let embed = Handlers.createErrorEmbed("Queue Filter", "Invalid command");
-
         if (commands.length > 1 || !allowedCommands.includes(command)) {
             Handlers.sendEmbed({
                 message: message,
@@ -373,6 +372,52 @@ export default class EventManager {
             embedImage: "http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg",
             fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true }, { name: 'Countdown', value: description, inline: true }),
             setTimestamp: true
+        });
+    }
+
+    static createRhombus(message, commands) {
+        if (Number.isNaN(commands[0])) return;
+
+        let rhombusSize = Number(commands[0]);
+
+        if (rhombusSize <= 0) {
+            Handlers.sendEmbed({
+                message: message,
+                title: "Rhombus",
+                description: "Rhombus must have a size"
+            });
+            return;
+        }
+
+
+    }
+
+    static searchWikiHow(message, commands) {
+        if (Array.isArray(commands)) {
+            commands.shift();
+        }
+
+        if (commands.length <= 0 || typeof(commands) === 'string') {
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "WikiHow",
+                description: "Empty query"
+            });
+            return;
+        }
+
+        wikihow(commands.join(" ")).then((data) => {
+            if (data == null) {
+                Handlers.sendEmbed({
+                    message: message,
+                    isError: true,
+                    title: "WikiHow",
+                    description: "You did it, this query does not exist in WikiHow, good job :)"
+                });
+            } else {
+                message.channel.send(data.url);
+            }
         });
     }
 
