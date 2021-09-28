@@ -1,16 +1,20 @@
-const R6API = require('r6api.js').default;
-const r6api = new R6API({ email: "wicakig123@laklica.com", password: "321gikaciw" });
-const serbot = require('./setup');
-const Covid = require('novelcovid');
-const moment = require('moment');
+import R6API from 'r6api.js';
+import * as Covid from 'novelcovid';
+import moment from 'moment';
+import Discord from 'discord.js';
 
-class EventManager {
+import { distube as Distube } from './setup.js';
+import config from './config.js';
+import Commands from './commands.js';
+import Handlers from './handlers.js';
+
+const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6apiPassword });
+
+export default class EventManager {
     constructor() {}
 
     // Determine Command Functions : boolean
     static messageIsAdmin(cmds, message) {
-        let Discord = serbot.Discord;
-
         let msgMember = message.member;
         if (!msgMember.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return false;
 
@@ -29,8 +33,6 @@ class EventManager {
     }
 
     static messageIsMusicAction(message) {
-        let Commands = serbot.Commands;
-
         return Commands.musicJoinCommands.includes(message) ||
             Commands.musicPauseCommands.includes(message) ||
             Commands.musicResumeCommands.includes(message) ||
@@ -43,8 +45,6 @@ class EventManager {
 
     // Command List Action
     static sendCommandList(message) {
-        let Commands = serbot.Commands;
-        let Handlers = serbot.Handlers;
         let description = "";
 
         Commands.dictionaries.forEach((dictionary) => {
@@ -76,8 +76,6 @@ class EventManager {
 
     // Covid Actions
     static getCovidCases(message, commands) {
-        let Handlers = serbot.Handlers;
-
         commands.shift();
         let countryName = commands[0];
         let countryData = { name: countryName, flag: "" };
@@ -107,12 +105,6 @@ class EventManager {
 
     // Local Music Actions
     static async playLocalMusic(message, commands) {
-        let Handlers = serbot.Handlers;
-
-        let Discord = serbot.Discord;
-        let Distube = serbot.distube;
-        let Config = serbot.config;
-
         commands.shift();
         let fileIndex = commands[0];
 
@@ -151,8 +143,8 @@ class EventManager {
                         embed = new Discord.MessageEmbed()
                             .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
                             .setTitle(song.name)
-                            .setColor(Config.embedColor)
-                            .setFooter(` | ${song.formattedDuration}`, Config.embedPauseIconURL);
+                            .setColor(config.embedColor)
+                            .setFooter(` | ${song.formattedDuration}`, config.embedPauseIconURL);
                         message.channel.send(embed);
                     });
                 } else {
@@ -164,10 +156,6 @@ class EventManager {
 
     // Music Actions
     static playMusic(message, commands) {
-        let Discord = serbot.Discord;
-        let Distube = serbot.distube;
-        let Config = serbot.config;
-
         commands.shift();
         Distube.play(message, commands.join(" ")).then(() => {
             let queue = Distube.getQueue(message);
@@ -178,17 +166,14 @@ class EventManager {
                 let embed = new Discord.MessageEmbed()
                     .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
                     .setTitle(song.name)
-                    .setColor(Config.embedColor)
-                    .setFooter(` | ${song.formattedDuration}`, Config.embedPauseIconURL);
+                    .setColor(config.embedColor)
+                    .setFooter(` | ${song.formattedDuration}`, config.embedPauseIconURL);
                 message.channel.send(embed);
             }
         });
     }
 
     static removeMusic(message, commands) {
-        let Distube = serbot.distube;
-        let Handlers = serbot.Handlers;
-
         let queueRemoveIndex = parseInt(commands[1]);
         let queue = Distube.getQueue(message);
         let isError = this.songRemoveErrorHandler(queue, message, queueRemoveIndex);
@@ -204,11 +189,6 @@ class EventManager {
     }
 
     static musicAction(voiceConnection, message, command) {
-        let Discord = serbot.Discord;
-        let Distube = serbot.distube;
-        let Config = serbot.config;
-        let Handlers = serbot.Handlers;
-
         let queue = Distube.getQueue(message);
 
         switch (command) {
@@ -243,7 +223,7 @@ class EventManager {
 
                     let embed = new Discord.MessageEmbed()
                         .setTitle("Queue Cleared")
-                        .setColor(Config.embedColor);
+                        .setColor(config.embedColor);
                     message.channel.send(embed);
                 }
                 break;
@@ -269,10 +249,6 @@ class EventManager {
     }
 
     static setQueueFilter(message, commands) {
-        let Commands = serbot.Commands;
-        let Distube = serbot.distube;
-        let Handlers = serbot.Handlers;
-
         if (!Distube.isPlaying(message)) {
             message.channel.send(Handlers.createErrorEmbed("Queue Filter", "No song playing"));
             return;
@@ -306,8 +282,6 @@ class EventManager {
 
     // R6 functions
     static async retrieveR6Stats(message, channel) {
-        let Handlers = serbot.Handlers;
-
         let username = message[1];
         let platforms = new Array("uplay", "xbl", "psn");
         let selectedPlatform;
@@ -358,23 +332,20 @@ class EventManager {
     }
 
     static sunbreakCountdown(message) {
-        let Handlers = serbot.Handlers;
-
         let sunbreakRelease = moment("20220831");
         let difference = sunbreakRelease.diff(moment(), 'days');
 
-        let description = difference > 1
-          ? `${difference} days and counting...`
-          : `${difference} day left`;
+        let description = difference > 1 ?
+            `${difference} days and counting...` :
+            `${difference} day left`;
 
         let embed = Handlers.createBasicEmbed("Monster Hunter Rise: Sunbreak", "");
-        
+
         embed
-          .setURL("https://www.monsterhunter.com/rise-sunbreak/en-uk/")
-          .addFields({name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true},
-          {name: 'Countdown', value: description, inline: true})
-          .setImage("http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg")
-          .setTimestamp();
+            .setURL("https://www.monsterhunter.com/rise-sunbreak/en-uk/")
+            .addFields({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true }, { name: 'Countdown', value: description, inline: true })
+            .setImage("http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg")
+            .setTimestamp();
 
         message.channel.send(embed);
     }
@@ -393,7 +364,7 @@ class EventManager {
             "id": userId,
             "avatarURL": userAvatarURL,
             "level": level,
-            "seasonName": season.seasonName || serbot.config.currentR6Season,
+            "seasonName": season.seasonName || config.currentR6Season,
             "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
             "seasonRankURL": seasonalStats.current.icon,
             "overallWR": this.getRatio(pvpStats.general.wins, pvpStats.general.wins + pvpStats.general.losses, true).toFixed(2),
@@ -423,8 +394,6 @@ class EventManager {
     }
 
     static songRemoveErrorHandler(queue, message, queueRemoveIndex) {
-        let Handlers = serbot.Handlers;
-
         let title = "Song Remove";
         let description = "Cannot remove song: ";
         let isError = false;
@@ -445,5 +414,3 @@ class EventManager {
         return isError;
     }
 }
-
-module.exports = EventManager

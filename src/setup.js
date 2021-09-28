@@ -1,14 +1,11 @@
-const Discord = require('discord.js'),
-    EventManager = require('./events.js'),
-    Commands = require('./commands.js'),
-    DisTube = require('distube'),
-    Handlers = require('./handlers.js'),
-    client = new Discord.Client(),
-    config = require('../config.json')
+import Discord from 'discord.js';
+import DisTube from 'distube';
+import EventManager from './events.js';
+import Commands from './commands.js';
+import config from './config.js';
 
-config.token = process.env.SERBOTJS_BOT_TOKEN;
-
-const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly: false, leaveOnStop: false });
+export const client = new Discord.Client();
+export const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly: false, leaveOnStop: false });
 
 //#region Distube EventListener
 distube.on('playSong', (message, queue, song) => {
@@ -84,10 +81,3 @@ client.on('message', (message) => {
         }
     })
     //#endregion Message Listener
-
-exports.Discord = Discord;
-exports.Commands = Commands;
-exports.Handlers = Handlers;
-exports.client = client;
-exports.config = config;
-exports.distube = distube;

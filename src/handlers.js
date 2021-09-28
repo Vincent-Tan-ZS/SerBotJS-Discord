@@ -1,21 +1,20 @@
-const serbot = require('./setup');
+import Discord from 'discord.js';
+import config from './config.js';
 
-class Handlers {
+export default class Handlers {
     constructor() {}
 
     static createBasicEmbed(title, description) {
-        return new serbot.Discord.MessageEmbed()
+        return new Discord.MessageEmbed()
             .setTitle(title)
-            .setColor(serbot.config.embedColor)
+            .setColor(config.embedColor)
             .setDescription(description);
     }
 
     static createErrorEmbed(title, description) {
-        return new serbot.Discord.MessageEmbed()
+        return new Discord.MessageEmbed()
             .setTitle(`Error: ${title}`)
-            .setColor(serbot.config.embedColor)
+            .setColor(config.embedColor)
             .setDescription(description);
     }
 }
-
-module.exports = Handlers

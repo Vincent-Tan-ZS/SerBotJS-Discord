@@ -1,4 +1,4 @@
-class Commands {
+export default class Commands {
     constructor() {}
 
     //#region Commands
@@ -68,6 +68,7 @@ class Commands {
     //#region Others
     static distubeFilterList = new Array("3d", "bassboost", "echo", "karoke", "nightcore", "vaporwave", "flanger", "gate", "haas", "reverse", "surround", "mcompand", "phaser", "tremolo", "earwax");
     //#endregion Others
-}
 
-module.exports = Commands
+    //#region Functions
+    //#endreigon Functions
+}

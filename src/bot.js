@@ -1,12 +1,12 @@
-require('dotenv').config();
+import http from 'http';
+import { client } from './setup.js';
+import config from './config.js';
 
-const http = require('http')
 http.createServer(function(request, response) {
-  response.writeHead(200, {'Content-Type': 'text/plain'});
-  response.write("SerBot enabled.");
-  response.end();
-  console.log("Pinged server");
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.write("SerBot enabled.");
+    response.end();
+    console.log("Pinged server");
 }).listen(process.env.PORT)
 
-const serbot = require('./setup');
-serbot.client.login(serbot.config.token);
+client.login(config.token);
