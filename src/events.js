@@ -1,6 +1,7 @@
 import R6API from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment';
+import { refreshLocalMusicFiles } from './local.js';
 
 import { distube as Distube } from './setup.js';
 import config from './config.js';
@@ -83,26 +84,28 @@ export default class EventManager {
     static async playLocalMusic(message, commands) {
         commands.shift();
         let fileIndex = commands[0];
-
-        var fs = require('fs');
-        var files = fs.readdirSync("C:/Users/vintz/Downloads/Music");
-        var musicFiles = files.filter(x => x.toLowerCase().substring(x.length - 4).includes(".mp3")).map(x => x.substr(0, x.lastIndexOf(".mp3")));
-
         let musicIDList = [];
 
-        if (fileIndex.toLowerCase() == "random") {
-            fileIndex = Math.floor(Math.random() * musicFiles.length) + 1;
-            musicIDList.push(fileIndex);
-        } else if (fileIndex.toLowerCase() == "random10") {
-            while (musicIDList.length < 10) {
-                let newRandomId = Math.floor(Math.random() * musicFiles.length) + 1;
-                if (!musicIDList.includes(newRandomId)) {
-                    musicIDList.push(newRandomId);
-                }
+        if (fileIndex.toLowerCase() == "refresh") {
+            refreshLocalMusicFiles();
+        } else if (fileIndex == "random" || typeof(fileIndex) == Number) {
+            if (fileIndex == "random") {
+                fileIndex = Math.floor(Math.random() * musicFiles.length) + 1;
             }
+
+            var fs = require('fs');
+            let musicTxt = path.resolve(process.cwd(), "./txt/music.txt");
+            var data = fs.readFileSync(musicTxt).toString();
+
+            let songName = data.split("\n")[fileIndex];
+            musicIDList.push(songName);
         } else {
-            fileIndex = Number(fileIndex) - 1;
-            musicIDList.push(fileIndex);
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Queue",
+                description: "Invalid command"
+            });
         }
 
         if (musicIDList.length > 0) {
