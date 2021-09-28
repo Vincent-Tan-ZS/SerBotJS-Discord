@@ -13,41 +13,12 @@ const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6a
 export default class EventManager {
     constructor() {}
 
-    // Determine Command Functions : boolean
-    static messageIsAdmin(cmds, message) {
-        let msgMember = message.member;
-        if (!msgMember.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return false;
-
-        let cmd = message.content.split(' ')[1];
-        return cmds.includes(cmd);
-    }
-
-    static messageIsCommandLowerCased(cmds, message) {
-        let lowercaseMessage = message.toLowerCase();
-        return cmds.includes(lowercaseMessage);
-    }
-
-    static messageIsCommandArray(cmds, message) {
-        let msgCommand = message[0];
-        return cmds.includes(msgCommand);
-    }
-
-    static messageIsMusicAction(message) {
-        return Commands.musicJoinCommands.includes(message) ||
-            Commands.musicPauseCommands.includes(message) ||
-            Commands.musicResumeCommands.includes(message) ||
-            Commands.musicSkipCommands.includes(message) ||
-            Commands.musicStopCommands.includes(message) ||
-            Commands.musicLeaveCommands.includes(message) ||
-            Commands.musicQueueCommands.includes(message) ||
-            Commands.musicClearCommands.includes(message);
-    }
-
     // Command List Action
     static sendCommandList(message) {
         let description = "";
+        let filteredDictionaries = Commands.dictionaries.filter(x => x.Description.length > 0);
 
-        Commands.dictionaries.forEach((dictionary) => {
+        filteredDictionaries.forEach((dictionary) => {
             description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
         });
 
@@ -281,8 +252,8 @@ export default class EventManager {
     }
 
     // R6 functions
-    static async retrieveR6Stats(message, channel) {
-        let username = message[1];
+    static async retrieveR6Stats(message, commands) {
+        let username = commands[1];
         let platforms = new Array("uplay", "xbl", "psn");
         let selectedPlatform;
         let platformTexts = new Array("PC", "XBOX", "PS");
@@ -291,7 +262,7 @@ export default class EventManager {
         let statsFound = false;
 
         // Attempt retrieve message
-        let sentMessage = await channel.send("Attempting to retrieve, please wait...");
+        let sentMessage = await message.channel.send("Attempting to retrieve, please wait...");
 
         // Attempt find username
         for (const platform of platforms) {
