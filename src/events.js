@@ -1,7 +1,6 @@
 import R6API from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment';
-import Discord from 'discord.js';
 
 import { distube as Distube } from './setup.js';
 import config from './config.js';
@@ -22,8 +21,11 @@ export default class EventManager {
             description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
         });
 
-        let embed = Handlers.createBasicEmbed("Command List", description);
-        message.channel.send(embed);
+        Handlers.sendEmbed({
+            message: message,
+            title: "Command List",
+            description: description
+        });
     }
 
     // Greeting Actions
@@ -67,10 +69,13 @@ export default class EventManager {
                 yesterdayData.recovered = result.todayRecovered;
             })
         ]).then(() => {
-            let embed = Handlers.createBasicEmbed(countryData.name, "Cases / Deaths / Recovered");
-            embed.setThumbnail(countryData.flag)
-                .addFields({ name: 'Today', value: `${todayData.cases} / ${todayData.deaths} / ${todayData.recovered}` }, { name: 'Yesterday', value: `${yesterdayData.cases} / ${yesterdayData.deaths} / ${yesterdayData.recovered}` });
-            message.channel.send(embed);
+            Handlers.sendEmbed({
+                message: message,
+                title: countryData.name,
+                description: "Cases / Deaths / Recovered",
+                thumbnail: countryData.flag,
+                fields: new Array({ name: 'Today', value: `${todayData.cases} / ${todayData.deaths} / ${todayData.recovered}` }, { name: 'Yesterday', value: `${yesterdayData.cases} / ${yesterdayData.deaths} / ${yesterdayData.recovered}` })
+            });
         });
     }
 
@@ -82,8 +87,6 @@ export default class EventManager {
         var fs = require('fs');
         var files = fs.readdirSync("C:/Users/vintz/Downloads/Music");
         var musicFiles = files.filter(x => x.toLowerCase().substring(x.length - 4).includes(".mp3")).map(x => x.substr(0, x.lastIndexOf(".mp3")));
-
-        let embed = Handlers.createErrorEmbed("Song Not Found", `There is only a total of ${musicFiles.length} songs in the directory`);
 
         let musicIDList = [];
 
@@ -111,15 +114,24 @@ export default class EventManager {
                         let queue = Distube.getQueue(message);
                         let song = queue.songs[queue.songs.length - 1];
                         let msgAuthor = message.author;
-                        embed = new Discord.MessageEmbed()
-                            .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
-                            .setTitle(song.name)
-                            .setColor(config.embedColor)
-                            .setFooter(` | ${song.formattedDuration}`, config.embedPauseIconURL);
-                        message.channel.send(embed);
+
+                        Handlers.sendEmbed({
+                            message: message,
+                            title: song.name,
+                            description: "",
+                            author: `${msgAuthor.username} Queued`,
+                            authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+                            footer: ` | ${song.formattedDuration}`,
+                            footerIcon: config.embedPauseIconURL
+                        });
                     });
                 } else {
-                    message.channel.send(embed);
+                    Handlers.sendEmbed({
+                        message: message,
+                        isError: true,
+                        title: "Song Not Found",
+                        description: `There is only a total of ${musicFiles.length} songs in the directory`
+                    });
                 }
             }
         }
@@ -134,12 +146,14 @@ export default class EventManager {
             if (queue != undefined) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
-                let embed = new Discord.MessageEmbed()
-                    .setAuthor(`${msgAuthor.username} Queued`, msgAuthor.avatarURL({ dynamic: true }))
-                    .setTitle(song.name)
-                    .setColor(config.embedColor)
-                    .setFooter(` | ${song.formattedDuration}`, config.embedPauseIconURL);
-                message.channel.send(embed);
+                Handlers.sendEmbed({
+                    message: message,
+                    author: `${msgAuthor.username} Queued`,
+                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+                    title: song.name,
+                    footer: ` | ${song.formattedDuration}`,
+                    footerIcon: config.embedPauseIconURL
+                });
             }
         });
     }
@@ -155,8 +169,11 @@ export default class EventManager {
         let song = queue.songs[queueRemoveIndex];
         queue.songs.splice(queueRemoveIndex, 1);
 
-        let embed = Handlers.createBasicEmbed("Song Removed", song.name);
-        message.channel.send(embed);
+        Handlers.sendEmbed({
+            message: message,
+            title: "Song Removed",
+            Description: song.name
+        });
     }
 
     static musicAction(voiceConnection, message, command) {
@@ -192,15 +209,15 @@ export default class EventManager {
                 if (queue.songs.length > 0) {
                     queue.songs = [];
 
-                    let embed = new Discord.MessageEmbed()
-                        .setTitle("Queue Cleared")
-                        .setColor(config.embedColor);
-                    message.channel.send(embed);
+                    Handlers.sendEmbed({
+                        message: message,
+                        title: "Queue Cleared",
+                    });
                 }
                 break;
             case "leave":
                 if (voiceConnection != null) {
-                    if (Distube.isPlaying("Is Playing")) {
+                    if (Distube.isPlaying(message)) {
                         Distube.stop(message);
                     }
                     voiceConnection.disconnect()
@@ -213,15 +230,23 @@ export default class EventManager {
                         return `${index + 1}. ${song.name}`;
                     }).join("\n");
 
-                let embed = Handlers.createBasicEmbed("Queue", description);
-                message.channel.send(embed);
+                Handlers.sendEmbed({
+                    message: message,
+                    title: "Queue",
+                    description: description
+                });
                 break;
         }
     }
 
     static setQueueFilter(message, commands) {
         if (!Distube.isPlaying(message)) {
-            message.channel.send(Handlers.createErrorEmbed("Queue Filter", "No song playing"));
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Queue Filter",
+                description: "No song playing"
+            });
             return;
         }
 
@@ -232,11 +257,20 @@ export default class EventManager {
         let embed = Handlers.createErrorEmbed("Queue Filter", "Invalid command");
 
         if (commands.length > 1 || !allowedCommands.includes(command)) {
-            message.channel.send(embed);
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Queue Filter",
+                description: "Invalid command"
+            });
         } else {
             if (command == "list" || command == "ls") {
                 let description = Commands.distubeFilterList.join("\n");
-                embed = Handlers.createBasicEmbed("Queue Filter List", description);
+                Handlers.sendEmbed({
+                    message: message,
+                    title: "Queue Filter List",
+                    description: description
+                });
             } else {
                 Distube.setFilter(message, command);
 
@@ -244,7 +278,12 @@ export default class EventManager {
                     `Queue Filter ${command} disabled` :
                     `Queue Filter ${command} enabled`;
 
-                embed = Handlers.createBasicEmbed("Queue Filter", description);
+                Handlers.sendEmbed({
+                    message: message,
+                    title: "Queue Filter",
+                    description: description
+                });
+
                 console.log(`${description} by ${message.author.username}`)
             }
             message.channel.send(embed);
@@ -282,8 +321,13 @@ export default class EventManager {
 
         // If stats doesn't exist
         if (!statsFound) {
-            let embed = Handlers.createErrorEmbed("R6 Stats", `Unable to find statistics for ${username}`)
-            sentMessage.edit("", embed);
+            Handlers.sendEmbed({
+                message: sentMessage,
+                isEdit: true,
+                isError: true,
+                title: "R6 Stats",
+                description: `Unable to find statistics for ${username}`
+            });
             return;
         }
 
@@ -294,31 +338,35 @@ export default class EventManager {
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
 
-        let embed = Handlers.createBasicEmbed(`Operation: ${r6Stats.seasonName}`, `**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`);
-
-        embed.setAuthor(`${username} [${platformText}]`, r6Stats.avatarURL)
-            .setThumbnail(r6Stats.seasonRankURL)
-            .addFields({ name: '**Overall**', value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: '**Casual**', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: '**Ranked**', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: '**Season**', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` });
-        sentMessage.edit("", embed);
+        Handlers.sendEmbed({
+            message: sentMessage,
+            title: `Operation ${r6Stats.seasonName}`,
+            description: `**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`,
+            author: `${username} [${platformText}]`,
+            authorIcon: r6Stats.avatarURL,
+            thumbnail: r6Stats.seasonRankURL,
+            fields: new Array({ name: '**Overall**', value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: '**Casual**', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: '**Ranked**', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: '**Season**', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` })
+        });
     }
 
     static sunbreakCountdown(message) {
         let sunbreakRelease = moment("20220831");
         let difference = sunbreakRelease.diff(moment(), 'days');
 
-        let description = difference > 1 ?
-            `${difference} days and counting...` :
-            `${difference} day left`;
+        if (difference < 0) return;
 
-        let embed = Handlers.createBasicEmbed("Monster Hunter Rise: Sunbreak", "");
+        let description = difference == 0 ?
+            "TODAY" : difference == 1 ?
+            "TOMORROW" : `${difference} days and counting...`;
 
-        embed
-            .setURL("https://www.monsterhunter.com/rise-sunbreak/en-uk/")
-            .addFields({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true }, { name: 'Countdown', value: description, inline: true })
-            .setImage("http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg")
-            .setTimestamp();
-
-        message.channel.send(embed);
+        Handlers.sendEmbed({
+            message: message,
+            title: "Monster Hunter Rise: Sunbreak",
+            embedURL: "https://www.monsterhunter.com/rise-sunbreak/en-uk/",
+            embedImage: "http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg",
+            fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true }, { name: 'Countdown', value: description, inline: true }),
+            setTimestamp: true
+        });
     }
 
     // Helper functions
@@ -378,8 +426,11 @@ export default class EventManager {
         }
 
         if (isError) {
-            let embed = Handlers.createErrorEmbed(title, description);
-            message.channel.send(embed);
+            Handlers.sendEmbed({
+                message: message,
+                title: title,
+                description: description
+            });
         }
 
         return isError;

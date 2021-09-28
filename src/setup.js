@@ -9,8 +9,11 @@ export const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly
 
 //#region Distube EventListener
 distube.on('playSong', (message, queue, song) => {
-        let embed = Handlers.createBasicEmbed("Now Playing", song.name);
-        message.channel.send(embed);
+        Handlers.sendEmbed({
+            message: message,
+            title: "Now Playing",
+            description: song.name
+        });
         console.log(`[Distube] Playing ${song.name}`);
     })
     .on('initQueue', queue => {
