@@ -1,8 +1,10 @@
 import R6API from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment';
-import { refreshLocalMusicFiles } from './local.js';
+import fs from 'fs';
+import path from 'path';
 
+import { refreshLocalMusicFiles } from './local.js';
 import { distube as Distube } from './setup.js';
 import config from './config.js';
 import Commands from './commands.js';
@@ -85,20 +87,22 @@ export default class EventManager {
         commands.shift();
         let fileIndex = commands[0];
         let musicIDList = [];
+        let songList = [];
 
         if (fileIndex.toLowerCase() == "refresh") {
             refreshLocalMusicFiles();
-        } else if (fileIndex == "random" || typeof(fileIndex) == Number) {
-            if (fileIndex == "random") {
-                fileIndex = Math.floor(Math.random() * musicFiles.length) + 1;
-            }
-
-            var fs = require('fs');
+        } else if (fileIndex == "random" || Number.parseInt(fileIndex) > 0) {
             let musicTxt = path.resolve(process.cwd(), "./txt/music.txt");
             var data = fs.readFileSync(musicTxt).toString();
+            songList = data.split("\n");
 
-            let songName = data.split("\n")[fileIndex];
-            musicIDList.push(songName);
+            if (fileIndex == "random") {
+                fileIndex = Math.floor(Math.random() * songList.length) + 1;
+            } else {
+                fileIndex -= 1;
+            }
+
+            musicIDList.push(fileIndex);
         } else {
             Handlers.sendEmbed({
                 message: message,
@@ -112,8 +116,8 @@ export default class EventManager {
             for (var i = 0; i < musicIDList.length; ++i) {
                 let musicID = musicIDList[i];
 
-                if (musicID < musicFiles.length) {
-                    await Distube.play(message, `${musicFiles[musicID]} audio only`).then(() => {
+                if (musicID < songList.length) {
+                    await Distube.play(message, `${songList[musicID]} audio only`).then(() => {
                         let queue = Distube.getQueue(message);
                         let song = queue.songs[queue.songs.length - 1];
                         let msgAuthor = message.author;
@@ -133,7 +137,7 @@ export default class EventManager {
                         message: message,
                         isError: true,
                         title: "Song Not Found",
-                        description: `There is only a total of ${musicFiles.length} songs in the directory`
+                        description: `There is only a total of ${songList.length} songs in the directory`
                     });
                 }
             }
