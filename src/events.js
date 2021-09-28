@@ -3,6 +3,7 @@ import * as Covid from 'novelcovid';
 import moment from 'moment';
 import fs from 'fs';
 import path from 'path';
+import { Util } from 'discord.js';
 
 //import { refreshLocalMusicFiles } from './local.js';
 import { distube as Distube } from './setup.js';
@@ -376,6 +377,7 @@ export default class EventManager {
     }
 
     static createRhombus(message, commands) {
+        commands.shift();
         if (Number.isNaN(commands[0])) return;
 
         let rhombusSize = Number(commands[0]);
@@ -384,12 +386,49 @@ export default class EventManager {
             Handlers.sendEmbed({
                 message: message,
                 title: "Rhombus",
-                description: "Rhombus must have a size"
+                description: "Rhombus must have a size! HOW YOU FINNA MAKE A RHOMBUS WITH NO SIZE??????"
             });
             return;
         }
 
+        if (rhombusSize == 1) {
+            Handlers.sendEmbed({
+                message: message,
+                title: "Rhombus",
+                description: "Rhombus too smol, gib bigger number"
+            });
+            return;
+        }
 
+        if (rhombusSize > 13) {
+            Handlers.sendEmbed({
+                message: message,
+                title: "Rhombus",
+                description: "Yo that's a MASSIVE rhombus bro, I won't accept anything past 13 sadly :("
+            });
+            return;
+        }
+
+        let width = (2 * rhombusSize) - 1;
+        let lineWidth = width;
+
+        let rhombus = "* ".repeat(lineWidth).slice(0, -1);
+
+        while (lineWidth > 0) {
+            lineWidth--;
+            let counter = width - lineWidth;
+
+            let whitespace = " ".repeat(counter);
+            let prePostLine = "* ".repeat(lineWidth).slice(0, -1);
+
+            rhombus = `${whitespace}${prePostLine}\n${rhombus}\n${whitespace}${prePostLine}`;
+        }
+
+        // Change when updated DiscordJs
+        let codeblockSyntax = "```";
+        rhombus = `${codeblockSyntax}${rhombus}${codeblockSyntax}`;
+
+        message.channel.send(rhombus);
     }
 
     static searchWikiHow(message, commands) {
