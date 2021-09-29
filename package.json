@@ -31,6 +31,7 @@
         "moment": "^2.29.1",
         "node-superfetch": "^0.2.3",
         "novelcovid": "^3.0.2",
+        "opusscript": "0.0.8",
         "r6api.js": "^2.1.0",
         "utf-8-validate": "^5.0.6",
         "ytdl-core": "^4.9.1",
