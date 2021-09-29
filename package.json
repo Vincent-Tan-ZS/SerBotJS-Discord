@@ -19,6 +19,7 @@
         "@discordjs/opus": "^0.6.0",
         "@discordjs/rest": "0.1.0-canary.0",
         "@discordjs/voice": "^0.6.0",
+        "@distube/spotify": "^0.6.4",
         "@szmarczak/http-timer": "^5.0.1",
         "bufferutil": "^4.0.4",
         "discord-api-types": "^0.23.1",

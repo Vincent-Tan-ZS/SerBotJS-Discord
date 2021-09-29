@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
 import { DisTube } from 'distube';
+import { SpotifyPlugin } from '@distube/spotify';
 import Handlers from './handlers.js';
 import Commands from './commands.js';
 import config from './config.js';
@@ -14,7 +15,11 @@ export const client = new Discord.Client({
         Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
     ]
 });
-export const distube = new DisTube(client, { leaveOnStop: false });
+export const distube = new DisTube(client,
+{
+  leaveOnStop: false,
+  plugins: [new SpotifyPlugin()]
+});
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
