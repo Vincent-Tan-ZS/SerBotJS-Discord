@@ -152,7 +152,7 @@ export default class EventManager {
         Distube.play(message, commands.join(" ")).then(() => {
             let queue = Distube.queues.get(message);
 
-            if (queue != undefined) {
+            if (queue != undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
                 Handlers.sendEmbed({
@@ -213,7 +213,12 @@ export default class EventManager {
                 break;
             case "skip":
                 if (!queue) return;
-                Distube.skip(queue);
+                if (queue.songs.length > 1) {
+                  Distube.skip(queue);
+                }
+                else {
+                  Distube.stop(queue);
+                }
                 message.react('👍');
                 break;
             case "stop":
