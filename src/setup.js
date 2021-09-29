@@ -19,7 +19,6 @@ export const distube = new DisTube(client, { leaveOnStop: false });
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
         Handlers.sendEmbed({
-            message: message,
             channel: queue.textChannel,
             title: "Now Playing",
             description: song.name
