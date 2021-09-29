@@ -1,16 +1,26 @@
 import Discord from 'discord.js';
-import DisTube from 'distube';
+import { DisTube } from 'distube';
 import Handlers from './handlers.js';
 import Commands from './commands.js';
 import config from './config.js';
 
-export const client = new Discord.Client();
-export const distube = new DisTube(client, { searchSongs: false, emitNewSongOnly: false, leaveOnStop: false });
+export const client = new Discord.Client({
+    intents: [Discord.Intents.FLAGS.GUILDS,
+        Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+        Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
+        Discord.Intents.FLAGS.GUILD_INVITES,
+        Discord.Intents.FLAGS.GUILD_VOICE_STATES,
+        Discord.Intents.FLAGS.GUILD_MESSAGES,
+        Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
+    ]
+});
+export const distube = new DisTube(client, { leaveOnStop: false });
 
 //#region Distube EventListener
-distube.on('playSong', (message, queue, song) => {
+distube.on('playSong', (queue, song) => {
         Handlers.sendEmbed({
             message: message,
+            channel: queue.textChannel,
             title: "Now Playing",
             description: song.name
         });
@@ -20,8 +30,8 @@ distube.on('playSong', (message, queue, song) => {
         queue.autoplay = false;
         queue.volume = 100;
     })
-    .on('error', (message, e) => {
-        message.channel.send(`Error: ${e}`);
+    .on('error', (channel, e) => {
+        channel.send(`Error: ${e}`);
     })
 
 //#endregion Distube EventListener
@@ -29,19 +39,22 @@ distube.on('playSong', (message, queue, song) => {
 //#region Discord Client EventListeners
 client.on('ready', () => {
     console.log("SerBot is now online!");
-    client.voice.connections.forEach((vc) => {
-        vc.voice.setDeaf(true);
-    })
 })
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-    if (!oldState.selfDeaf) newState.setSelfDeaf(true);
+    let user = oldState.member.user;
+    if (!user.bot && !user.username == "SerBot") return;
+
+    let voice = distube.voices.get(newState.guild);
+    if (voice == null) return;
+
+    if (!voice.selfDeaf) voice.setSelfDeaf(true);
 })
 
 //#endregion Discord Client EventListeners
 
 //#region Message Listener
-client.on('message', (message) => {
+client.on('messageCreate', (message) => {
     let msgContent = message.content;
 
     if (!msgContent.startsWith(`${config.prefix} `)) return;

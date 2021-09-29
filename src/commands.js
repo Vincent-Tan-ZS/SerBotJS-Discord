@@ -95,10 +95,7 @@ export default class Commands {
 
     //#region Functions
     static musicActionResolve(message, messageCommands) {
-        let channelId = message.member.voice.channelID;
-        let voiceConnection = client.voice.connections.find(x => x.channel.id == channelId) || null;
-
-        EventManager.musicAction(voiceConnection, message, messageCommands);
+        EventManager.musicAction(message, messageCommands);
     }
 
     static disconnectActionResolve(message) {

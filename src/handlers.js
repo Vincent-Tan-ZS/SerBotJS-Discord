@@ -6,6 +6,7 @@ export default class Handlers {
 
     static sendEmbed({
         message = undefined,
+        channel = undefined,
         isEdit = false,
         isError = false,
         title = 'lorem ipsum',
@@ -22,7 +23,11 @@ export default class Handlers {
         setTimestamp = false,
         timestampOverride = ''
     }) {
-        if (message == undefined) return;
+        if (message == undefined && channel == undefined) return;
+
+        if (message != undefined) {
+            channel = message.channel;
+        }
 
         if (isError) {
             title = `Error: ${title}`;
@@ -71,10 +76,15 @@ export default class Handlers {
             }
         }
 
-        if (isEdit) {
-            message.edit("", embed);
+        let messageOption = {
+            content: " ",
+            embeds: [embed]
+        };
+
+        if (isEdit && message != undefined) {
+            message.edit(messageOption);
         } else {
-            message.channel.send(embed);
+            channel.send(messageOption);
         }
     }
 }

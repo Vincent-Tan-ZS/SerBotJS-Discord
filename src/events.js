@@ -10,6 +10,7 @@ import config from './config.js';
 import Commands from './commands.js';
 import Handlers from './handlers.js';
 import { wikihow } from './wikihow.js';
+import "./extension.js";
 
 const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -119,7 +120,7 @@ export default class EventManager {
 
                 if (musicID < songList.length) {
                     await Distube.play(message, `${songList[musicID]} audio only`).then(() => {
-                        let queue = Distube.getQueue(message);
+                        let queue = Distube.queues.get(message);
                         let song = queue.songs[queue.songs.length - 1];
                         let msgAuthor = message.author;
 
@@ -149,7 +150,7 @@ export default class EventManager {
     static playMusic(message, commands) {
         commands.shift();
         Distube.play(message, commands.join(" ")).then(() => {
-            let queue = Distube.getQueue(message);
+            let queue = Distube.queues.get(message);
 
             if (queue != undefined) {
                 let song = queue.songs[queue.songs.length - 1];
@@ -168,7 +169,7 @@ export default class EventManager {
 
     static removeMusic(message, commands) {
         let queueRemoveIndex = parseInt(commands[1]);
-        let queue = Distube.getQueue(message);
+        let queue = Distube.queues.get(message);
         let isError = this.songRemoveErrorHandler(queue, message, queueRemoveIndex);
 
         if (isError) return;
@@ -184,36 +185,43 @@ export default class EventManager {
         });
     }
 
-    static musicAction(voiceConnection, message, command) {
-        let queue = Distube.getQueue(message);
+    static musicAction(message, command) {
+        let queue = Distube.queues.get(message);
+        let guild = message.channel.guild;
+        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
 
         switch (command) {
             case "join":
                 if (voiceConnection == null) {
                     let authorChannel = message.member.voice.channel;
                     if (authorChannel != null) {
-                        authorChannel.join();
+                        Distube.voices.join(authorChannel);
                     }
                 }
                 break;
             case "pause":
-                if (!Distube.isPaused) {
-                    Distube.pause(message);
+                if (!queue) return;
+                if (!queue.paused) {
+                    Distube.pause(queue);
                 }
                 break;
             case "resume":
-                if (Distube.isPaused) {
-                    Distube.resume(message);
+                if (!queue) return;
+                if (queue.paused) {
+                    Distube.resume(queue);
                 }
                 break;
             case "skip":
-                Distube.skip(message);
+                if (!queue) return;
+                Distube.skip(queue);
                 message.react('👍');
                 break;
             case "stop":
-                Distube.stop(message);
+                if (!queue) return;
+                Distube.stop(queue);
                 break;
             case "clear":
+                if (!queue) return;
                 if (queue.songs.length > 0) {
                     queue.songs = [];
 
@@ -224,12 +232,11 @@ export default class EventManager {
                 }
                 break;
             case "leave":
-                if (voiceConnection != null) {
-                    if (Distube.isPlaying(message)) {
-                        Distube.stop(message);
-                    }
-                    voiceConnection.disconnect()
+                if (queue != null && queue.playing) {
+                    Distube.stop(queue);
                 }
+
+                Distube.voices.leave(guild);
                 break;
             case "q":
             case "queue":
@@ -248,15 +255,7 @@ export default class EventManager {
     }
 
     static setQueueFilter(message, commands) {
-        if (!Distube.isPlaying(message)) {
-            Handlers.sendEmbed({
-                message: message,
-                isError: true,
-                title: "Queue Filter",
-                description: "No song playing"
-            });
-            return;
-        }
+        if (typeof(commands) == 'string') return;
 
         let allowedCommands = Commands.distubeFilterList.concat("list", "ls");
         commands.shift();
@@ -278,9 +277,21 @@ export default class EventManager {
                     description: description
                 });
             } else {
-                Distube.setFilter(message, command);
+                let queue = Distube.queues.get(message);
 
-                let description = Distube.filters == command ?
+                if (!queue || !queue.playing) {
+                    Handlers.sendEmbed({
+                        message: message,
+                        isError: true,
+                        title: "Queue Filter",
+                        description: "No song playing"
+                    });
+                    return;
+                }
+
+                queue.setFilter(command);
+
+                let description = queue.filters == command ?
                     `Queue Filter ${command} disabled` :
                     `Queue Filter ${command} enabled`;
 
@@ -292,7 +303,6 @@ export default class EventManager {
 
                 console.log(`${description} by ${message.author.username}`)
             }
-            message.channel.send(embed);
         }
     }
 
@@ -346,12 +356,13 @@ export default class EventManager {
 
         Handlers.sendEmbed({
             message: sentMessage,
+            isEdit: true,
             title: `Operation ${r6Stats.seasonName}`,
-            description: `**Level:** ${r6Stats.level}\n**MMR:** ${r6Stats.seasonMMR}`,
+            description: `${"Level:".ToBold()} ${r6Stats.level}\n${"MMR:".ToBold()} ${r6Stats.seasonMMR}`,
             author: `${username} [${platformText}]`,
             authorIcon: r6Stats.avatarURL,
             thumbnail: r6Stats.seasonRankURL,
-            fields: new Array({ name: '**Overall**', value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: '**Casual**', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: '**Ranked**', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: '**Season**', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` })
+            fields: new Array({ name: "Overall", value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` })
         });
     }
 
@@ -399,15 +410,6 @@ export default class EventManager {
             return;
         }
 
-        if (rhombusSize > 13) {
-            Handlers.sendEmbed({
-                message: message,
-                title: "Rhombus",
-                description: "Yo that's a MASSIVE rhombus bro, I won't accept anything past 13 sadly :("
-            });
-            return;
-        }
-
         let width = (2 * rhombusSize) - 1;
         let lineWidth = width;
 
@@ -423,11 +425,17 @@ export default class EventManager {
             rhombus = `${whitespace}${prePostLine}\n${rhombus}\n${whitespace}${prePostLine}`;
         }
 
-        // Change when updated DiscordJs
-        let codeblockSyntax = "```";
-        rhombus = `${codeblockSyntax}${rhombus}${codeblockSyntax}`;
+        let content = rhombusSize > 15 ?
+            "Bit massive innit bruv?" :
+            " ";
 
-        message.channel.send(rhombus);
+        message.channel.send({
+            content: content,
+            files: [{
+                attachment: Buffer.from(rhombus, 'utf-8'),
+                name: `${rhombusSize}Rhombus.txt`
+            }]
+        });
     }
 
     static searchWikiHow(message, commands) {
