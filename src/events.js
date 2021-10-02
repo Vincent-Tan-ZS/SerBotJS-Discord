@@ -148,6 +148,8 @@ export default class EventManager {
 
     // Music Actions
     static playMusic(message, commands) {
+        if (message.member.voice == null) return;
+
         commands.shift();
         Distube.play(message, commands.join(" ")).then(() => {
             let queue = Distube.queues.get(message);
