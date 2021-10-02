@@ -96,10 +96,10 @@ export default class Commands {
     //#region Functions
     static musicActionResolve(message, messageCommands) {
         // Check if user is in a voice channel
-        let userVoiceState = message.member.voice;
-        if (userVoiceState == null) return;
+        let userChannel = message.member.voice.channel;
+        if (userChannel == null) return;
 
-        EventManager.musicAction(message, messageCommands, userVoiceState.channel);
+        EventManager.musicAction(message, messageCommands, userChannel);
     }
 
     static disconnectActionResolve(message) {
