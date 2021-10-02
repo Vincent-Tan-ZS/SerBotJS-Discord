@@ -185,77 +185,70 @@ export default class EventManager {
         });
     }
 
-    static musicAction(message, command) {
+    static sendGuildQueue(message, command) {
+        if (command != "q" && command != "queue") return;
+
+        let queue = Distube.queues.get(message);
+
+        let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
+            queue.songs.map((song, index) => {
+                return `${index + 1}. ${song.name}`;
+            }).join("\n");
+
+        Handlers.sendEmbed({
+            message: message,
+            title: "Queue",
+            description: description
+        });
+    }
+
+    static musicAction(message, command, userChannel) {
         let queue = Distube.queues.get(message);
         let guild = message.channel.guild;
         let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
+        let isSameChannel = voiceConnection != null ?
+            voiceConnection.voiceState.channelId == userChannel.id :
+            false;
 
-        switch (command) {
-            case "join":
-                if (voiceConnection == null) {
-                    let authorChannel = message.member.voice.channel;
-                    if (authorChannel != null) {
-                        Distube.voices.join(authorChannel);
+        if (command == "join" && !isSameChannel) {
+            Distube.voices.join(userChannel);
+        } else if (queue != null && isSameChannel) {
+            switch (command) {
+                case "pause":
+                    this.toggleQueuePause(true, queue);
+                    break;
+                case "resume":
+                    this.toggleQueuePause(false, queue);
+                    break;
+                case "skip":
+                    if (queue.songs.length > 1) {
+                        Distube.skip(queue);
+                    } else {
+                        Distube.stop(queue);
                     }
-                }
-                break;
-            case "pause":
-                if (!queue) return;
-                if (!queue.paused) {
-                    Distube.pause(queue);
-                }
-                break;
-            case "resume":
-                if (!queue) return;
-                if (queue.paused) {
-                    Distube.resume(queue);
-                }
-                break;
-            case "skip":
-                if (!queue) return;
-                if (queue.songs.length > 1) {
-                  Distube.skip(queue);
-                }
-                else {
-                  Distube.stop(queue);
-                }
-                message.react('👍');
-                break;
-            case "stop":
-                if (!queue) return;
-                Distube.stop(queue);
-                break;
-            case "clear":
-                if (!queue) return;
-                if (queue.songs.length > 0) {
-                    queue.songs = [];
-
-                    Handlers.sendEmbed({
-                        message: message,
-                        title: "Queue Cleared",
-                    });
-                }
-                break;
-            case "leave":
-                if (queue != null && queue.playing) {
+                    message.react('👍');
+                    break;
+                case "stop":
                     Distube.stop(queue);
-                }
+                    break;
+                case "clear":
+                    if (queue.songs.length > 0) {
+                        queue.songs = [];
 
-                Distube.voices.leave(guild);
-                break;
-            case "q":
-            case "queue":
-                let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
-                    queue.songs.map((song, index) => {
-                        return `${index + 1}. ${song.name}`;
-                    }).join("\n");
+                        Handlers.sendEmbed({
+                            message: message,
+                            title: "Queue Cleared",
+                        });
+                    }
+                    break;
+                case "leave":
+                    if (queue.playing) {
+                        Distube.stop(queue);
+                    }
 
-                Handlers.sendEmbed({
-                    message: message,
-                    title: "Queue",
-                    description: description
-                });
-                break;
+                    Distube.voices.leave(guild);
+                    break;
+            }
         }
     }
 
@@ -537,5 +530,13 @@ export default class EventManager {
         }
 
         return isError;
+    }
+
+    static toggleQueuePause(queue, isPause) {
+        if (isPause && !queue.paused) {
+            Distube.pause(queue);
+        } else if (!isPause && queue.paused) {
+            Distube.resume(queue);
+        }
     }
 }

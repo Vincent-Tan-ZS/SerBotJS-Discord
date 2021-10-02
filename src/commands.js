@@ -67,7 +67,7 @@ export default class Commands {
     static musicSkipDictionary = new Command(this.musicSkipCommands, this.musicSkipDescription, this.musicActionResolve);
     static musicStopDictionary = new Command(this.musicStopCommands, this.musicStopDescription, this.musicActionResolve);
     static musicLeaveDictionary = new Command(this.musicLeaveCommands, this.musicLeaveDescription, this.musicActionResolve);
-    static musicQueueDictionary = new Command(this.musicQueueCommands, this.musicQueueDescription, this.musicActionResolve);
+    static musicQueueDictionary = new Command(this.musicQueueCommands, this.musicQueueDescription, (msg, cmds) => { EventManager.sendGuildQueue(msg, cmds); });
     static musicClearDictionary = new Command(this.musicClearCommands, this.musicClearDescription, this.musicActionResolve);
     static disconnectDictionary = new Command(this.disconnectCommands, this.disconnectDescription, this.disconnectActionResolve);
     static r6Dictionary = new Command(this.r6Commands, this.r6Description, (msg, cmds) => { EventManager.retrieveR6Stats(msg, cmds); });
@@ -95,7 +95,11 @@ export default class Commands {
 
     //#region Functions
     static musicActionResolve(message, messageCommands) {
-        EventManager.musicAction(message, messageCommands);
+        // Check if user is in a voice channel
+        let userVoiceState = message.member.voice;
+        if (userVoiceState == null) return;
+
+        EventManager.musicAction(message, messageCommands, userVoiceState.channel);
     }
 
     static disconnectActionResolve(message) {
