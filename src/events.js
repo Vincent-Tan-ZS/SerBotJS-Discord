@@ -209,11 +209,21 @@ export default class EventManager {
         let guild = message.channel.guild;
         let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
         let isSameChannel = voiceConnection != null ?
-            voiceConnection.voiceState.channelId == userChannel.id :
-            false;
+            voiceConnection.voiceState.channelId == userChannel.id : false;
 
         if (command == "join" && !isSameChannel) {
+          try {
             Distube.voices.join(userChannel);
+          }
+          catch(e) {
+            console.log(`[Distube] ${e.message}`);
+          }
+        } else if (command == "leave" && isSameChannel) {
+              if (queue != null && queue.playing) {
+                Distube.stop(queue);
+            }
+
+            Distube.voices.leave(guild);
         } else if (queue != null && isSameChannel) {
             switch (command) {
                 case "pause":
@@ -242,13 +252,6 @@ export default class EventManager {
                             title: "Queue Cleared",
                         });
                     }
-                    break;
-                case "leave":
-                    if (queue.playing) {
-                        Distube.stop(queue);
-                    }
-
-                    Distube.voices.leave(guild);
                     break;
             }
         }

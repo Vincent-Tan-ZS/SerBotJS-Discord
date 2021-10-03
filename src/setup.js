@@ -18,6 +18,7 @@ export const client = new Discord.Client({
 export const distube = new DisTube(client,
 {
   leaveOnStop: false,
+  youtubeCookie: config.distubeCookie,
   plugins: [new SpotifyPlugin()]
 });
 
