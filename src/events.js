@@ -204,56 +204,78 @@ export default class EventManager {
         });
     }
 
-    static musicAction(message, command, userChannel) {
+    static joinOrLeaveVC(message, command, userChannel) {
         let queue = Distube.queues.get(message);
         let guild = message.channel.guild;
         let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
         let isSameChannel = voiceConnection != null ?
             voiceConnection.voiceState.channelId == userChannel.id : false;
 
-        if (command == "join" && !isSameChannel) {
-          try {
-            Distube.voices.join(userChannel);
-          }
-          catch(e) {
-            console.log(`[Distube] ${e.message}`);
-          }
-        } else if (command == "leave" && isSameChannel) {
-              if (queue != null && queue.playing) {
-                Distube.stop(queue);
-            }
+        switch (command) {
+            case "join":
+                if (queue == null && !isSameChannel) {
+                    Distube.voices.join(userChannel);
+                }
+                break;
+            case "leave":
+                if (isSameChannel) {
+                    // If there is a queue
+                    if (queue != null) {
+                        if (queue.playing) {
+                            Distube.stop(queue);
+                        }
 
-            Distube.voices.leave(guild);
-        } else if (queue != null && isSameChannel) {
-            switch (command) {
-                case "pause":
-                    this.toggleQueuePause(true, queue);
-                    break;
-                case "resume":
-                    this.toggleQueuePause(false, queue);
-                    break;
-                case "skip":
-                    if (queue.songs.length > 1) {
-                        Distube.skip(queue);
-                    } else {
-                        Distube.stop(queue);
+                        if (queue.songs.length > 0) {
+                            queue.songs = [];
+                        }
                     }
-                    message.react('👍');
-                    break;
-                case "stop":
+
+                    // Leave VC
+                    Distube.voices.leave(guild);
+                }
+                break;
+        }
+    }
+
+    static musicAction(message, command, userChannel) {
+        let queue = Distube.queues.get(message);
+        if (queue == null) return;
+
+        let guild = message.channel.guild;
+        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
+        let isSameChannel = voiceConnection != null ?
+            voiceConnection.voiceState.channelId == userChannel.id : false;
+
+        if (!isSameChannel) return;
+
+        switch (command) {
+            case "pause":
+                this.toggleQueuePause(true, queue);
+                break;
+            case "resume":
+                this.toggleQueuePause(false, queue);
+                break;
+            case "skip":
+                if (queue.songs.length > 1) {
+                    Distube.skip(queue);
+                } else {
                     Distube.stop(queue);
-                    break;
-                case "clear":
-                    if (queue.songs.length > 0) {
-                        queue.songs = [];
+                }
+                message.react('👍');
+                break;
+            case "stop":
+                Distube.stop(queue);
+                break;
+            case "clear":
+                if (queue.songs.length > 0) {
+                    queue.songs = [];
 
-                        Handlers.sendEmbed({
-                            message: message,
-                            title: "Queue Cleared",
-                        });
-                    }
-                    break;
-            }
+                    Handlers.sendEmbed({
+                        message: message,
+                        title: "Queue Cleared",
+                    });
+                }
+                break;
         }
     }
 
@@ -307,6 +329,12 @@ export default class EventManager {
                 console.log(`${description} by ${message.author.username}`)
             }
         }
+    }
+
+    static sendDay(message) {
+        let today = moment().utc().zone(8).format("dddd");
+
+        message.channel.send(`[GMT+8] ${today}`);
     }
 
     // R6 functions

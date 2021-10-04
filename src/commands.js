@@ -34,6 +34,7 @@ export default class Commands {
     static sunbreakCommands = new Array("sunbreak");
     static rhombusCommands = new Array("rhombus");
     static wikiHowCommands = new Array("wikihow");
+    static todayCommands = new Array("today");
     //#endregion Commands
 
     //#region Commands Description
@@ -54,6 +55,7 @@ export default class Commands {
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
     static rhombusDescription = "Creates a rhombus of size n";
     static wikiHowDescription = "Searches for a WikiHow page";
+    static todayDescription = "I'll tell you what day it is today";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -74,11 +76,11 @@ export default class Commands {
     static covidDictionary = new Command(this.covidCommands, this.covidDescription, (msg, cmds) => { EventManager.getCovidCases(msg, cmds); });
     static rhombusDictionary = new Command(this.rhombusCommands, this.rhombusDescription, (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
     static wikiHowDictionary = new Command(this.wikiHowCommands, this.wikiHowDescription, (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
+    static todayDictionary = new Command(this.todayCommands, this.todayDescription, (msg) => { EventManager.sendDay(msg); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
     static sunbreakDictionary = new Command(this.sunbreakCommands, "", (msg) => { EventManager.sunbreakCountdown(msg); });
-
     //#endregion Dictionary
 
     //#region DictionaryList
@@ -86,7 +88,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.r6Dictionary, this.covidDictionary,
         this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary, this.localMusicDictionary,
-        this.sunbreakDictionary);
+        this.sunbreakDictionary, this.todayDictionary);
     //#endregion DictionaryList
 
     //#region Others
@@ -99,7 +101,15 @@ export default class Commands {
         let userChannel = message.member.voice.channel;
         if (userChannel == null) return;
 
-        EventManager.musicAction(message, messageCommands, userChannel);
+        switch (messageCommands) {
+            case "join":
+            case "leave":
+                EventManager.joinOrLeaveVC(message, messageCommands, userChannel);
+                break;
+            default:
+                EventManager.musicAction(message, messageCommands, userChannel);
+                break;
+        }
     }
 
     static disconnectActionResolve(message) {
