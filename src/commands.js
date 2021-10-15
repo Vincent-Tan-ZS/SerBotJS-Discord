@@ -35,6 +35,7 @@ export default class Commands {
     static rhombusCommands = new Array("rhombus");
     static wikiHowCommands = new Array("wikihow");
     static todayCommands = new Array("today");
+    static tictactoeCommands = new Array("tictactoe");
     //#endregion Commands
 
     //#region Commands Description
@@ -56,6 +57,7 @@ export default class Commands {
     static rhombusDescription = "Creates a rhombus of size n";
     static wikiHowDescription = "Searches for a WikiHow page";
     static todayDescription = "I'll tell you what day it is today";
+    static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server!";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -77,6 +79,7 @@ export default class Commands {
     static rhombusDictionary = new Command(this.rhombusCommands, this.rhombusDescription, (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
     static wikiHowDictionary = new Command(this.wikiHowCommands, this.wikiHowDescription, (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
     static todayDictionary = new Command(this.todayCommands, this.todayDescription, (msg) => { EventManager.sendDay(msg); });
+    static tictactoeDictionary = new Command(this.tictactoeCommands, this.tictactoeDescription, (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -88,7 +91,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.r6Dictionary, this.covidDictionary,
         this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary, this.localMusicDictionary,
-        this.sunbreakDictionary, this.todayDictionary);
+        this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary);
     //#endregion DictionaryList
 
     //#region Others
@@ -120,6 +123,8 @@ export default class Commands {
             .catch(console.error);
     }
 
+    //MessageCommands will contain commands after "ser".
+    //Example (square brackets == messageCommands): ser [play spiderman pizza theme]
     static resolveCommand(message, messageCommands) {
         let cmd = typeof(messageCommands) == 'string' ?
             messageCommands.toLowerCase() :

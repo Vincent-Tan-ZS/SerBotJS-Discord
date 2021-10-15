@@ -1,8 +1,9 @@
 import R6API from 'r6api.js';
 import * as Covid from 'novelcovid';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 //import { refreshLocalMusicFiles } from './local.js';
 import { distube as Distube } from './setup.js';
@@ -13,6 +14,33 @@ import { wikihow } from './wikihow.js';
 import "./extension.js";
 
 const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6apiPassword });
+const ticTacToeGames = new Array(0);
+
+class TicTacToe {
+    constructor() {}
+
+    static newGame(player1, player2) {
+        let secret = player1 + player2;
+        let hash = crypto.createHash('sha256', secret).digest('hex');
+
+        let existing = ticTacToeGames.indexOf(x => x._id == hash);
+        if (existing >= 0) return "";
+
+        this._id = hash
+        this._messageId = "";
+
+        this._player1 = player1;
+        this._player1Emoji = ":regional_indicator_x:";
+
+        this._player2 = player2;
+        this._player2Emoji = ":regional_indicator_o:";
+
+        this._playerTurn = 1;
+
+        ticTacToeGames.push(this);
+        return hash;
+    }
+}
 
 export default class EventManager {
     constructor() {}
@@ -332,9 +360,116 @@ export default class EventManager {
     }
 
     static sendDay(message) {
-        let today = moment().utc().zone(8).format("dddd");
-
+        let today = moment().tz("Asia/Kuala_Lumpur").format("dddd");
         message.channel.send(`[GMT+8] ${today}`);
+    }
+
+    // Tic-Tac-Toe
+    static async playTicTacToe(message, commands) {
+        if (typeof(commands) == 'string') return;
+
+        let player = message.author.id;
+        let otherPlayer = Handlers.getUserIdFromMention(commands[1]);
+
+        if (otherPlayer === config.botId) {
+            message.channel.send("I'm touched but I cannot play Tic-Tac-Toe :(");
+            return;
+        }
+
+        // if (player === otherPlayer) {
+        //     Handlers.sendEmbed({
+        //         message: message,
+        //         isError: true,
+        //         title: "Tic-Tac-Toe",
+        //         description: "Please don't play Tic-Tac-Toe by yourself :("
+        //     });
+        //     return;
+        // }
+
+        let otherPlayerUser = await message.guild.members.fetch(otherPlayer);
+
+        let playerUsername = message.author.username;
+        let otherPlayerUsername = otherPlayerUser.user.username;
+
+        let gameId = TicTacToe.newGame(player, otherPlayer);
+
+        if (gameId.length <= 0) {
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Tic-Tac-Toe",
+                description: "Only one game with the same player at a time allowed"
+            });
+            return;
+        }
+
+        let game = ticTacToeGames.find(x => x._id == gameId);
+
+        let waitForReactions = "[Please wait for the reactions...]\n\n";
+        let gameMessage = `${waitForReactions}${playerUsername} vs ${otherPlayerUsername}\n\n` + config.ticTacToeFormat;
+        message.channel.send(gameMessage).then((msg) => {
+            msg.react("↖");
+            msg.react("⬆");
+            msg.react("↗");
+
+            msg.react("⬅");
+            msg.react("⏺");
+            msg.react("➡");
+
+            msg.react("↙");
+            msg.react("⬇");
+            msg.react("↘").then((r) => {
+                let m = r.message;
+                m.edit({
+                    content: m.content.substr(waitForReactions.length, m.content.length)
+                });
+                game._messageId = m.id;
+            });
+        });
+    }
+
+    static updateTicTacToe(reaction, user) {
+        let message = reaction.message;
+        let game = ticTacToeGames.find(x => x._messageId == message.id);
+        if (game == null) return;
+        if (game._player1 != user.id && game._player2 != user.id) return;
+
+        let isPlayer1 = game._player1 == user.id;
+
+        if (game._playerTurn == 1 && !isPlayer1) {
+            //Undo Reaction
+            return;
+        }
+
+        if (game._playerTurn == 2 && isPlayer1) {
+            //Undo Reaction
+            return;
+        }
+
+        let content = message.content;
+        console.log(content);
+
+        switch (reaction._emoji.name) {
+            case "↖":
+
+                break;
+            case "⬆":
+                break;
+            case "↗":
+                break;
+            case "⬅":
+                break;
+            case "⏺":
+                break;
+            case "➡":
+                break;
+            case "↙":
+                break;
+            case "⬇":
+                break;
+            case "↘":
+                break;
+        }
     }
 
     // R6 functions

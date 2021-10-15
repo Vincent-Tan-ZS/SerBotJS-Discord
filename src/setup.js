@@ -4,6 +4,7 @@ import { SpotifyPlugin } from '@distube/spotify';
 import Handlers from './handlers.js';
 import Commands from './commands.js';
 import config from './config.js';
+import EventManager from './events.js';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -15,11 +16,10 @@ export const client = new Discord.Client({
         Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
     ]
 });
-export const distube = new DisTube(client,
-{
-  leaveOnStop: false,
-  youtubeCookie: config.distubeCookie,
-  plugins: [new SpotifyPlugin()]
+export const distube = new DisTube(client, {
+    leaveOnStop: false,
+    youtubeCookie: config.distubeCookie,
+    plugins: [new SpotifyPlugin()]
 });
 
 //#region Distube EventListener
@@ -69,5 +69,9 @@ client.on('messageCreate', (message) => {
 
     Commands.resolveCommand(message, messageCommands);
 })
+
+client.on("messageReactionAdd", (reaction, user) => {
+    EventManager.updateTicTacToe(reaction, user);
+});
 
 //#endregion Message Listener

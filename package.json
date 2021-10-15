@@ -30,6 +30,7 @@
         "ffmpeg-static": "^4.4.0",
         "libsodium-wrappers": "^0.7.9",
         "moment": "^2.29.1",
+        "moment-timezone": "^0.5.33",
         "node-superfetch": "^0.2.3",
         "novelcovid": "^3.0.2",
         "opusscript": "0.0.8",

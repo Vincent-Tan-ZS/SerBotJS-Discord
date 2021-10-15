@@ -87,4 +87,10 @@ export default class Handlers {
             channel.send(messageOption);
         }
     }
+
+    static getUserIdFromMention(discordMention) {
+        let start = discordMention.indexOf("!") + 1;
+        let end = discordMention.lastIndexOf(">") - start;
+        return discordMention.substr(start, end);
+    }
 }
