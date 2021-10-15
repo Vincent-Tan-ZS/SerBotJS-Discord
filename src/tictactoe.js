@@ -86,15 +86,6 @@ export default class TicTacToe {
     }
 
     endOfRoundAction(message) {
-        // Tie
-        if (this._emojiList.length == 9) {
-            TicTacToe.allGames.splice(TicTacToe.allGames.findIndex(x => x._id == this._id), 1);
-            message.edit({
-                content: message.content + `\nGame Tied!`.ToBold()
-            });
-            return;
-        }
-
         // One person wins
         let player1Emojis = this._emojiList.filter((emoji, index) => index % 2 == 0);
         let player2Emojis = this._emojiList.filter((emoji, index) => index % 2 != 0);
@@ -119,6 +110,15 @@ export default class TicTacToe {
                 content: message.content + `\n${winner} is the winner!`.ToBold()
             });
             message.react("🎉");
+            return;
+        }
+
+        // Tie
+        if (this._emojiList.length == 9) {
+            TicTacToe.allGames.splice(TicTacToe.allGames.findIndex(x => x._id == this._id), 1);
+            message.edit({
+                content: message.content + `\nGame Tied!`.ToBold()
+            });
             return;
         }
 
