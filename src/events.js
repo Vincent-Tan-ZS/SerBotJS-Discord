@@ -349,15 +349,15 @@ export default class EventManager {
             return;
         }
 
-        // if (player === otherPlayer) {
-        //     Handlers.sendEmbed({
-        //         message: message,
-        //         isError: true,
-        //         title: "Tic-Tac-Toe",
-        //         description: "Please don't play Tic-Tac-Toe by yourself :("
-        //     });
-        //     return;
-        // }
+        if (player === otherPlayer) {
+            Handlers.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Tic-Tac-Toe",
+                description: "Please don't play Tic-Tac-Toe by yourself :("
+            });
+            return;
+        }
 
         let otherPlayerUser = await message.guild.members.fetch(otherPlayer);
         let gameId = TicTacToe.newGame(message.author, otherPlayerUser.user);
