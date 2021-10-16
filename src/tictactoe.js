@@ -21,8 +21,8 @@ export default class TicTacToe {
     constructor() {}
 
     static newGame(player1, player2) {
-        let secret = player1.id + player2.id;
-        let hash = crypto.createHash('sha256', secret).digest('hex');
+        let secret = player1 + player2;
+        let hash = crypto.createHash('sha256').update(secret).digest('hex');
 
         let existing = this.allGames.findIndex(x => x._id == hash);
         if (existing >= 0) return "";
