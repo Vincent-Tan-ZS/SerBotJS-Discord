@@ -89,7 +89,7 @@ export default class Handlers {
     }
 
     static getUserIdFromMention(discordMention) {
-        let start = discordMention.indexOf("!") + 1;
+        let start = discordMention.FirstDigitIndex();
         let end = discordMention.lastIndexOf(">") - start;
         return discordMention.substr(start, end);
     }
