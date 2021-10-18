@@ -585,6 +585,35 @@ export default class EventManager {
         });
     }
 
+    static animalCrossingUpdateCountdown(message) {
+        let rng = Math.random();
+        
+        if (rng <= 0.5) {
+          let updateRelease = moment("20211105");
+          let difference = updateRelease.diff(moment(), 'days');
+
+          if (difference < 0) return;
+
+          let description = difference == 0 ?
+              "TODAY" : difference == 1 ?
+              "TOMORROW" : `${difference} days and counting...`;
+
+          Handlers.sendEmbed({
+              message: message,
+              title: "Animal Crossing: New Horizons Title Update 2.0",
+              embedURL: "https://animal-crossing.com/new-horizons/",
+              embedImage: "https://i.imgur.com/fPkV0Rd.jpg",
+              fields: new Array({ name: 'Release Date', value: updateRelease.format("DD/MM/YYYY"), inline: true }, { name: 'Countdown', value: description, inline: true }),
+              setTimestamp: true
+          });
+        }
+        else {
+          if (message.member.voice.channel == null) return;
+
+          Distube.play(message, "maroon 5 animals lyrics");
+        }
+    }
+
     // Helper functions
     static scrapeR6Stats(r6user, stats, level, ranks) {
         let userId = r6user.id;

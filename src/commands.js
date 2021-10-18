@@ -36,6 +36,7 @@ export default class Commands {
     static wikiHowCommands = new Array("wikihow");
     static todayCommands = new Array("today");
     static tictactoeCommands = new Array("tictactoe");
+    static animalCommands = new Array("animal");
     //#endregion Commands
 
     //#region Commands Description
@@ -84,6 +85,7 @@ export default class Commands {
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
     static sunbreakDictionary = new Command(this.sunbreakCommands, "", (msg) => { EventManager.sunbreakCountdown(msg); });
+    static animalDictionary = new Command(this.animalCommands, "", (msg) => { EventManager.animalCrossingUpdateCountdown(msg); });
     //#endregion Dictionary
 
     //#region DictionaryList
@@ -91,7 +93,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.r6Dictionary, this.covidDictionary,
         this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary, this.localMusicDictionary,
-        this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary);
+        this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary);
     //#endregion DictionaryList
 
     //#region Others
