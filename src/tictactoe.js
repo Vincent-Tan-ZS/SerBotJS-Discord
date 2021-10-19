@@ -47,6 +47,13 @@ export default class TicTacToe {
         return hash;
     }
 
+    static cancelMatch(game) {
+      let index = this.allGames.findIndex(x => x._id == game._id);
+      if (index < 0) return;
+
+      this.allGames.splice(index);
+    }
+
     addTicTacToeEmoji(emojiToCheck) {
         if (!this._emojiList.includes(emojiToCheck)) return "🟦";
 

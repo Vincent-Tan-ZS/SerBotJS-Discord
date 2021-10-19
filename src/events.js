@@ -386,7 +386,8 @@ export default class EventManager {
 
             msg.react("↙");
             msg.react("⬇");
-            msg.react("↘").then((r) => {
+            msg.react("↘");
+            msg.react("❌").then((r) => {
                 let m = r.message.content.replace("[Please wait for the reactions...]\n\n", "");
                 m += `\n${game._player1Username}'s turn`;
                 r.message.edit({
@@ -405,6 +406,11 @@ export default class EventManager {
 
         let reactedEmoji = reaction._emoji.name;
         if (game._emojiList.includes(reactedEmoji)) return;
+
+        if (reactedEmoji == "❌") {
+          TicTacToe.cancelMatch(game);
+          return;
+        }
 
         let isPlayer1 = game._player1 == user.id;
 
