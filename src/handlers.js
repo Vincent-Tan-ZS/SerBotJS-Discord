@@ -5,10 +5,7 @@ import config from './config.js';
 export default class Handlers {
     constructor() {}
 
-    static sendEmbed({
-        message = undefined,
-        channel = undefined,
-        isEdit = false,
+    static createEmbed({
         isError = false,
         title = 'lorem ipsum',
         description = '',
@@ -25,12 +22,6 @@ export default class Handlers {
         timestampOverride = '',
         components = new MessageActionRow(),
     }) {
-        if (message == undefined && channel == undefined) return;
-
-        if (message != undefined) {
-            channel = message.channel;
-        }
-
         if (isError) {
             title = `Error: ${title}`;
         }
@@ -84,10 +75,57 @@ export default class Handlers {
             components: [components]
         };
 
+        return messageOption;
+    }
+
+    static sendEmbed({
+        message = undefined,
+        channel = undefined,
+        isEdit = false,
+        isError = false,
+        title = 'lorem ipsum',
+        description = '',
+        embedURL = '',
+        embedImage = '',
+        author = '',
+        authorIcon = '',
+        authorURL = '',
+        footer = '',
+        footerIcon = '',
+        thumbnail = '',
+        fields = new Array(),
+        setTimestamp = false,
+        timestampOverride = '',
+        components = new MessageActionRow(),
+    }) {
+        if (message == undefined && channel == undefined) return;
+
+        if (message != undefined) {
+            channel = message.channel;
+        }
+
+        let embed = this.createEmbed({
+            isError: isError,
+            title: title,
+            description: description,
+            embedURL: embedURL,
+            embedImage: embedImage,
+            author: author,
+            authorIcon: authorIcon,
+            authorURL: authorURL,
+            footer: footer,
+            footerIcon: footerIcon,
+            thumbnail: thumbnail,
+            fields: fields,
+            setTimestamp: setTimestamp,
+            timestampOverride: timestampOverride,
+            components: components,
+        });
+
         if (isEdit && message != undefined) {
-            message.edit(messageOption);
+            message.edit(embed);
         } else {
-            channel.send(messageOption);
+            channel.send(embed);
         }
     }
 

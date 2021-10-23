@@ -449,33 +449,62 @@ export default class EventManager {
     }
 
     // R6 functions
-    static async retrieveR6Stats(message, commands) {
-        let username = commands[1];
-        let platforms = new Array("uplay", "xbl", "psn");
-        let selectedPlatform;
-        let platformTexts = new Array("PC", "XBOX", "PS");
-        let platformText;
-        let r6user;
-        let statsFound = false;
+    static async updateR6Stats(username, platform, currentSeason, isNext) {
+        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, platform);
 
+        // If stats doesn't exist
+        if (!statsFound) {
+            return Handlers.createEmbed({
+                isError: true,
+                title: "R6 Stats",
+                description: `Unable to find statistics for ${username}`
+            });
+        }
+
+        let currentSeasonId = config.r6SeasonReferences.find(x => x.operation == currentSeason).id;
+        let newSeasonId = isNext ? currentSeasonId + 1 : currentSeasonId - 1;
+        let seasons = [newSeasonId - 1, newSeasonId, newSeasonId + 1];
+
+        let id = r6user[0].id;
+        let stats = await r6api.getStats(selectedPlatform, id);
+        let level = (await r6api.getProgression(selectedPlatform, id))[0].level;
+        let ranks = await r6api.getRanks(selectedPlatform, id, { seasonIds: seasons });
+
+        let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
+        let newStats = r6Stats.length >= 2 ? r6Stats[1] : r6Stats[0];
+        let allNewSeasonIds = r6Stats.map(x => Number(x.seasonId));
+
+        const row = new MessageActionRow().addComponents(
+            new MessageButton()
+            .setCustomId("previousR6Season")
+            .setLabel("<")
+            .setStyle("PRIMARY")
+            .setDisabled(!allNewSeasonIds.includes(seasons[0])),
+            new MessageButton()
+            .setCustomId("nextR6Season")
+            .setLabel(">")
+            .setStyle("PRIMARY")
+            .setDisabled(!allNewSeasonIds.includes(seasons[2]))
+        );
+
+        return Handlers.createEmbed({
+            title: `Operation ${newStats.seasonName}`,
+            description: `${"Level:".ToBold()} ${newStats.level}\n${"MMR:".ToBold()} ${newStats.seasonMMR}`,
+            author: `${username} [${platformText}]`,
+            authorIcon: newStats.avatarURL,
+            thumbnail: newStats.seasonRankURL,
+            fields: new Array({ name: "Overall", value: `WR: ${newStats.overallWR}%\nKD: ${newStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${newStats.casualWR}%\nKD: ${newStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${newStats.rankedWR}%\nKD: ${newStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${newStats.seasonWR}%\nKD: ${newStats.seasonKD}` }),
+            components: row
+        });
+    }
+
+    static async retrieveR6Stats(message, commands) {
         // Attempt retrieve message
         let sentMessage = await message.channel.send("Attempting to retrieve, please wait...");
 
-        // Attempt find username
-        for (const platform of platforms) {
-            try {
-                r6user = await r6api.findByUsername(platform, username);
+        let username = commands[1];
 
-                if (r6user.length > 0) {
-                    selectedPlatform = platform;
-                    platformText = platformTexts[platforms.indexOf(platform)];
-                    statsFound = true;
-                    break;
-                }
-            } catch (e) {
-                statsFound = false;
-            }
-        }
+        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, null);
 
         // If stats doesn't exist
         if (!statsFound) {
@@ -653,6 +682,44 @@ export default class EventManager {
     }
 
     // Helper functions
+    static async findR6Stats(username, predefinedPlatform) {
+        let platforms = new Array("uplay", "xbl", "psn");
+        let platformTexts = new Array("PC", "XBOX", "PS");
+
+        let r6user;
+        let selectedPlatform = platforms.includes(predefinedPlatform) ? predefinedPlatform : "";
+        let platformText = platformTexts.includes(predefinedPlatform) ? predefinedPlatform : "";
+        let statsFound = false;
+
+        if (selectedPlatform.length > 0) {
+            r6user = await r6api.findByUsername(selectedPlatform, username);
+            platformText = platformTexts[platforms.indexOf(platform)];
+            statsFound = r6user.length > 0;
+        } else if (platformText.length > 0) {
+            selectedPlatform = platforms[platformTexts.indexOf(platformText)];
+            r6user = await r6api.findByUsername(selectedPlatform, username);
+            statsFound = r6user.length > 0;
+        } else {
+            // Attempt find username
+            for (const platform of platforms) {
+                try {
+                    r6user = await r6api.findByUsername(platform, username);
+
+                    if (r6user.length > 0) {
+                        selectedPlatform = platform;
+                        platformText = platformTexts[platforms.indexOf(platform)];
+                        statsFound = true;
+                        break;
+                    }
+                } catch (e) {
+                    statsFound = false;
+                }
+            }
+        }
+
+        return { r6user, selectedPlatform, platformText, statsFound };
+    }
+
     static scrapeR6Stats(r6user, stats, level, ranks) {
         let userId = r6user.id;
         let userAvatarURL = r6user.avatar['500'];
@@ -674,6 +741,7 @@ export default class EventManager {
                 "id": userId,
                 "avatarURL": userAvatarURL,
                 "level": level,
+                "seasonId": seasonId,
                 "seasonName": season.seasonName,
                 "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
                 "seasonRankURL": seasonalStats.current.icon,

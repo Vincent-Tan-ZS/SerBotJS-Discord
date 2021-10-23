@@ -78,8 +78,25 @@ client.on("messageReactionAdd", (reaction, user) => {
 
 //#region Interaction Listener
 client.on("interactionCreate", (interaction) => {
-    console.log(interaction);
-    let collector = interaction.channel.createMessageComponentCollector();
-    console.log(collector);
+    let message = interaction.message;
+    let embed = message.embeds[0];
+
+    const collector = interaction.channel.createMessageComponentCollector();
+
+    collector.on("collect", async i => {
+        // R6 Stats Buttons
+        if (i.componentType == "BUTTON" && i.customId.includes("R6Season")) {
+            await i.deferUpdate();
+
+            let username = embed.author.name.substr(0, embed.author.name.indexOf(" "));
+            let titleMatch = embed.author.name.match(/\[(.*?)\]/);
+            let platform = titleMatch[1];
+            let season = embed.title.replace("Operation ", "");
+            let isNext = i.customId == "nextR6Season";
+
+            let newEmbed = await EventManager.updateR6Stats(username, platform, season, isNext);
+            await i.editReply(newEmbed);
+        }
+    });
 });
 //#endregion Interaction Listener
