@@ -71,9 +71,12 @@ export default class Handlers {
 
         let messageOption = {
             content: " ",
-            embeds: [embed],
-            components: [components]
+            embeds: [embed]
         };
+
+        if (components.components.length > 0) {
+          messageOption.components = [components];
+        }
 
         return messageOption;
     }
