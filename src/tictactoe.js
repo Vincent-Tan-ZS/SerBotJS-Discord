@@ -48,10 +48,12 @@ export default class TicTacToe {
     }
 
     static cancelMatch(game) {
-      let index = this.allGames.findIndex(x => x._id == game._id);
-      if (index < 0) return;
+        game._emojiList.push("❌");
 
-      this.allGames.splice(index);
+        let index = this.allGames.findIndex(x => x._id == game._id);
+        if (index < 0) return;
+
+        this.allGames.splice(index);
     }
 
     addTicTacToeEmoji(emojiToCheck) {

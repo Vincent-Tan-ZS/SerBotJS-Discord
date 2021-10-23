@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import { MessageActionRow } from 'discord.js';
 import config from './config.js';
 
 export default class Handlers {
@@ -21,7 +22,8 @@ export default class Handlers {
         thumbnail = '',
         fields = new Array(),
         setTimestamp = false,
-        timestampOverride = ''
+        timestampOverride = '',
+        components = new MessageActionRow(),
     }) {
         if (message == undefined && channel == undefined) return;
 
@@ -78,7 +80,8 @@ export default class Handlers {
 
         let messageOption = {
             content: " ",
-            embeds: [embed]
+            embeds: [embed],
+            components: [components]
         };
 
         if (isEdit && message != undefined) {

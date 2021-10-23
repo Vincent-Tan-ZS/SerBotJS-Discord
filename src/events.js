@@ -12,8 +12,10 @@ import Handlers from './handlers.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
+import { RepeatMode } from 'distube';
+import { MessageActionRow, MessageButton } from 'discord.js';
 
-const r6api = new R6API.default({ email: config.r6apiEmail, password: config.r6apiPassword });
+const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 
 export default class EventManager {
     constructor() {}
@@ -277,6 +279,18 @@ export default class EventManager {
                     });
                 }
                 break;
+            case "loop":
+                let repeatMode = queue.repeatMode == RepeatMode.DISABLED ? RepeatMode.SONG : RepeatMode.DISABLED;
+                let message = queue.repeatMode == RepeatMode.DISABLED ? "Looping current track" : "Loop disabled";
+
+                Distube.setRepeatMode(queue, repeatMode);
+
+                Handlers.sendEmbed({
+                    message: message,
+                    title: "Queue Loop",
+                });
+
+                break;
         }
     }
 
@@ -315,7 +329,7 @@ export default class EventManager {
                     return;
                 }
 
-                queue.setFilter(command);
+                Distube.setFilter(queue, command);
 
                 let description = queue.filters == command ?
                     `Queue Filter ${command} disabled` :
@@ -408,8 +422,12 @@ export default class EventManager {
         if (game._emojiList.includes(reactedEmoji)) return;
 
         if (reactedEmoji == "❌") {
-          TicTacToe.cancelMatch(game);
-          return;
+            TicTacToe.cancelMatch(game);
+            let gameMessage = game.createOrUpdateMessage();
+            message.edit({
+                content: gameMessage + "\nMatch Cancelled".ToBold()
+            });
+            return;
         }
 
         let isPlayer1 = game._player1 == user.id;
@@ -474,19 +492,34 @@ export default class EventManager {
         let id = r6user[0].id;
         let stats = await r6api.getStats(selectedPlatform, id);
         let level = (await r6api.getProgression(selectedPlatform, id))[0].level;
-        let ranks = await r6api.getRanks(selectedPlatform, id);
+        let ranks = await r6api.getRanks(selectedPlatform, id, { seasonIds: 'all' });
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
+        let latestStats = r6Stats[r6Stats.length - 1];
+
+        const row = new MessageActionRow().addComponents(
+            new MessageButton()
+            .setCustomId("previousR6Season")
+            .setLabel("<")
+            .setStyle("PRIMARY")
+            .setDisabled(r6Stats.length - 2 < 0),
+            new MessageButton()
+            .setCustomId("nextR6Season")
+            .setLabel(">")
+            .setStyle("PRIMARY")
+            .setDisabled(true)
+        );
 
         Handlers.sendEmbed({
             message: sentMessage,
             isEdit: true,
-            title: `Operation ${r6Stats.seasonName}`,
-            description: `${"Level:".ToBold()} ${r6Stats.level}\n${"MMR:".ToBold()} ${r6Stats.seasonMMR}`,
+            title: `Operation ${latestStats.seasonName}`,
+            description: `${"Level:".ToBold()} ${latestStats.level}\n${"MMR:".ToBold()} ${latestStats.seasonMMR}`,
             author: `${username} [${platformText}]`,
-            authorIcon: r6Stats.avatarURL,
-            thumbnail: r6Stats.seasonRankURL,
-            fields: new Array({ name: "Overall", value: `WR: ${r6Stats.overallWR}%\nKD: ${r6Stats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${r6Stats.casualWR}%\nKD: ${r6Stats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${r6Stats.rankedWR}%\nKD: ${r6Stats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${r6Stats.seasonWR}%\nKD: ${r6Stats.seasonKD}` })
+            authorIcon: latestStats.avatarURL,
+            thumbnail: latestStats.seasonRankURL,
+            fields: new Array({ name: "Overall", value: `WR: ${latestStats.overallWR}%\nKD: ${latestStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${latestStats.casualWR}%\nKD: ${latestStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${latestStats.rankedWR}%\nKD: ${latestStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${latestStats.seasonWR}%\nKD: ${latestStats.seasonKD}` }),
+            components: row
         });
     }
 
@@ -593,30 +626,29 @@ export default class EventManager {
 
     static animalCrossingUpdateCountdown(message) {
         let rng = Math.random();
-        
+
         if (rng <= 0.5) {
-          let updateRelease = moment("20211105");
-          let difference = updateRelease.diff(moment(), 'days');
+            let updateRelease = moment("20211105");
+            let difference = updateRelease.diff(moment(), 'days');
 
-          if (difference < 0) return;
+            if (difference < 0) return;
 
-          let description = difference == 0 ?
-              "TODAY" : difference == 1 ?
-              "TOMORROW" : `${difference} days and counting...`;
+            let description = difference == 0 ?
+                "TODAY" : difference == 1 ?
+                "TOMORROW" : `${difference} days and counting...`;
 
-          Handlers.sendEmbed({
-              message: message,
-              title: "Animal Crossing: New Horizons Title Update 2.0",
-              embedURL: "https://animal-crossing.com/new-horizons/",
-              embedImage: "https://i.imgur.com/fPkV0Rd.jpg",
-              fields: new Array({ name: 'Release Date', value: updateRelease.format("DD/MM/YYYY"), inline: true }, { name: 'Countdown', value: description, inline: true }),
-              setTimestamp: true
-          });
-        }
-        else {
-          if (message.member.voice.channel == null) return;
+            Handlers.sendEmbed({
+                message: message,
+                title: "Animal Crossing: New Horizons Title Update 2.0",
+                embedURL: "https://animal-crossing.com/new-horizons/",
+                embedImage: "https://i.imgur.com/fPkV0Rd.jpg",
+                fields: new Array({ name: 'Release Date', value: updateRelease.format("DD/MM/YYYY"), inline: true }, { name: 'Countdown', value: description, inline: true }),
+                setTimestamp: true
+            });
+        } else {
+            if (message.member.voice.channel == null) return;
 
-          Distube.play(message, "maroon 5 animals lyrics");
+            Distube.play(message, "maroon 5 animals lyrics");
         }
     }
 
@@ -625,27 +657,40 @@ export default class EventManager {
         let userId = r6user.id;
         let userAvatarURL = r6user.avatar['500'];
         let seasons = typeof(ranks[0].seasons) == 'object' ? ranks[0].seasons : ranks[0].seasons[ranks[0].seasons.length - 1];
-        let seasonId = Object.keys(seasons).sort()[0];
-        let season = seasons[seasonId];
-        let seasonalStats = season.regions['ncsa'].boards.pvp_ranked;
         let pvpStats = stats[0].pvp;
 
-        return Object({
-            "id": userId,
-            "avatarURL": userAvatarURL,
-            "level": level,
-            "seasonName": season.seasonName || config.currentR6Season,
-            "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
-            "seasonRankURL": seasonalStats.current.icon,
-            "overallWR": this.getRatio(pvpStats.general.wins, pvpStats.general.wins + pvpStats.general.losses, true).toFixed(2),
-            "overallKD": this.getRatio(pvpStats.general.kills, pvpStats.general.deaths, false).toFixed(2),
-            "casualWR": this.getRatio(pvpStats.queues.casual.wins, pvpStats.queues.casual.wins + pvpStats.queues.casual.losses, true).toFixed(2),
-            "casualKD": this.getRatio(pvpStats.queues.casual.kills, pvpStats.queues.casual.deaths, false).toFixed(2),
-            "rankedWR": this.getRatio(pvpStats.queues.ranked.wins, pvpStats.queues.ranked.wins + pvpStats.queues.ranked.losses, true).toFixed(2),
-            "rankedKD": this.getRatio(pvpStats.queues.ranked.kills, pvpStats.queues.ranked.deaths, false).toFixed(2),
-            "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
-            "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2),
+        let overallWR = this.getRatio(pvpStats.general.wins, pvpStats.general.wins + pvpStats.general.losses, true).toFixed(2);
+        let overallKD = this.getRatio(pvpStats.general.kills, pvpStats.general.deaths, false).toFixed(2);
+        let casualWR = this.getRatio(pvpStats.queues.casual.wins, pvpStats.queues.casual.wins + pvpStats.queues.casual.losses, true).toFixed(2);
+        let casualKD = this.getRatio(pvpStats.queues.casual.kills, pvpStats.queues.casual.deaths, false).toFixed(2);
+        let rankedWR = this.getRatio(pvpStats.queues.ranked.wins, pvpStats.queues.ranked.wins + pvpStats.queues.ranked.losses, true).toFixed(2);
+        let rankedKD = this.getRatio(pvpStats.queues.ranked.kills, pvpStats.queues.ranked.deaths, false).toFixed(2);
+
+        let allSeasonStats = new Array();
+        Object.keys(seasons).forEach((seasonId) => {
+            let season = seasons[seasonId];
+            let seasonalStats = season.regions['ncsa'].boards.pvp_ranked;
+            let seasonStats = new Object({
+                "id": userId,
+                "avatarURL": userAvatarURL,
+                "level": level,
+                "seasonName": season.seasonName,
+                "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
+                "seasonRankURL": seasonalStats.current.icon,
+                "overallWR": overallWR,
+                "overallKD": overallKD,
+                "casualWR": casualWR,
+                "casualKD": casualKD,
+                "rankedWR": rankedWR,
+                "rankedKD": rankedKD,
+                "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
+                "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
+            });
+
+            allSeasonStats.push(seasonStats);
         });
+
+        return allSeasonStats;
     }
 
     static getRatio(numerator, denominator, percentage) {

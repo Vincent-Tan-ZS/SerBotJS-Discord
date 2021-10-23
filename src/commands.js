@@ -28,6 +28,7 @@ export default class Commands {
     static musicClearCommands = new Array("clr", "clear");
     static musicQueueCommands = new Array("q", "queue");
     static musicFilterCommands = new Array("f", "filter");
+    static musicLoopCommands = new Array("l", "loop");
     static r6Commands = new Array("r6");
     static localMusicCommands = new Array("music");
     static covidCommands = new Array("covid");
@@ -53,6 +54,7 @@ export default class Commands {
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
     static musicFilterDescription = "Filters the song queue (replays current song)";
+    static musicLoopDescription = "Loops/Unloops the current track";
     static r6Description = "Display Rainbow Six: Siege player stats";
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
     static rhombusDescription = "Creates a rhombus of size n";
@@ -74,6 +76,7 @@ export default class Commands {
     static musicLeaveDictionary = new Command(this.musicLeaveCommands, this.musicLeaveDescription, this.musicActionResolve);
     static musicQueueDictionary = new Command(this.musicQueueCommands, this.musicQueueDescription, (msg, cmds) => { EventManager.sendGuildQueue(msg, cmds); });
     static musicClearDictionary = new Command(this.musicClearCommands, this.musicClearDescription, this.musicActionResolve);
+    static musicLoopDictionary = new Command(this.musicLoopCommands, this.musicLoopDescription, this.musicActionResolve);
     static disconnectDictionary = new Command(this.disconnectCommands, this.disconnectDescription, this.disconnectActionResolve);
     static r6Dictionary = new Command(this.r6Commands, this.r6Description, (msg, cmds) => { EventManager.retrieveR6Stats(msg, cmds); });
     static covidDictionary = new Command(this.covidCommands, this.covidDescription, (msg, cmds) => { EventManager.getCovidCases(msg, cmds); });
@@ -91,9 +94,9 @@ export default class Commands {
     //#region DictionaryList
     static dictionaries = new Array(this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
-        this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.r6Dictionary, this.covidDictionary,
-        this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary, this.localMusicDictionary,
-        this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary);
+        this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
+        this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
+        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary);
     //#endregion DictionaryList
 
     //#region Others

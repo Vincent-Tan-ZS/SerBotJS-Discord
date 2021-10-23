@@ -75,3 +75,11 @@ client.on("messageReactionAdd", (reaction, user) => {
 });
 
 //#endregion Message Listener
+
+//#region Interaction Listener
+client.on("interactionCreate", (interaction) => {
+    console.log(interaction);
+    let collector = interaction.channel.createMessageComponentCollector();
+    console.log(collector);
+});
+//#endregion Interaction Listener
