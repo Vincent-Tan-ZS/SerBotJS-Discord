@@ -485,17 +485,14 @@ export default class EventManager {
     }
 
     static async retrieveR6Stats(message, commands) {
+        let stopwatch = new Stopwatch();
+
         // Attempt retrieve message
         let sentMessage = await message.channel.send("Attempting to retrieve, please wait...");
 
         let username = commands[1];
 
-        let stopwatch = new Stopwatch();
-
         let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, null);
-
-        stopwatch.Stop();
-        stopwatch.ShowEllapsed();
 
         // If stats doesn't exist
         if (!statsFound) {
@@ -530,6 +527,9 @@ export default class EventManager {
         });
 
         const row = new MessageActionRow().addComponents(interactionSelect);
+
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("All R6 before send embed", message.channel);
 
         Handlers.sendEmbed({
             message: sentMessage,
