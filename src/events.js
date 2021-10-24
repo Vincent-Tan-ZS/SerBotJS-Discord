@@ -11,6 +11,7 @@ import Commands from './commands.js';
 import Handlers from './handlers.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
+import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { MessageActionRow, MessageSelectMenu, MessageButton } from 'discord.js';
@@ -489,7 +490,12 @@ export default class EventManager {
 
         let username = commands[1];
 
+        let stopwatch = new Stopwatch();
+
         let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, null);
+
+        stopwatch.Stop();
+        stopwatch.ShowEllapsed();
 
         // If stats doesn't exist
         if (!statsFound) {
