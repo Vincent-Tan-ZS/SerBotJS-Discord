@@ -1,4 +1,4 @@
-import R6API from 'r6api.js';
+import R6API, { utils as R6Utils, constants as R6Constants } from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
 import fs from 'fs';
@@ -485,8 +485,6 @@ export default class EventManager {
     }
 
     static async retrieveR6Stats(message, commands) {
-        let stopwatch = new Stopwatch();
-
         // Attempt retrieve message
         let sentMessage = await message.channel.send("Attempting to retrieve, please wait...");
 
@@ -527,9 +525,6 @@ export default class EventManager {
         });
 
         const row = new MessageActionRow().addComponents(interactionSelect);
-
-        stopwatch.Stop();
-        stopwatch.ShowElapsed("All R6 before send embed", message.channel);
 
         Handlers.sendEmbed({
             message: sentMessage,
@@ -693,6 +688,56 @@ export default class EventManager {
 
     static async getR6Stats(r6UserId, platform) {
         let seasons = config.r6SeasonReferences.map(x => x.id);
+
+        let stopwatch = new Stopwatch();
+
+        let [customStats, customProgression] = await Promise.all([
+            r6api.custom(
+                R6Utils.getURL.STATS(
+                    platform, [r6UserId], ['generalpvp_matchwon', 'generalpvp_matchlost', 'generalpvp_kills', 'generalpvp_death',
+                        'casualpvp_matchwon', 'casualpvp_matchlost', 'casualpvp_kills', 'casualpvp_death',
+                        'rankedpvp_matchwon', 'rankedpvp_matchlost', 'rankedpvp_kills', 'rankedpvp_death'
+                    ]
+                )
+            ),
+            r6api.custom(
+                R6Utils.getURL.PROGRESS(
+                    platform, [r6UserId]
+                )
+            )
+        ]);
+
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("Custom Promise all");
+
+        stopwatch.Reset();
+        let customRank = await r6api.custom(
+            R6Utils.getURL.RANKS(
+                platform, [r6UserId], 15, ["emca", "apac", "ncsa"], "pvp_ranked"
+            )
+        );
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("Custom Rank");
+
+        console.log(customRank);
+
+        /*
+        let stopwatch = new Stopwatch();
+        let stat = await r6api.getStats(platform, r6UserId, { categories: ["pvp"] });
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("GetStats");
+
+        stopwatch.Reset();
+        await r6api.getProgression(platform, r6UserId);
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("GetProgression");
+
+        stopwatch.Reset();
+        await r6api.getRanks(platform, r6UserId, { seasonIds: seasons });
+        stopwatch.Stop();
+        stopwatch.ShowElapsed("GetRanks");
+        */
+
         let [stats, level, ranks] = await Promise.all([
             r6api.getStats(platform, r6UserId),
             r6api.getProgression(platform, r6UserId),
@@ -709,15 +754,11 @@ export default class EventManager {
         let platformTexts = new Array("PC", "XBOX", "PS");
 
         let r6user;
-        let selectedPlatform = platforms.includes(predefinedPlatform) ? predefinedPlatform : "";
+        let selectedPlatform = "";
         let platformText = platformTexts.includes(predefinedPlatform) ? predefinedPlatform : "";
         let statsFound = false;
 
-        if (selectedPlatform.length > 0) {
-            r6user = await r6api.findByUsername(selectedPlatform, username);
-            platformText = platformTexts[platforms.indexOf(platform)];
-            statsFound = r6user.length > 0;
-        } else if (platformText.length > 0) {
+        if (platformText.length > 0) {
             selectedPlatform = platforms[platformTexts.indexOf(platformText)];
             r6user = await r6api.findByUsername(selectedPlatform, username);
             statsFound = r6user.length > 0;
