@@ -90,6 +90,8 @@ client.on("interactionCreate", (interaction) => {
             let season = embed.title.replace("Operation ", "");
             let isNext = interaction.customId == "nextR6Season";
 
+            interaction.editReply({content: "Retrieving, please wait...", embeds: [], components: []});
+            
             EventManager.updateR6Stats(username, platform, season, isNext).then((newEmbed) => {
                 interaction.editReply(newEmbed);
             });

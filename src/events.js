@@ -280,14 +280,16 @@ export default class EventManager {
                 }
                 break;
             case "loop":
+            case "l":
                 let repeatMode = queue.repeatMode == RepeatMode.DISABLED ? RepeatMode.SONG : RepeatMode.DISABLED;
-                let message = queue.repeatMode == RepeatMode.DISABLED ? "Looping current track" : "Loop disabled";
+                let description = queue.repeatMode == RepeatMode.DISABLED ? "Looping current track" : "Stopped looping current track";
 
                 Distube.setRepeatMode(queue, repeatMode);
 
                 Handlers.sendEmbed({
                     message: message,
                     title: "Queue Loop",
+                    description: description
                 });
 
                 break;
@@ -425,7 +427,7 @@ export default class EventManager {
             TicTacToe.cancelMatch(game);
             let gameMessage = game.createOrUpdateMessage();
             message.edit({
-                content: gameMessage + "\nMatch Cancelled".ToBold()
+                content: gameMessage + `\nMatch Cancelled [${user.username}]`.ToBold()
             });
             return;
         }
@@ -477,12 +479,12 @@ export default class EventManager {
         const row = new MessageActionRow().addComponents(
             new MessageButton()
             .setCustomId("previousR6Season")
-            .setLabel("<")
+            .setLabel("◀️")
             .setStyle("PRIMARY")
             .setDisabled(!allNewSeasonIds.includes(seasons[0])),
             new MessageButton()
             .setCustomId("nextR6Season")
-            .setLabel(">")
+            .setLabel("▶️")
             .setStyle("PRIMARY")
             .setDisabled(!allNewSeasonIds.includes(seasons[2]))
         );
@@ -529,12 +531,12 @@ export default class EventManager {
         const row = new MessageActionRow().addComponents(
             new MessageButton()
             .setCustomId("previousR6Season")
-            .setLabel("<")
+            .setLabel("◀️")
             .setStyle("PRIMARY")
             .setDisabled(r6Stats.length - 2 < 0),
             new MessageButton()
             .setCustomId("nextR6Season")
-            .setLabel(">")
+            .setLabel("▶️")
             .setStyle("PRIMARY")
             .setDisabled(true)
         );
@@ -736,7 +738,8 @@ export default class EventManager {
         let allSeasonStats = new Array();
         Object.keys(seasons).forEach((seasonId) => {
             let season = seasons[seasonId];
-            let seasonalStats = season.regions['ncsa'].boards.pvp_ranked;
+            let region = this.getR6SeasonRegion(season);
+            let seasonalStats = season.regions[region].boards.pvp_ranked;
             let seasonStats = new Object({
                 "id": userId,
                 "avatarURL": userAvatarURL,
@@ -759,6 +762,23 @@ export default class EventManager {
         });
 
         return allSeasonStats;
+    }
+
+    // For seasons before Shifting Tides
+    static getR6SeasonRegion(season) {
+      let region = "";
+      let maxMatches = 0;
+
+      Object.keys(season.regions).forEach((key) => {
+        let regionMatches = season.regions[key].boards.pvp_ranked.matches;
+
+        if (regionMatches > maxMatches) {
+          maxMatches = regionMatches;
+          region = key;
+        }
+      });
+      
+      return region;
     }
 
     static getRatio(numerator, denominator, percentage) {
