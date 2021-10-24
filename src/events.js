@@ -13,7 +13,7 @@ import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageButton } from 'discord.js';
+import { MessageActionRow, MessageSelectMenu } from 'discord.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -451,7 +451,7 @@ export default class EventManager {
     }
 
     // R6 functions
-    static async updateR6Stats(username, platform, currentSeason, isNext) {
+    static async updateR6Stats(username, platform, newSeasonId) {
         let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, platform);
 
         // If stats doesn't exist
@@ -463,14 +463,7 @@ export default class EventManager {
             });
         }
 
-        let currentSeasonId = config.r6SeasonReferences.find(x => x.operation == currentSeason).id;
-        let newSeasonId = isNext ? currentSeasonId + 1 : currentSeasonId - 1;
-        let seasons = [newSeasonId - 1, newSeasonId, newSeasonId + 1];
-
-        seasons = seasons.filter((seasonId) => {
-          return config.r6SeasonReferences.find(x => x.id == seasonId) != undefined;
-        })
-
+        let seasons = config.r6SeasonReferences.map(x => x.id);
         let id = r6user[0].id;
         let [stats, level, ranks] = await Promise.all([
           r6api.getStats(selectedPlatform, id),
@@ -482,20 +475,24 @@ export default class EventManager {
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let newStats = r6Stats.find(x => x.seasonId == newSeasonId);
-        let allNewSeasonIds = r6Stats.map(x => x.seasonId);
+        
+        let availableSeasonIds = r6Stats.map(x => x.seasonId);
+        let availableSeasons = config.r6SeasonReferences.filter(x => availableSeasonIds.includes(x.id));
 
-        const row = new MessageActionRow().addComponents(
-            new MessageButton()
-            .setCustomId("previousR6Season")
-            .setLabel("◀️")
-            .setStyle("PRIMARY")
-            .setDisabled(!allNewSeasonIds.includes(seasons[0])),
-            new MessageButton()
-            .setCustomId("nextR6Season")
-            .setLabel("▶️")
-            .setStyle("PRIMARY")
-            .setDisabled(!allNewSeasonIds.includes(seasons[2]))
-        );
+        let interactionSelect = new MessageSelectMenu()
+            .setCustomId("R6SeasonChange")
+            .setDisabled(availableSeasons.length == 0);
+
+        availableSeasons.forEach((s) => {
+          let option = {
+            label: s.operation,
+            value: `${s.id}`,
+            default: s.id == newStats.seasonId
+          };
+          interactionSelect.addOptions(option);
+        });
+
+        const row = new MessageActionRow().addComponents(interactionSelect);
 
         return Handlers.createEmbed({
             title: `Operation ${newStats.seasonName}`,
@@ -528,30 +525,36 @@ export default class EventManager {
             return;
         }
 
+        let seasons = config.r6SeasonReferences.map(x => x.id);
         let id = r6user[0].id;
         let [stats, level, ranks] = await Promise.all([
           r6api.getStats(selectedPlatform, id),
           r6api.getProgression(selectedPlatform, id),
-          r6api.getRanks(selectedPlatform, id, { seasonIds: 'all' })
+          r6api.getRanks(selectedPlatform, id, { seasonIds: seasons })
         ]);
-
+        
         level = level[0].level;
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let latestStats = r6Stats[r6Stats.length - 1];
 
-        const row = new MessageActionRow().addComponents(
-            new MessageButton()
-            .setCustomId("previousR6Season")
-            .setLabel("◀️")
-            .setStyle("PRIMARY")
-            .setDisabled(r6Stats.length - 2 < 0),
-            new MessageButton()
-            .setCustomId("nextR6Season")
-            .setLabel("▶️")
-            .setStyle("PRIMARY")
-            .setDisabled(true)
-        );
+        let availableSeasonIds = r6Stats.map(x => x.seasonId);
+        let availableSeasons = config.r6SeasonReferences.filter(x => availableSeasonIds.includes(x.id));
+
+        let interactionSelect = new MessageSelectMenu()
+            .setCustomId("R6SeasonChange")
+            .setDisabled(availableSeasons.length == 0);
+
+        availableSeasons.forEach((s) => {
+          let option = {
+            label: s.operation,
+            value: `${s.id}`,
+            default: s.id == latestStats.seasonId
+          };
+          interactionSelect.addOptions(option);
+        });
+
+        const row = new MessageActionRow().addComponents(interactionSelect);
 
         Handlers.sendEmbed({
             message: sentMessage,

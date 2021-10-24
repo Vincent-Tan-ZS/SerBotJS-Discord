@@ -81,18 +81,16 @@ client.on("interactionCreate", (interaction) => {
     let message = interaction.message;
     let embed = message.embeds[0];
 
-    // R6 Stats Buttons
-    if (interaction.componentType == "BUTTON" && interaction.customId.includes("R6Season")) {
-        interaction.deferUpdate().then(() => {
+    // R6 Stats Select
+    if (interaction.customId == "R6SeasonChange") {
+      interaction.deferUpdate().then(() => {
             let username = embed.author.name.substr(0, embed.author.name.indexOf(" "));
             let titleMatch = embed.author.name.match(/\[(.*?)\]/);
             let platform = titleMatch[1];
-            let season = embed.title.replace("Operation ", "");
-            let isNext = interaction.customId == "nextR6Season";
-
+            let seasonId = Number(interaction.values[0]);
             interaction.editReply({content: "Retrieving, please wait...", embeds: [], components: []});
             
-            EventManager.updateR6Stats(username, platform, season, isNext).then((newEmbed) => {
+            EventManager.updateR6Stats(username, platform, seasonId).then((newEmbed) => {
                 interaction.editReply(newEmbed);
             });
         });
