@@ -467,6 +467,10 @@ export default class EventManager {
         let newSeasonId = isNext ? currentSeasonId + 1 : currentSeasonId - 1;
         let seasons = [newSeasonId - 1, newSeasonId, newSeasonId + 1];
 
+        seasons = seasons.filter((seasonId) => {
+          return config.r6SeasonReferences.find(x => x.id == seasonId) != undefined;
+        })
+
         let id = r6user[0].id;
         let [stats, level, ranks] = await Promise.all([
           r6api.getStats(selectedPlatform, id),
