@@ -13,7 +13,7 @@ import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageSelectMenu } from 'discord.js';
+import { MessageActionRow, MessageSelectMenu, MessageButton } from 'discord.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -463,36 +463,14 @@ export default class EventManager {
             });
         }
 
-        let seasons = config.r6SeasonReferences.map(x => x.id);
-        let id = r6user[0].id;
-        let [stats, level, ranks] = await Promise.all([
-          r6api.getStats(selectedPlatform, id),
-          r6api.getProgression(selectedPlatform, id),
-          r6api.getRanks(selectedPlatform, id, { seasonIds: seasons })
-        ]);
-
-        level = level[0].level;
-
+        let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let newStats = r6Stats.find(x => x.seasonId == newSeasonId);
-        
+
         let availableSeasonIds = r6Stats.map(x => x.seasonId);
         let availableSeasons = config.r6SeasonReferences.filter(x => availableSeasonIds.includes(x.id));
 
-        let interactionSelect = new MessageSelectMenu()
-            .setCustomId("R6SeasonChange")
-            .setDisabled(availableSeasons.length == 0);
-
-        availableSeasons.forEach((s) => {
-          let option = {
-            label: s.operation,
-            value: `${s.id}`,
-            default: s.id == newStats.seasonId
-          };
-          interactionSelect.addOptions(option);
-        });
-
-        const row = new MessageActionRow().addComponents(interactionSelect);
+        let row = this.getR6InteractionRow(availableSeasons, newStats.seasonId);
 
         return Handlers.createEmbed({
             title: `Operation ${newStats.seasonName}`,
@@ -525,16 +503,7 @@ export default class EventManager {
             return;
         }
 
-        let seasons = config.r6SeasonReferences.map(x => x.id);
-        let id = r6user[0].id;
-        let [stats, level, ranks] = await Promise.all([
-          r6api.getStats(selectedPlatform, id),
-          r6api.getProgression(selectedPlatform, id),
-          r6api.getRanks(selectedPlatform, id, { seasonIds: seasons })
-        ]);
-        
-        level = level[0].level;
-
+        let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let latestStats = r6Stats[r6Stats.length - 1];
 
@@ -546,12 +515,12 @@ export default class EventManager {
             .setDisabled(availableSeasons.length == 0);
 
         availableSeasons.forEach((s) => {
-          let option = {
-            label: s.operation,
-            value: `${s.id}`,
-            default: s.id == latestStats.seasonId
-          };
-          interactionSelect.addOptions(option);
+            let option = {
+                label: s.operation,
+                value: `${s.id}`,
+                default: s.id == latestStats.seasonId
+            };
+            interactionSelect.addOptions(option);
         });
 
         const row = new MessageActionRow().addComponents(interactionSelect);
@@ -699,6 +668,36 @@ export default class EventManager {
     }
 
     // Helper functions
+    static getR6InteractionRow(availableSeasons, seasonId) {
+        let interactionSelect = new MessageSelectMenu()
+            .setCustomId("R6SeasonChange")
+            .setDisabled(availableSeasons.length == 0);
+
+        availableSeasons.forEach((s) => {
+            let option = {
+                label: s.operation,
+                value: `${s.id}`,
+                default: s.id == seasonId
+            };
+            interactionSelect.addOptions(option);
+        });
+
+        return new MessageActionRow().addComponents(interactionSelect);
+    }
+
+    static async getR6Stats(r6UserId, platform) {
+        let seasons = config.r6SeasonReferences.map(x => x.id);
+        let [stats, level, ranks] = await Promise.all([
+            r6api.getStats(platform, r6UserId),
+            r6api.getProgression(platform, r6UserId),
+            r6api.getRanks(platform, r6UserId, { seasonIds: seasons })
+        ]);
+
+        level = level[0].level;
+
+        return [stats, level, ranks];
+    }
+
     static async findR6Stats(username, predefinedPlatform) {
         let platforms = new Array("uplay", "xbl", "psn");
         let platformTexts = new Array("PC", "XBOX", "PS");
@@ -756,27 +755,27 @@ export default class EventManager {
             let region = this.getR6SeasonRegion(season);
 
             if (region.length > 0) {
-              let seasonalStats = season.regions[region].boards.pvp_ranked;
+                let seasonalStats = season.regions[region].boards.pvp_ranked;
 
-              let seasonStats = new Object({
-                  "id": userId,
-                  "avatarURL": userAvatarURL,
-                  "level": level,
-                  "seasonId": Number(seasonId),
-                  "seasonName": season.seasonName,
-                  "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
-                  "seasonRankURL": seasonalStats.current.icon,
-                  "overallWR": overallWR,
-                  "overallKD": overallKD,
-                  "casualWR": casualWR,
-                  "casualKD": casualKD,
-                  "rankedWR": rankedWR,
-                  "rankedKD": rankedKD,
-                  "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
-                  "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
-              });
+                let seasonStats = new Object({
+                    "id": userId,
+                    "avatarURL": userAvatarURL,
+                    "level": level,
+                    "seasonId": Number(seasonId),
+                    "seasonName": season.seasonName,
+                    "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
+                    "seasonRankURL": seasonalStats.current.icon,
+                    "overallWR": overallWR,
+                    "overallKD": overallKD,
+                    "casualWR": casualWR,
+                    "casualKD": casualKD,
+                    "rankedWR": rankedWR,
+                    "rankedKD": rankedKD,
+                    "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
+                    "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
+                });
 
-              allSeasonStats.push(seasonStats);
+                allSeasonStats.push(seasonStats);
             }
         });
 
@@ -785,20 +784,20 @@ export default class EventManager {
 
     // For seasons before Shifting Tides
     static getR6SeasonRegion(season) {
-      let region = "";
-      let maxMatches = 0;
+        let region = "";
+        let maxMatches = 0;
 
-      Object.keys(season.regions).forEach((key) => {
-        let regionJSON = season.regions[key];
-        let regionMatches = regionJSON.boards.pvp_ranked.matches;
+        Object.keys(season.regions).forEach((key) => {
+            let regionJSON = season.regions[key];
+            let regionMatches = regionJSON.boards.pvp_ranked.matches;
 
-        if (regionMatches > maxMatches) {
-          maxMatches = regionMatches;
-          region = regionJSON.regionId;
-        }
-      });
-      
-      return region;
+            if (regionMatches > maxMatches) {
+                maxMatches = regionMatches;
+                region = regionJSON.regionId;
+            }
+        });
+
+        return region;
     }
 
     static getRatio(numerator, denominator, percentage) {
