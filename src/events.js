@@ -468,13 +468,17 @@ export default class EventManager {
         let seasons = [newSeasonId - 1, newSeasonId, newSeasonId + 1];
 
         let id = r6user[0].id;
-        let stats = await r6api.getStats(selectedPlatform, id);
-        let level = (await r6api.getProgression(selectedPlatform, id))[0].level;
-        let ranks = await r6api.getRanks(selectedPlatform, id, { seasonIds: seasons });
+        let [stats, level, ranks] = await Promise.all([
+          r6api.getStats(selectedPlatform, id),
+          r6api.getProgression(selectedPlatform, id),
+          r6api.getRanks(selectedPlatform, id, { seasonIds: seasons })
+        ]);
+
+        level = level[0].level;
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
-        let newStats = r6Stats.length >= 2 ? r6Stats[1] : r6Stats[0];
-        let allNewSeasonIds = r6Stats.map(x => Number(x.seasonId));
+        let newStats = r6Stats.find(x => x.seasonId == newSeasonId);
+        let allNewSeasonIds = r6Stats.map(x => x.seasonId);
 
         const row = new MessageActionRow().addComponents(
             new MessageButton()
@@ -521,9 +525,13 @@ export default class EventManager {
         }
 
         let id = r6user[0].id;
-        let stats = await r6api.getStats(selectedPlatform, id);
-        let level = (await r6api.getProgression(selectedPlatform, id))[0].level;
-        let ranks = await r6api.getRanks(selectedPlatform, id, { seasonIds: 'all' });
+        let [stats, level, ranks] = await Promise.all([
+          r6api.getStats(selectedPlatform, id),
+          r6api.getProgression(selectedPlatform, id),
+          r6api.getRanks(selectedPlatform, id, { seasonIds: 'all' })
+        ]);
+
+        level = level[0].level;
 
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let latestStats = r6Stats[r6Stats.length - 1];
@@ -739,26 +747,30 @@ export default class EventManager {
         Object.keys(seasons).forEach((seasonId) => {
             let season = seasons[seasonId];
             let region = this.getR6SeasonRegion(season);
-            let seasonalStats = season.regions[region].boards.pvp_ranked;
-            let seasonStats = new Object({
-                "id": userId,
-                "avatarURL": userAvatarURL,
-                "level": level,
-                "seasonId": seasonId,
-                "seasonName": season.seasonName,
-                "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
-                "seasonRankURL": seasonalStats.current.icon,
-                "overallWR": overallWR,
-                "overallKD": overallKD,
-                "casualWR": casualWR,
-                "casualKD": casualKD,
-                "rankedWR": rankedWR,
-                "rankedKD": rankedKD,
-                "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
-                "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
-            });
 
-            allSeasonStats.push(seasonStats);
+            if (region.length > 0) {
+              let seasonalStats = season.regions[region].boards.pvp_ranked;
+
+              let seasonStats = new Object({
+                  "id": userId,
+                  "avatarURL": userAvatarURL,
+                  "level": level,
+                  "seasonId": Number(seasonId),
+                  "seasonName": season.seasonName,
+                  "seasonMMR": parseInt(seasonalStats.current.mmr).toLocaleString(),
+                  "seasonRankURL": seasonalStats.current.icon,
+                  "overallWR": overallWR,
+                  "overallKD": overallKD,
+                  "casualWR": casualWR,
+                  "casualKD": casualKD,
+                  "rankedWR": rankedWR,
+                  "rankedKD": rankedKD,
+                  "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
+                  "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
+              });
+
+              allSeasonStats.push(seasonStats);
+            }
         });
 
         return allSeasonStats;
@@ -770,11 +782,12 @@ export default class EventManager {
       let maxMatches = 0;
 
       Object.keys(season.regions).forEach((key) => {
-        let regionMatches = season.regions[key].boards.pvp_ranked.matches;
+        let regionJSON = season.regions[key];
+        let regionMatches = regionJSON.boards.pvp_ranked.matches;
 
         if (regionMatches > maxMatches) {
           maxMatches = regionMatches;
-          region = key;
+          region = regionJSON.regionId;
         }
       });
       
