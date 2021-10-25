@@ -469,7 +469,7 @@ export default class EventManager {
         let newStats = r6Stats.find(x => x.seasonId == newSeasonId);
 
         let availableSeasonIds = r6Stats.map(x => x.seasonId);
-        let availableSeasons = config.r6SeasonReferences.filter(x => availableSeasonIds.includes(x.id));
+        let availableSeasons = Object.fromEntries(Object.entries(R6Constants.SEASONS).filter(([key]) => availableSeasonIds.includes(Number(key))));
 
         let row = this.getR6InteractionRow(availableSeasons, newStats.seasonId);
 
@@ -509,22 +509,9 @@ export default class EventManager {
         let latestStats = r6Stats[r6Stats.length - 1];
 
         let availableSeasonIds = r6Stats.map(x => x.seasonId);
-        let availableSeasons = config.r6SeasonReferences.filter(x => availableSeasonIds.includes(x.id));
+        let availableSeasons = Object.fromEntries(Object.entries(R6Constants.SEASONS).filter(([key]) => availableSeasonIds.includes(Number(key))));
 
-        let interactionSelect = new MessageSelectMenu()
-            .setCustomId("R6SeasonChange")
-            .setDisabled(availableSeasons.length == 0);
-
-        availableSeasons.forEach((s) => {
-            let option = {
-                label: s.operation,
-                value: `${s.id}`,
-                default: s.id == latestStats.seasonId
-            };
-            interactionSelect.addOptions(option);
-        });
-
-        const row = new MessageActionRow().addComponents(interactionSelect);
+        let row = this.getR6InteractionRow(availableSeasons, latestStats.seasonId);
 
         Handlers.sendEmbed({
             message: sentMessage,
@@ -674,11 +661,13 @@ export default class EventManager {
             .setCustomId("R6SeasonChange")
             .setDisabled(availableSeasons.length == 0);
 
-        availableSeasons.forEach((s) => {
+        Object.keys(availableSeasons).forEach(availableSeasonId => {
+            let s = availableSeasons[availableSeasonId];
+
             let option = {
-                label: s.operation,
-                value: `${s.id}`,
-                default: s.id == seasonId
+                label: s.name,
+                value: availableSeasonId,
+                default: Number(availableSeasonId) == seasonId
             };
             interactionSelect.addOptions(option);
         });
@@ -687,7 +676,7 @@ export default class EventManager {
     }
 
     static async getR6Stats(r6UserId, platform) {
-        let seasons = config.r6SeasonReferences.map(x => x.id);
+        let seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
         let r6Regions = Object.keys(R6Constants.REGIONS);
 
         let rankedPromises = seasons.filter(sId => sId >= 18).map((seasonId) => {
