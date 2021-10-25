@@ -17,9 +17,9 @@ Object.defineProperty(String.prototype, "ToCodeBlock", {
 });
 
 Object.defineProperty(String.prototype, "FirstDigitIndex", {
-  value: function FirstDigitIndex() {
-    return this.search(/\d/);
-  },
-  writable: true,
-  configurable: true
+    value: function FirstDigitIndex() {
+        return this.search(/\d/);
+    },
+    writable: true,
+    configurable: true
 });
