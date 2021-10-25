@@ -730,33 +730,34 @@ export default class EventManager {
     }
 
     static async findR6Stats(username, predefinedPlatform) {
-        let platforms = new Array("uplay", "xbl", "psn");
-        let platformTexts = new Array("PC", "XBOX", "PS");
+        let platformTexts = new Array("PC", "PS", "XBOX");
 
         let r6user;
-        let selectedPlatform = "";
         let platformText = platformTexts.includes(predefinedPlatform) ? predefinedPlatform : "";
+        let selectedPlatform = platformTexts.includes(predefinedPlatform) ? R6Constants.PLATFORMS[platformTexts.indexOf(platformText)] : "";
         let statsFound = false;
 
         if (platformText.length > 0) {
-            selectedPlatform = platforms[platformTexts.indexOf(platformText)];
             r6user = await r6api.findByUsername(selectedPlatform, username);
             statsFound = r6user.length > 0;
         } else {
-            // Attempt find username
-            for (const platform of platforms) {
-                try {
-                    r6user = await r6api.findByUsername(platform, username);
+            let usernamePromises = [];
 
-                    if (r6user.length > 0) {
-                        selectedPlatform = platform;
-                        platformText = platformTexts[platforms.indexOf(platform)];
-                        statsFound = true;
-                        break;
-                    }
-                } catch (e) {
-                    statsFound = false;
-                }
+            R6Constants.PLATFORMS.forEach(platform => {
+                usernamePromises.push(r6api.findByUsername(platform, username))
+            });
+
+            let allResults = await Promise.all(usernamePromises);
+
+            if (allResults.every(res => {
+                    return res.length <= 0;
+                })) {
+                statsFound = false;
+            } else {
+                r6user = allResults.find(x => x.length > 0);
+                selectedPlatform = r6user[0].platform;
+                platformText = platformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
+                statsFound = true;
             }
         }
 
