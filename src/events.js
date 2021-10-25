@@ -800,7 +800,7 @@ export default class EventManager {
 
             if (seasonalStats.wins + seasonalStats.losses + seasonalStats.abandons <= 0) return;
 
-            let rankIcon = R6Utils.getRankIconFromRankId(seasonalStats.rank);
+            let rankIcon = R6Utils.getRankIconFromRankId(seasonalStats.rank, seasonId);
 
             let seasonStats = new Object({
                 "id": userId,
