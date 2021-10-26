@@ -453,16 +453,10 @@ export default class EventManager {
 
     // R6 functions
     static async updateR6Stats(username, platform, newSeasonId) {
-        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, platform);
+        let platformTexts = new Array("PC", "PS", "XBOX");
+        let selectedPlatform = R6Constants.PLATFORMS[platformTexts.indexOf(platform)];
 
-        // If stats doesn't exist
-        if (!statsFound) {
-            return Handlers.createEmbed({
-                isError: true,
-                title: "R6 Stats",
-                description: `Unable to find statistics for ${username}`
-            });
-        }
+        let r6user = await r6api.findByUsername(selectedPlatform, username);
 
         let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
@@ -476,7 +470,7 @@ export default class EventManager {
         return Handlers.createEmbed({
             title: `Operation ${newStats.seasonName}`,
             description: `${"Level:".ToBold()} ${newStats.level}\n${"MMR:".ToBold()} ${newStats.seasonMMR}`,
-            author: `${username} [${platformText}]`,
+            author: `${username} [${platform}]`,
             authorIcon: newStats.avatarURL,
             thumbnail: newStats.seasonRankURL,
             fields: new Array({ name: "Overall", value: `WR: ${newStats.overallWR}%\nKD: ${newStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${newStats.casualWR}%\nKD: ${newStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${newStats.rankedWR}%\nKD: ${newStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${newStats.seasonWR}%\nKD: ${newStats.seasonKD}` }),
@@ -490,7 +484,9 @@ export default class EventManager {
 
         let username = commands[1];
 
-        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username, null);
+        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username);
+
+        username = r6user[0].username;
 
         // If stats doesn't exist
         if (!statsFound) {
@@ -505,6 +501,17 @@ export default class EventManager {
         }
 
         let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
+        if (Object.keys(stats.results).length <= 0) {
+            Handlers.sendEmbed({
+                message: sentMessage,
+                isEdit: true,
+                isError: true,
+                title: "R6 Stats",
+                description: `${username} has no statistics`
+            });
+            return;
+        }
+
         let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
         let latestStats = r6Stats[r6Stats.length - 1];
 
@@ -729,36 +736,30 @@ export default class EventManager {
         return [customStats, customProgression.player_profiles[0].level, groupedCustomRanks];
     }
 
-    static async findR6Stats(username, predefinedPlatform) {
+    static async findR6Stats(username) {
         let platformTexts = new Array("PC", "PS", "XBOX");
 
         let r6user;
-        let platformText = platformTexts.includes(predefinedPlatform) ? predefinedPlatform : "";
-        let selectedPlatform = platformTexts.includes(predefinedPlatform) ? R6Constants.PLATFORMS[platformTexts.indexOf(platformText)] : "";
+        let platformText = "";
+        let selectedPlatform = "";
         let statsFound = false;
+        let usernamePromises = [];
 
-        if (platformText.length > 0) {
-            r6user = await r6api.findByUsername(selectedPlatform, username);
-            statsFound = r6user.length > 0;
+        R6Constants.PLATFORMS.forEach(platform => {
+            usernamePromises.push(r6api.findByUsername(platform, username))
+        });
+
+        let allResults = await Promise.all(usernamePromises);
+
+        if (allResults.every(res => {
+                return res.length <= 0;
+            })) {
+            statsFound = false;
         } else {
-            let usernamePromises = [];
-
-            R6Constants.PLATFORMS.forEach(platform => {
-                usernamePromises.push(r6api.findByUsername(platform, username))
-            });
-
-            let allResults = await Promise.all(usernamePromises);
-
-            if (allResults.every(res => {
-                    return res.length <= 0;
-                })) {
-                statsFound = false;
-            } else {
-                r6user = allResults.find(x => x.length > 0);
-                selectedPlatform = r6user[0].platform;
-                platformText = platformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
-                statsFound = true;
-            }
+            r6user = allResults.find(x => x.length > 0);
+            selectedPlatform = r6user[0].platform;
+            platformText = platformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
+            statsFound = true;
         }
 
         return { r6user, selectedPlatform, platformText, statsFound };
