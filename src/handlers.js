@@ -11,6 +11,7 @@ export default class Handlers {
         description = '',
         embedURL = '',
         embedImage = '',
+        embedColor = config.embedColor,
         author = '',
         authorIcon = '',
         authorURL = '',
@@ -28,7 +29,7 @@ export default class Handlers {
 
         let embed = new Discord.MessageEmbed()
             .setTitle(title)
-            .setColor(config.embedColor)
+            .setColor(embedColor)
             .setDescription(description);
 
         if (embedURL.length > 0) {
@@ -75,7 +76,7 @@ export default class Handlers {
         };
 
         if (components.components.length > 0) {
-          messageOption.components = [components];
+            messageOption.components = [components];
         }
 
         return messageOption;
@@ -90,6 +91,7 @@ export default class Handlers {
         description = '',
         embedURL = '',
         embedImage = '',
+        embedColor = config.embedColor,
         author = '',
         authorIcon = '',
         authorURL = '',
@@ -113,6 +115,7 @@ export default class Handlers {
             description: description,
             embedURL: embedURL,
             embedImage: embedImage,
+            embedColor: embedColor,
             author: author,
             authorIcon: authorIcon,
             authorURL: authorURL,

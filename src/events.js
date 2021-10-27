@@ -473,6 +473,7 @@ export default class EventManager {
             author: `${username} [${platform}]`,
             authorIcon: newStats.avatarURL,
             thumbnail: newStats.seasonRankURL,
+            embedColor: newStats.seasonColor,
             fields: new Array({ name: "Overall", value: `WR: ${newStats.overallWR}%\nKD: ${newStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${newStats.casualWR}%\nKD: ${newStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${newStats.rankedWR}%\nKD: ${newStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${newStats.seasonWR}%\nKD: ${newStats.seasonKD}` }),
             components: row
         });
@@ -501,6 +502,8 @@ export default class EventManager {
         }
 
         let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
+
+        //No matches played at all (Casual & Ranked)
         if (Object.keys(stats.results).length <= 0) {
             Handlers.sendEmbed({
                 message: sentMessage,
@@ -519,6 +522,11 @@ export default class EventManager {
         let availableSeasons = Object.fromEntries(Object.entries(R6Constants.SEASONS).filter(([key]) => availableSeasonIds.includes(Number(key))));
 
         let row = this.getR6InteractionRow(availableSeasons, latestStats.seasonId);
+        let embedFields = new Array({ name: "Overall", value: `WR: ${latestStats.overallWR}%\nKD: ${latestStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${latestStats.casualWR}%\nKD: ${latestStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${latestStats.rankedWR}%\nKD: ${latestStats.rankedKD}`, inline: true });
+
+        if (latestStats.seasonWR.length > 0) {
+            embedFields.push({ name: 'Season', value: `WR: ${latestStats.seasonWR}%\nKD: ${latestStats.seasonKD}` });
+        }
 
         Handlers.sendEmbed({
             message: sentMessage,
@@ -528,7 +536,8 @@ export default class EventManager {
             author: `${username} [${platformText}]`,
             authorIcon: latestStats.avatarURL,
             thumbnail: latestStats.seasonRankURL,
-            fields: new Array({ name: "Overall", value: `WR: ${latestStats.overallWR}%\nKD: ${latestStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${latestStats.casualWR}%\nKD: ${latestStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${latestStats.rankedWR}%\nKD: ${latestStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${latestStats.seasonWR}%\nKD: ${latestStats.seasonKD}` }),
+            embedColor: latestStats.seasonColor,
+            fields: embedFields,
             components: row
         });
     }
@@ -664,11 +673,15 @@ export default class EventManager {
 
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
+        let availableSeasonIds = Object.keys(availableSeasons);
+
+        if (availableSeasonIds.length <= 1) return;
+
         let interactionSelect = new MessageSelectMenu()
             .setCustomId("R6SeasonChange")
             .setDisabled(availableSeasons.length == 0);
 
-        Object.keys(availableSeasons).forEach(availableSeasonId => {
+        availableSeasonIds.forEach(availableSeasonId => {
             let s = availableSeasons[availableSeasonId];
 
             let option = {
@@ -786,7 +799,7 @@ export default class EventManager {
         let allSeasonStats = [];
         seasonIds.forEach((seasonId) => {
             let seasonRanks = ranks.filter(rank => rank[0].season == seasonId)[0];
-            let seasonName = R6Constants.SEASONS[seasonId].name;
+            let season = R6Constants.SEASONS[seasonId];
 
             let seasonalStats = seasonRanks[0];
 
@@ -809,9 +822,10 @@ export default class EventManager {
                 "avatarURL": userAvatarURL,
                 "level": level,
                 "seasonId": Number(seasonId),
-                "seasonName": seasonName,
+                "seasonName": season.name,
                 "seasonMMR": parseInt(seasonalStats.mmr).toLocaleString(),
                 "seasonRankURL": rankIcon,
+                "seasonColor": season.color,
                 "overallWR": overallWR,
                 "overallKD": overallKD,
                 "casualWR": casualWR,
@@ -824,6 +838,31 @@ export default class EventManager {
 
             allSeasonStats.push(seasonStats);
         });
+
+        if (allSeasonStats.length <= 0) {
+            let latestSeason = Object.entries(R6Constants.SEASONS).pop();
+
+            let seasonStats = new Object({
+                "id": userId,
+                "avatarURL": userAvatarURL,
+                "level": level,
+                "seasonId": Number(latestSeason[0]),
+                "seasonName": latestSeason[1].name,
+                "seasonMMR": "2,500",
+                "seasonRankURL": "",
+                "seasonColor": latestSeason[1].color,
+                "overallWR": overallWR,
+                "overallKD": overallKD,
+                "casualWR": casualWR,
+                "casualKD": casualKD,
+                "rankedWR": rankedWR,
+                "rankedKD": rankedKD,
+                "seasonWR": "",
+                "seasonKD": ""
+            });
+
+            allSeasonStats.push(seasonStats);
+        }
 
         return allSeasonStats;
     }
