@@ -2,7 +2,7 @@ import Discord from 'discord.js';
 import { MessageActionRow } from 'discord.js';
 import config from './config.js';
 
-export default class Handlers {
+export default class Utils {
     constructor() {}
 
     static createEmbed({

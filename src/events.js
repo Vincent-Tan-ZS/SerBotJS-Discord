@@ -8,7 +8,7 @@ import path from 'path';
 import { distube as Distube } from './setup.js';
 import config from './config.js';
 import Commands from './commands.js';
-import Handlers from './handlers.js';
+import Utils from './utils.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import Stopwatch from './stopwatch.js';
@@ -30,7 +30,7 @@ export default class EventManager {
             description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
         });
 
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             message: message,
             title: "Command List",
             description: description
@@ -78,7 +78,7 @@ export default class EventManager {
                 yesterdayData.recovered = result.todayRecovered;
             })
         ]).then(() => {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 title: countryData.name,
                 description: "Cases / Deaths / Recovered",
@@ -110,7 +110,7 @@ export default class EventManager {
 
             musicIDList.push(fileIndex);
         } else {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 isError: true,
                 title: "Queue",
@@ -128,7 +128,7 @@ export default class EventManager {
                         let song = queue.songs[queue.songs.length - 1];
                         let msgAuthor = message.author;
 
-                        Handlers.sendEmbed({
+                        Utils.sendEmbed({
                             message: message,
                             title: song.name,
                             description: "",
@@ -139,7 +139,7 @@ export default class EventManager {
                         });
                     });
                 } else {
-                    Handlers.sendEmbed({
+                    Utils.sendEmbed({
                         message: message,
                         isError: true,
                         title: "Song Not Found",
@@ -161,7 +161,7 @@ export default class EventManager {
             if (queue != undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
-                Handlers.sendEmbed({
+                Utils.sendEmbed({
                     message: message,
                     author: `${msgAuthor.username} Queued`,
                     authorIcon: msgAuthor.avatarURL({ dynamic: true }),
@@ -184,7 +184,7 @@ export default class EventManager {
         let song = queue.songs[queueRemoveIndex];
         queue.songs.splice(queueRemoveIndex, 1);
 
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             message: message,
             title: "Song Removed",
             Description: song.name
@@ -201,7 +201,7 @@ export default class EventManager {
                 return `${index + 1}. ${song.name}`;
             }).join("\n");
 
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             message: message,
             title: "Queue",
             description: description
@@ -274,7 +274,7 @@ export default class EventManager {
                 if (queue.songs.length > 0) {
                     queue.songs = [];
 
-                    Handlers.sendEmbed({
+                    Utils.sendEmbed({
                         message: message,
                         title: "Queue Cleared",
                     });
@@ -287,7 +287,7 @@ export default class EventManager {
 
                 Distube.setRepeatMode(queue, repeatMode);
 
-                Handlers.sendEmbed({
+                Utils.sendEmbed({
                     message: message,
                     title: "Queue Loop",
                     description: description
@@ -305,7 +305,7 @@ export default class EventManager {
         let command = commands[0];
 
         if (commands.length > 1 || !allowedCommands.includes(command)) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 isError: true,
                 title: "Queue Filter",
@@ -314,7 +314,7 @@ export default class EventManager {
         } else {
             if (command == "list" || command == "ls") {
                 let description = Commands.distubeFilterList.join("\n");
-                Handlers.sendEmbed({
+                Utils.sendEmbed({
                     message: message,
                     title: "Queue Filter List",
                     description: description
@@ -323,7 +323,7 @@ export default class EventManager {
                 let queue = Distube.queues.get(message);
 
                 if (!queue || !queue.playing) {
-                    Handlers.sendEmbed({
+                    Utils.sendEmbed({
                         message: message,
                         isError: true,
                         title: "Queue Filter",
@@ -338,7 +338,7 @@ export default class EventManager {
                     `Queue Filter ${command} disabled` :
                     `Queue Filter ${command} enabled`;
 
-                Handlers.sendEmbed({
+                Utils.sendEmbed({
                     message: message,
                     title: "Queue Filter",
                     description: description
@@ -359,7 +359,7 @@ export default class EventManager {
         if (typeof(commands) == 'string') return;
 
         let player = message.author.id;
-        let otherPlayer = Handlers.getUserIdFromMention(commands[1]);
+        let otherPlayer = Utils.getUserIdFromMention(commands[1]);
 
         if (otherPlayer === config.botId) {
             message.channel.send("I'm touched but I cannot play Tic-Tac-Toe :(");
@@ -367,7 +367,7 @@ export default class EventManager {
         }
 
         if (player === otherPlayer) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 isError: true,
                 title: "Tic-Tac-Toe",
@@ -380,7 +380,7 @@ export default class EventManager {
         let gameId = TicTacToe.newGame(message.author, otherPlayerUser.user);
 
         if (gameId.length <= 0) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 isError: true,
                 title: "Tic-Tac-Toe",
@@ -451,6 +451,36 @@ export default class EventManager {
         });
     }
 
+    static replyCopypasta(message, commands) {
+        if (commands.length < 3) return;
+        commands.shift();
+
+        let mention = commands.shift();
+        let userId = Utils.getUserIdFromMention(mention);
+
+        if (userId.length <= 0 || isNaN(userId)) {
+            Utils.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Copypasta",
+                description: "Please mention a user. (ser copypasta @SerBot [Game Title])"
+            });
+            return;
+        }
+
+        if (userId == message.author.id) {
+            Utils.sendEmbed({
+                message: message,
+                isError: true,
+                title: "Copypasta",
+                description: "Please mention someone else other than yourself :)"
+            });
+            return;
+        }
+
+        message.reply(`Sorry ${mention}, I dm'd you this acting on a whim. However, if you do wish to ${commands.join(" ")} tomorrow, I am more than up for it.`);
+    }
+
     // R6 functions
     static async updateR6Stats(username, platform, newSeasonId) {
         let platformTexts = new Array("PC", "PS", "XBOX");
@@ -467,7 +497,7 @@ export default class EventManager {
 
         let row = this.getR6InteractionRow(availableSeasons, newStats.seasonId);
 
-        return Handlers.createEmbed({
+        return Utils.createEmbed({
             title: `Operation ${newStats.seasonName}`,
             description: `${"Level:".ToBold()} ${newStats.level}\n${"MMR:".ToBold()} ${newStats.seasonMMR}`,
             author: `${username} [${platform}]`,
@@ -489,7 +519,7 @@ export default class EventManager {
 
         // If stats doesn't exist
         if (!statsFound) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: sentMessage,
                 isEdit: true,
                 isError: true,
@@ -505,7 +535,7 @@ export default class EventManager {
 
         //No matches played at all (Casual & Ranked)
         if (Object.keys(stats.results).length <= 0) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: sentMessage,
                 isEdit: true,
                 isError: true,
@@ -528,7 +558,7 @@ export default class EventManager {
             embedFields.push({ name: 'Season', value: `WR: ${latestStats.seasonWR}%\nKD: ${latestStats.seasonKD}` });
         }
 
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             message: sentMessage,
             isEdit: true,
             title: `Operation ${latestStats.seasonName}`,
@@ -552,7 +582,7 @@ export default class EventManager {
             "TODAY" : difference == 1 ?
             "TOMORROW" : `${difference} days and counting...`;
 
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             message: message,
             title: "Monster Hunter Rise: Sunbreak",
             embedURL: "https://www.monsterhunter.com/rise-sunbreak/en-uk/",
@@ -569,7 +599,7 @@ export default class EventManager {
         let rhombusSize = Number(commands[0]);
 
         if (rhombusSize <= 0) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 title: "Rhombus",
                 description: "Rhombus must have a size! HOW YOU FINNA MAKE A RHOMBUS WITH NO SIZE??????"
@@ -578,7 +608,7 @@ export default class EventManager {
         }
 
         if (rhombusSize == 1) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 title: "Rhombus",
                 description: "Rhombus too smol, gib bigger number"
@@ -620,7 +650,7 @@ export default class EventManager {
         }
 
         if (commands.length <= 0 || typeof(commands) === 'string') {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 isError: true,
                 title: "WikiHow",
@@ -631,7 +661,7 @@ export default class EventManager {
 
         wikihow(commands.join(" ")).then((data) => {
             if (data == null) {
-                Handlers.sendEmbed({
+                Utils.sendEmbed({
                     message: message,
                     isError: true,
                     title: "WikiHow",
@@ -656,7 +686,7 @@ export default class EventManager {
                 "TODAY" : difference == 1 ?
                 "TOMORROW" : `${difference} days and counting...`;
 
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 title: "Animal Crossing: New Horizons Title Update 2.0",
                 embedURL: "https://animal-crossing.com/new-horizons/",
@@ -913,7 +943,7 @@ export default class EventManager {
         }
 
         if (isError) {
-            Handlers.sendEmbed({
+            Utils.sendEmbed({
                 message: message,
                 title: title,
                 description: description

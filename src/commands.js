@@ -38,6 +38,7 @@ export default class Commands {
     static todayCommands = new Array("today");
     static tictactoeCommands = new Array("tictactoe");
     static animalCommands = new Array("animal");
+    static copypastaCommands = new Array("copypasta");
     //#endregion Commands
 
     //#region Commands Description
@@ -61,6 +62,7 @@ export default class Commands {
     static wikiHowDescription = "Searches for a WikiHow page";
     static todayDescription = "I'll tell you what day it is today";
     static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server!";
+    static copypastaDescription = "Copypasta: mention a user and a game";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -84,6 +86,7 @@ export default class Commands {
     static wikiHowDictionary = new Command(this.wikiHowCommands, this.wikiHowDescription, (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
     static todayDictionary = new Command(this.todayCommands, this.todayDescription, (msg) => { EventManager.sendDay(msg); });
     static tictactoeDictionary = new Command(this.tictactoeCommands, this.tictactoeDescription, (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
+    static copypastaDictionary = new Command(this.copypastaCommands, this.copypastaDescription, (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -96,7 +99,8 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary);
+        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary,
+        this.copypastaDictionary);
     //#endregion DictionaryList
 
     //#region Others

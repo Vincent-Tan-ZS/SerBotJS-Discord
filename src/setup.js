@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import { DisTube } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
-import Handlers from './handlers.js';
+import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
@@ -24,7 +24,7 @@ export const distube = new DisTube(client, {
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
-        Handlers.sendEmbed({
+        Utils.sendEmbed({
             channel: queue.textChannel,
             title: "Now Playing",
             description: song.name
@@ -83,13 +83,13 @@ client.on("interactionCreate", (interaction) => {
 
     // R6 Stats Select
     if (interaction.customId == "R6SeasonChange") {
-      interaction.deferUpdate().then(() => {
+        interaction.deferUpdate().then(() => {
             let username = embed.author.name.substr(0, embed.author.name.indexOf(" "));
             let titleMatch = embed.author.name.match(/\[(.*?)\]/);
             let platform = titleMatch[1];
             let seasonId = Number(interaction.values[0]);
-            interaction.editReply({content: "Retrieving, please wait...", embeds: [], components: []});
-            
+            interaction.editReply({ content: "Retrieving, please wait...", embeds: [], components: [] });
+
             EventManager.updateR6Stats(username, platform, seasonId).then((newEmbed) => {
                 interaction.editReply(newEmbed);
             });
