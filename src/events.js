@@ -487,8 +487,6 @@ export default class EventManager {
 
         let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username);
 
-        username = r6user[0].username;
-
         // If stats doesn't exist
         if (!statsFound) {
             Handlers.sendEmbed({
@@ -500,6 +498,8 @@ export default class EventManager {
             });
             return;
         }
+
+        username = r6user[0].username;
 
         let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
 
