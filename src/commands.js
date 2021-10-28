@@ -143,7 +143,11 @@ export default class Commands {
 
         if (dictionary == null || dictionary == undefined) return;
 
-        dictionary.Action(message, messageCommands);
+        let commands = typeof(messageCommands) == 'string' ?
+            [messageCommands] :
+            messageCommands;
+
+        dictionary.Action(message, commands);
     }
 
     //#endreigon Functions
