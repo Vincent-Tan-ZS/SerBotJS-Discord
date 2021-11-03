@@ -113,10 +113,12 @@ export default class Commands {
         let userChannel = message.member.voice.channel;
         if (userChannel == null) return;
 
-        switch (messageCommands) {
+        let command = messageCommands[0];
+
+        switch (command) {
             case "join":
             case "leave":
-                EventManager.joinOrLeaveVC(message, messageCommands, userChannel);
+                EventManager.joinOrLeaveVC(message, command, userChannel);
                 break;
             default:
                 EventManager.musicAction(message, messageCommands, userChannel);

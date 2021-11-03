@@ -574,13 +574,13 @@ export default class EventManager {
 
     static sunbreakCountdown(message) {
         let sunbreakRelease = moment("20220831");
-        let difference = sunbreakRelease.diff(moment(), 'days');
+        let difference = sunbreakRelease.diff(moment(), 'days', true);
 
         if (difference < 0) return;
 
-        let description = difference == 0 ?
-            "TODAY" : difference == 1 ?
-            "TOMORROW" : `${difference} days and counting...`;
+        let description = difference <= 0 ?
+            "TODAY" : difference <= 1 ?
+            "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
 
         Utils.sendEmbed({
             message: message,
@@ -678,13 +678,13 @@ export default class EventManager {
 
         if (rng <= 0.5) {
             let updateRelease = moment("20211105");
-            let difference = updateRelease.diff(moment(), 'days');
+            let difference = updateRelease.diff(moment(), 'days', true);
 
             if (difference < 0) return;
 
-            let description = difference == 0 ?
-                "TODAY" : difference == 1 ?
-                "TOMORROW" : `${difference} days and counting...`;
+            let description = difference <= 0 ?
+                "TODAY" : difference <= 1 ?
+                "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
 
             Utils.sendEmbed({
                 message: message,
