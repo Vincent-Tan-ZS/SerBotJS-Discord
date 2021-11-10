@@ -36,14 +36,17 @@ distube.on('playSong', (queue, song) => {
         queue.autoplay = false;
         queue.volume = 100;
     })
+
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
     })
-    .on('finish', queue => {
-      setTimeout(() => {
-        if (queue.songs.length <= 0 && queue.repeatMode != 0) {
-          distube.voices.leave(queue);
-        }
+    .on('deleteQueue', (queue) => {
+        setTimeout(() => {
+          let newQueue = distube.getQueue(queue);
+
+          if (newQueue.songs.length <= 0 && newQueue.repeatMode == 0) {
+            distube.voices.leave(queue);
+          }
       }, 60000);
     });
 
