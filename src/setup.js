@@ -36,7 +36,6 @@ distube.on('playSong', (queue, song) => {
         queue.autoplay = false;
         queue.volume = 100;
     })
-
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
     })
