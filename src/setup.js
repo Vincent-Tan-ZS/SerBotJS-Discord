@@ -16,6 +16,7 @@ export const client = new Discord.Client({
         Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
     ]
 });
+
 export const distube = new DisTube(client, {
     leaveOnStop: false,
     youtubeCookie: config.distubeCookie,
@@ -36,8 +37,15 @@ distube.on('playSong', (queue, song) => {
         queue.volume = 100;
     })
     .on('error', (channel, e) => {
-        channel.send(`Error: ${e}`);
+        channel.send(`Distube Error: ${e}`);
     })
+    .on('finish', queue => {
+      setTimeout(() => {
+        if (queue.songs.length <= 0 && queue.repeatMode != 0) {
+          distube.voices.leave(queue);
+        }
+      }, 60000);
+    });
 
 //#endregion Distube EventListener
 
@@ -56,6 +64,9 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     if (!voice.selfDeaf) voice.setSelfDeaf(true);
 })
 
+client.on('error', (e) => {
+  console.log(`DiscordJs Error: ${e}`);
+})
 //#endregion Discord Client EventListeners
 
 //#region Message Listener

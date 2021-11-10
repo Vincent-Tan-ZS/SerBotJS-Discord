@@ -2,13 +2,6 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-class R6Season {
-    constructor(id, operation) {
-        this.id = id;
-        this.operation = operation;
-    }
-}
-
 export default {
     prefix: "ser",
     botId: "807613302817292319",

@@ -37,8 +37,8 @@ export default class Commands {
     static wikiHowCommands = new Array("wikihow");
     static todayCommands = new Array("today");
     static tictactoeCommands = new Array("tictactoe");
-    static animalCommands = new Array("animal");
     static copypastaCommands = new Array("copypasta");
+    static _8ballCommands = new Array("8ball", "8b");
     //#endregion Commands
 
     //#region Commands Description
@@ -54,7 +54,7 @@ export default class Commands {
     static musicRemoveDescription = "Removes selected song from queue";
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
-    static musicFilterDescription = "Filters the song queue (replays current song)";
+    static musicFilterDescription = "Filters the song queue";
     static musicLoopDescription = "Loops/Unloops the current track";
     static r6Description = "Display Rainbow Six: Siege player stats";
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
@@ -63,6 +63,7 @@ export default class Commands {
     static todayDescription = "I'll tell you what day it is today";
     static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server!";
     static copypastaDescription = "Copypasta: mention a user and a game";
+    static _8ballDescription = "8-ball lmao";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -87,11 +88,11 @@ export default class Commands {
     static todayDictionary = new Command(this.todayCommands, this.todayDescription, (msg) => { EventManager.sendDay(msg); });
     static tictactoeDictionary = new Command(this.tictactoeCommands, this.tictactoeDescription, (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
     static copypastaDictionary = new Command(this.copypastaCommands, this.copypastaDescription, (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); });
+    static _8ballDictionary = new Command(this._8ballCommands, this._8ballDescription, (msg) => { EventManager.reply8Ball(msg); })
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
     static sunbreakDictionary = new Command(this.sunbreakCommands, "", (msg) => { EventManager.sunbreakCountdown(msg); });
-    static animalDictionary = new Command(this.animalCommands, "", (msg) => { EventManager.animalCrossingUpdateCountdown(msg); });
     //#endregion Dictionary
 
     //#region DictionaryList
@@ -99,8 +100,8 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, this.animalDictionary,
-        this.copypastaDictionary);
+        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, 
+        this.copypastaDictionary, this._8ballDictionary);
     //#endregion DictionaryList
 
     //#region Others
@@ -121,7 +122,7 @@ export default class Commands {
                 EventManager.joinOrLeaveVC(message, command, userChannel);
                 break;
             default:
-                EventManager.musicAction(message, messageCommands, userChannel);
+                EventManager.musicAction(message, command, userChannel);
                 break;
         }
     }

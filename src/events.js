@@ -124,7 +124,7 @@ export default class EventManager {
 
                 if (musicID < songList.length) {
                     await Distube.play(message, `${songList[musicID]} audio only`).then(() => {
-                        let queue = Distube.queues.get(message);
+                        let queue = Distube.getQueue(message);
                         let song = queue.songs[queue.songs.length - 1];
                         let msgAuthor = message.author;
 
@@ -156,7 +156,7 @@ export default class EventManager {
 
         commands.shift();
         Distube.play(message, commands.join(" ")).then(() => {
-            let queue = Distube.queues.get(message);
+            let queue = Distube.getQueue(message);
 
             if (queue != undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
@@ -175,7 +175,7 @@ export default class EventManager {
 
     static removeMusic(message, commands) {
         let queueRemoveIndex = parseInt(commands[1]);
-        let queue = Distube.queues.get(message);
+        let queue = Distube.getQueue(message);
         let isError = this.songRemoveErrorHandler(queue, message, queueRemoveIndex);
 
         if (isError) return;
@@ -194,7 +194,7 @@ export default class EventManager {
     static sendGuildQueue(message, command) {
         if (command != "q" && command != "queue") return;
 
-        let queue = Distube.queues.get(message);
+        let queue = Distube.getQueue(message);
 
         let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
             queue.songs.map((song, index) => {
@@ -209,7 +209,7 @@ export default class EventManager {
     }
 
     static joinOrLeaveVC(message, command, userChannel) {
-        let queue = Distube.queues.get(message);
+        let queue = Distube.getQueue(message);
         let guild = message.channel.guild;
         let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
         let isSameChannel = voiceConnection != null ?
@@ -242,7 +242,7 @@ export default class EventManager {
     }
 
     static musicAction(message, command, userChannel) {
-        let queue = Distube.queues.get(message);
+        let queue = Distube.getQueue(message);
         if (queue == null) return;
 
         let guild = message.channel.guild;
@@ -320,7 +320,7 @@ export default class EventManager {
                     description: description
                 });
             } else {
-                let queue = Distube.queues.get(message);
+                let queue = Distube.getQueue(message);
 
                 if (!queue || !queue.playing) {
                     Utils.sendEmbed({
@@ -334,7 +334,7 @@ export default class EventManager {
 
                 Distube.setFilter(queue, command);
 
-                let description = queue.filters == command ?
+                let description = queue.filters.includes(command) ?
                     `Queue Filter ${command} disabled` :
                     `Queue Filter ${command} enabled`;
 
@@ -672,33 +672,15 @@ export default class EventManager {
             }
         });
     }
+    
+    static reply8Ball(message) {
+        let reply = "Ummm, yeah... maybe..";
+        let replies = ["Yes", "No", "HAHAHHAHAHAHHA, oh you're being serious", "Yeah, sure, whatever", "Stop asking me bro damn", "Yeah nah", "Get juked", "Horizon cracked"];
 
-    static animalCrossingUpdateCountdown(message) {
-        let rng = Math.random();
+        let rng = Math.floor((Math.random() * replies.length) + 1);
+        reply = replies[rng-1];
 
-        if (rng <= 0.5) {
-            let updateRelease = moment("20211105");
-            let difference = updateRelease.diff(moment(), 'days', true);
-
-            if (difference < 0) return;
-
-            let description = difference <= 0 ?
-                "TODAY" : difference <= 1 ?
-                "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
-
-            Utils.sendEmbed({
-                message: message,
-                title: "Animal Crossing: New Horizons Title Update 2.0",
-                embedURL: "https://animal-crossing.com/new-horizons/",
-                embedImage: "https://i.imgur.com/fPkV0Rd.jpg",
-                fields: new Array({ name: 'Release Date', value: updateRelease.format("DD/MM/YYYY"), inline: true }, { name: 'Countdown', value: description, inline: true }),
-                setTimestamp: true
-            });
-        } else {
-            if (message.member.voice.channel == null) return;
-
-            Distube.play(message, "maroon 5 animals lyrics");
-        }
+        message.channel.send(reply);
     }
 
     // Helper functions
@@ -953,7 +935,7 @@ export default class EventManager {
         return isError;
     }
 
-    static toggleQueuePause(queue, isPause) {
+    static toggleQueuePause(isPause, queue) {
         if (isPause && !queue.paused) {
             Distube.pause(queue);
         } else if (!isPause && queue.paused) {
