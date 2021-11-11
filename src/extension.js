@@ -8,14 +8,6 @@ Object.defineProperty(String.prototype, "ToBold", {
     configurable: true
 });
 
-Object.defineProperty(String.prototype, "ToCodeBlock", {
-    value: function ToCodeBlock() {
-        return Formatters.bold(this);
-    },
-    writable: true,
-    configurable: true
-});
-
 Object.defineProperty(String.prototype, "FirstDigitIndex", {
     value: function FirstDigitIndex() {
         return this.search(/\d/);

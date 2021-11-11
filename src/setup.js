@@ -40,13 +40,13 @@ distube.on('playSong', (queue, song) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('deleteQueue', (queue) => {
-        setTimeout(() => {
-          let newQueue = distube.getQueue(queue);
+        await Utils.sleep(60000);
+        
+        let newQueue = distube.getQueue(queue);
 
-          if (newQueue.songs.length <= 0 && newQueue.repeatMode == 0) {
-            distube.voices.leave(queue);
-          }
-      }, 60000);
+        if ((newQueue == undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
+          distube.voices.leave(queue);
+        }
     });
 
 //#endregion Distube EventListener

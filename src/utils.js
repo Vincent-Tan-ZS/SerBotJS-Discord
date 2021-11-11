@@ -5,6 +5,12 @@ import config from './config.js';
 export default class Utils {
     constructor() {}
 
+    static sleep(ms) {
+      return new Promise(function(resolve) {
+        setTimeout(resolve, ms);
+      })
+    }
+
     static createEmbed({
         isError = false,
         title = 'lorem ipsum',
