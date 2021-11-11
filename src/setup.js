@@ -40,7 +40,7 @@ distube.on('playSong', (queue, song) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('deleteQueue', (queue) => {
-        await Utils.sleep(60000);
+        Utils.sleep(60000);
         
         let newQueue = distube.getQueue(queue);
 
