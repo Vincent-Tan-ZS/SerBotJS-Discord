@@ -5,12 +5,10 @@ import config from './config.js';
 export default class Utils {
     constructor() {}
 
-    static async sleep(ms) {
-      await new Promise(function(resolve) {
+    static sleep(ms) {
+      return new Promise(function(resolve) {
         setTimeout(resolve, ms);
       });
-
-      return;
     }
 
     static createEmbed({
