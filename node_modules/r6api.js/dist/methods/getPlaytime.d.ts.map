@@ -1,0 +1,1 @@
+{"version":3,"file":"getPlaytime.d.ts","sourceRoot":"","sources":["../../src/methods/getPlaytime.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,QAAQ,EAAE,IAAI,EAAU,MAAM,YAAY,CAAC;AAGpD,MAAM,WAAW,YAAY;IAC3B,OAAO,EAAE;QACP,CAAC,EAAE,EAAE,MAAM,GAAG;YACZ,CAAC,EAAE,EAAE,MAAM,GAAG,MAAM,CAAC;SACtB,CAAA;KACF,CAAA;CACF;mCAMyB,QAAQ,OAAO,IAAI,EAAE;;;;;;;;;;;;;AAA/C,wBAsBM"}
