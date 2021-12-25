@@ -6,9 +6,9 @@ export default class Utils {
     constructor() {}
 
     static sleep(ms) {
-      return new Promise(function(resolve) {
-        setTimeout(resolve, ms);
-      });
+        return new Promise(function(resolve) {
+            setTimeout(resolve, ms);
+        });
     }
 
     static createEmbed({
@@ -47,7 +47,7 @@ export default class Utils {
         }
 
         if (author.length > 0) {
-            embed.setAuthor(author, authorIcon, authorURL);
+            embed.setAuthor({ name: author, url: authorURL, iconURL: authorIcon });
         }
 
         if (footer.length > 0) {
