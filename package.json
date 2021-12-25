@@ -21,6 +21,7 @@
         "@discordjs/voice": "^0.7.5",
         "@distube/spotify": "^1.0.0",
         "@szmarczak/http-timer": "^5.0.1",
+        "bufferutil": "^4.0.5",
         "discord-api-types": "^0.26.0",
         "discord.js": "^13.4.0",
         "distube": "^3.0.4",
