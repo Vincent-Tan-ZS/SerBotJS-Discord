@@ -22,7 +22,7 @@
         "@distube/spotify": "^1.2.1",
         "@szmarczak/http-timer": "^5.0.1",
         "bufferutil": "^4.0.6",
-        "discord-api-types": "^0.26.0",
+        "discord-api-types": "^0.26.1",
         "discord.js": "^13.4.0",
         "distube": "^3.0.4",
         "dotenv": "^10.0.0",
@@ -35,7 +35,7 @@
         "opusscript": "0.0.8",
         "r6api.js": "^4.1.0",
         "utf-8-validate": "^5.0.9",
-        "ytdl-core": "^4.9.2",
+        "ytdl-core": "^4.11.0",
         "zlib-sync": "^0.1.7"
     }
 }
