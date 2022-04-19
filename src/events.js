@@ -573,7 +573,7 @@ export default class EventManager {
     }
 
     static sunbreakCountdown(message) {
-        let sunbreakRelease = moment("20220831");
+        let sunbreakRelease = moment("20220630");
         let difference = sunbreakRelease.diff(moment(), 'days', true);
 
         if (difference < 0) return;
