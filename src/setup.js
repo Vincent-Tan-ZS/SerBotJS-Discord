@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { DisTube } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
+import { YtDlpPlugin } from '@distube/yt-dlp'
 import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
@@ -20,7 +21,8 @@ export const client = new Discord.Client({
 export const distube = new DisTube(client, {
     leaveOnStop: false,
     youtubeCookie: config.distubeCookie,
-    plugins: [new SpotifyPlugin()]
+    youtubeDL: false,
+    plugins: [new SpotifyPlugin(), new YtDlpPlugin()]
 });
 
 //#region Distube EventListener
@@ -36,16 +38,19 @@ distube.on('playSong', (queue, song) => {
         queue.autoplay = false;
         queue.volume = 100;
     })
+    .on('searchNoResult', (message, query) => {
+        message.channel.send(`[Distube] ${query} not found.`);
+    })
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('deleteQueue', (queue) => {
         Utils.sleep(60000).then(() => {
-          let newQueue = distube.getQueue(queue);
+            let newQueue = distube.getQueue(queue);
 
-          if ((newQueue == undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
-            distube.voices.leave(queue);
-          }
+            if ((newQueue == undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
+                distube.voices.leave(queue);
+            }
         });
     });
 
@@ -67,9 +72,9 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 })
 
 client.on('error', (e) => {
-  console.log(`DiscordJs Error: ${e}`);
-})
-//#endregion Discord Client EventListeners
+        console.log(`DiscordJs Error: ${e}`);
+    })
+    //#endregion Discord Client EventListeners
 
 //#region Message Listener
 client.on('messageCreate', (message) => {

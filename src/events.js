@@ -155,7 +155,10 @@ export default class EventManager {
         if (message.member.voice.channel == null) return;
 
         commands.shift();
-        Distube.play(message, commands.join(" ")).then(() => {
+        Distube.play(message.member.voice.channel, commands.join(" "), {
+            member: message.member,
+            textChannel: message.channel
+        }).then(() => {
             let queue = Distube.getQueue(message);
 
             if (queue != undefined && queue.songs.length > 1) {
@@ -587,7 +590,7 @@ export default class EventManager {
             title: "Monster Hunter Rise: Sunbreak",
             embedURL: "https://www.monsterhunter.com/rise-sunbreak/en-uk/",
             embedImage: "http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg",
-            fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")} (Estimate)`, inline: true }, { name: 'Countdown', value: description, inline: true }),
+            fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")}`, inline: true }, { name: 'Countdown', value: description, inline: true }),
             setTimestamp: true
         });
     }
@@ -672,15 +675,11 @@ export default class EventManager {
             }
         });
     }
-    
+
     static reply8Ball(message) {
-        let reply = "Ummm, yeah... maybe..";
-        let replies = ["Yes", "No", "HAHAHHAHAHAHHA, oh you're being serious", "Yeah, sure, whatever", "Stop asking me bro damn", "Yeah nah", "Get juked", "Horizon cracked"];
+        let rng = Math.floor((Math.random() * config.eightBallReplies.length) + 1) - 1;
 
-        let rng = Math.floor((Math.random() * replies.length) + 1);
-        reply = replies[rng-1];
-
-        message.channel.send(reply);
+        message.channel.send(config.eightBallReplies[rng]);
     }
 
     // Helper functions
@@ -801,12 +800,12 @@ export default class EventManager {
             return Number(a) - Number(b);
         });
 
-        let overallWR = this.getRatio(pvpStats['generalpvp_matchwon:infinite'], pvpStats['generalpvp_matchwon:infinite'] + pvpStats['generalpvp_matchlost:infinite'], true).toFixed(2);
-        let overallKD = this.getRatio(pvpStats['generalpvp_kills:infinite'], pvpStats['generalpvp_death:infinite'], false).toFixed(2);
-        let casualWR = this.getRatio(pvpStats['casualpvp_matchwon:infinite'], pvpStats['casualpvp_matchwon:infinite'] + pvpStats['casualpvp_matchlost:infinite'], true).toFixed(2);
-        let casualKD = this.getRatio(pvpStats['casualpvp_kills:infinite'], pvpStats['casualpvp_death:infinite'], false).toFixed(2);
-        let rankedWR = this.getRatio(pvpStats['rankedpvp_matchwon:infinite'], pvpStats['rankedpvp_matchwon:infinite'] + pvpStats['rankedpvp_matchlost:infinite'], true).toFixed(2);
-        let rankedKD = this.getRatio(pvpStats['rankedpvp_kills:infinite'], pvpStats['rankedpvp_death:infinite'], false).toFixed(2);
+        let overallWR = Utils.getRatio(pvpStats['generalpvp_matchwon:infinite'], pvpStats['generalpvp_matchwon:infinite'] + pvpStats['generalpvp_matchlost:infinite'], true).toFixed(2);
+        let overallKD = Utils.getRatio(pvpStats['generalpvp_kills:infinite'], pvpStats['generalpvp_death:infinite'], false).toFixed(2);
+        let casualWR = Utils.getRatio(pvpStats['casualpvp_matchwon:infinite'], pvpStats['casualpvp_matchwon:infinite'] + pvpStats['casualpvp_matchlost:infinite'], true).toFixed(2);
+        let casualKD = Utils.getRatio(pvpStats['casualpvp_kills:infinite'], pvpStats['casualpvp_death:infinite'], false).toFixed(2);
+        let rankedWR = Utils.getRatio(pvpStats['rankedpvp_matchwon:infinite'], pvpStats['rankedpvp_matchwon:infinite'] + pvpStats['rankedpvp_matchlost:infinite'], true).toFixed(2);
+        let rankedKD = Utils.getRatio(pvpStats['rankedpvp_kills:infinite'], pvpStats['rankedpvp_death:infinite'], false).toFixed(2);
 
         let allSeasonStats = [];
         seasonIds.forEach((seasonId) => {
@@ -844,8 +843,8 @@ export default class EventManager {
                 "casualKD": casualKD,
                 "rankedWR": rankedWR,
                 "rankedKD": rankedKD,
-                "seasonWR": this.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
-                "seasonKD": this.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
+                "seasonWR": Utils.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
+                "seasonKD": Utils.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
             });
 
             allSeasonStats.push(seasonStats);
@@ -894,21 +893,6 @@ export default class EventManager {
         });
 
         return region;
-    }
-
-    static getRatio(numerator, denominator, percentage) {
-        let num = parseFloat(numerator);
-        let den = parseFloat(denominator);
-
-        if (num == 0 || den == 0 || isNaN(num) || isNaN(den)) {
-            return 0;
-        }
-
-        if (percentage) {
-            return num / den * 100;
-        }
-
-        return num / den;
     }
 
     static songRemoveErrorHandler(queue, message, queueRemoveIndex) {

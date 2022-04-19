@@ -5,6 +5,21 @@ import config from './config.js';
 export default class Utils {
     constructor() {}
 
+    static getRatio(numerator, denominator, percentage) {
+        let num = parseFloat(numerator);
+        let den = parseFloat(denominator);
+
+        if (num == 0 || den == 0 || isNaN(num) || isNaN(den)) {
+            return 0;
+        }
+
+        if (percentage) {
+            return num / den * 100;
+        }
+
+        return num / den;
+    }
+
     static sleep(ms) {
         return new Promise(function(resolve) {
             setTimeout(resolve, ms);
