@@ -682,6 +682,28 @@ export default class EventManager {
         message.channel.send(config.eightBallReplies[rng]);
     }
 
+    static coinFlip(message) {
+        let rng = Math.floor((Math.random() * 10));
+        let msg = rng >= 5 ?
+            "Heads" :
+            "Tails";
+
+        message.channel.send(`🪙 ${msg}`);
+    }
+
+    static wheel(message, commands) {
+        commands.shift();
+        if (commands.length <= 0) return;
+
+        let optionStr = commands.join(' ');
+        let listOfOptions = optionStr.split(",");
+
+        if (listOfOptions.length <= 0) return;
+
+        let index = Math.floor((Math.random() * listOfOptions.length));
+        message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
+    }
+
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
         let availableSeasonIds = Object.keys(availableSeasons);
