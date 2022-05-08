@@ -39,6 +39,8 @@ export default class Commands {
     static tictactoeCommands = new Array("tictactoe");
     static copypastaCommands = new Array("copypasta");
     static _8ballCommands = new Array("8ball", "8b");
+    static coinFlipCommands = new Array("coin", "coinflip");
+    static wheelCommands = new Array("wheel");
     //#endregion Commands
 
     //#region Commands Description
@@ -64,6 +66,8 @@ export default class Commands {
     static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server!";
     static copypastaDescription = "Copypasta: mention a user and a game";
     static _8ballDescription = "8-ball lmao";
+    static coinFlipDescription = "Does a random coin flip";
+    static wheelDescription = "Does a wheel spin (randomizer)";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -89,6 +93,8 @@ export default class Commands {
     static tictactoeDictionary = new Command(this.tictactoeCommands, this.tictactoeDescription, (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
     static copypastaDictionary = new Command(this.copypastaCommands, this.copypastaDescription, (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); });
     static _8ballDictionary = new Command(this._8ballCommands, this._8ballDescription, (msg) => { EventManager.reply8Ball(msg); })
+    static coinFlipDictionary = new Command(this.coinFlipCommands, this.coinFlipDescription, (msg) => { EventManager.coinFlip(msg); });
+    static wheelDictionary = new Command(this.wheelCommands, this.wheelDescription, (msg, cmds) => { EventManager.wheel(msg, cmds); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -100,8 +106,8 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary, 
-        this.copypastaDictionary, this._8ballDictionary);
+        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary,
+        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary);
     //#endregion DictionaryList
 
     //#region Others
@@ -146,8 +152,7 @@ export default class Commands {
 
         if (dictionary == null || dictionary == undefined) return;
 
-        let commands = typeof(messageCommands) == 'string' ?
-            [messageCommands] :
+        let commands = typeof(messageCommands) == 'string' ? [messageCommands] :
             messageCommands;
 
         dictionary.Action(message, commands);
