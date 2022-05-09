@@ -147,7 +147,7 @@ export default class TicTacToe {
         if (this._emojiList.length == 9) {
             TicTacToe.allGames.splice(gameIndex, 1);
             message.edit({
-                content: message.content + `Game Tied!`.ToBold()
+                content: message.content + `\nGame Tied!`.ToBold()
             });
             return;
         }
