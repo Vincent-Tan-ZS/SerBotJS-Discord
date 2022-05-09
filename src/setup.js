@@ -88,10 +88,6 @@ client.on('messageCreate', (message) => {
     Commands.resolveCommand(message, messageCommands);
 })
 
-client.on("messageReactionAdd", (reaction, user) => {
-    EventManager.updateTicTacToe(reaction, user);
-});
-
 //#endregion Message Listener
 
 //#region Interaction Listener
@@ -112,6 +108,15 @@ client.on("interactionCreate", (interaction) => {
                 interaction.editReply(newEmbed);
             });
         });
+    }
+    // Tic-Tac-Toe
+    else if (interaction.customId.startsWith("ttt")) {
+        let payload = interaction.customId.slice(3);
+        let gameId = payload.slice(0, 64);
+        let selectedSquare = payload.slice(64);
+        EventManager.updateTicTacToe(gameId, selectedSquare, interaction.user, message);
+
+        interaction.deferUpdate();
     }
 });
 //#endregion Interaction Listener

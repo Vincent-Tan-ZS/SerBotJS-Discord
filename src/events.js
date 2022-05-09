@@ -395,52 +395,22 @@ export default class EventManager {
         let game = TicTacToe.allGames.find(x => x._id == gameId);
         let gameMessage = game.createOrUpdateMessage();
 
-        message.channel.send(gameMessage).then((msg) => {
-            msg.react("↖");
-            msg.react("⬆");
-            msg.react("↗");
-
-            msg.react("⬅");
-            msg.react("⏺");
-            msg.react("➡");
-
-            msg.react("↙");
-            msg.react("⬇");
-            msg.react("↘");
-            msg.react("❌").then((r) => {
-                let m = r.message.content.replace("[Please wait for the reactions...]\n\n", "");
-                m += `\n${game._player1Username}'s turn`;
-                r.message.edit({
-                    content: m
-                });
-                game._messageId = r.message.id;
-            });
-        });
+        message.channel.send(gameMessage);
     }
 
-    static updateTicTacToe(reaction, user) {
-        let message = reaction.message;
-        let game = TicTacToe.allGames.find(x => x._messageId == message.id);
+    static updateTicTacToe(gameId, reactedEmoji, user, message) {
+        let game = TicTacToe.allGames.find(x => x._id == gameId);
         if (game == null) return;
         if (game._player1 != user.id && game._player2 != user.id) return;
-
-        let reactedEmoji = reaction._emoji.name;
         if (game._emojiList.includes(reactedEmoji)) return;
 
         if (reactedEmoji == "❌") {
             TicTacToe.cancelMatch(game);
-            let gameMessage = game.createOrUpdateMessage();
+            let gameMessage = game.createOrUpdateMessage(true);
             message.edit({
-                content: gameMessage + `\nMatch Cancelled [${user.username}]`.ToBold()
+                content: gameMessage.content + `Match Cancelled [${user.username}]`.ToBold(),
+                components: gameMessage.components
             });
-            return;
-        }
-
-        let isPlayer1 = game._player1 == user.id;
-
-        if ((game._playerTurn == 1 && !isPlayer1) ||
-            (game._playerTurn == 2 && isPlayer1)) {
-            reaction.users.remove(user);
             return;
         }
 
@@ -448,7 +418,8 @@ export default class EventManager {
         let gameMessage = game.createOrUpdateMessage();
 
         message.edit({
-            content: gameMessage
+            content: gameMessage.content,
+            components: gameMessage.components
         }).then((msg) => {
             game.endOfRoundAction(msg);
         });
