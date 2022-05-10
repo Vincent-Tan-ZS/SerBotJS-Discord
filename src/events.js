@@ -414,6 +414,13 @@ export default class EventManager {
             return;
         }
 
+        let isPlayer1 = game._player1 == user.id;
+
+        if ((game._playerTurn == 1 && !isPlayer1) ||
+            (game._playerTurn == 2 && isPlayer1)) {
+            return;
+        }
+
         game._emojiList.push(reactedEmoji);
         let gameMessage = game.createOrUpdateMessage();
 
