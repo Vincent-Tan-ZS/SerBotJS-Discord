@@ -15,7 +15,8 @@ export const client = new Discord.Client({
         Discord.Intents.FLAGS.GUILD_VOICE_STATES,
         Discord.Intents.FLAGS.GUILD_MESSAGES,
         Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
-    ]
+    ],
+    partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 });
 
 export const distube = new DisTube(client, {
@@ -24,6 +25,15 @@ export const distube = new DisTube(client, {
     youtubeDL: false,
     plugins: [new SpotifyPlugin(), new YtDlpPlugin()]
 });
+
+const ReactionRoleMap = {
+    amongus: "767007058712592415",
+    gtav: "767007142615711755",
+    csgo: "767007162538262528",
+    r6s: "767007020946948147",
+    rocketleague: "767006976097386517",
+    weirdchamp: "978622725469921320" //League of Legends
+}
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
@@ -45,7 +55,7 @@ distube.on('playSong', (queue, song) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('deleteQueue', (queue) => {
-        Utils.sleep(60000).then(() => {
+        Utils.sleep(5 * 60 * 1000).then(() => {
             let newQueue = distube.getQueue(queue);
 
             if ((newQueue == undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
@@ -89,6 +99,34 @@ client.on('messageCreate', (message) => {
 })
 
 //#endregion Message Listener
+
+//#region Reaction Listener
+client.on("messageReactionAdd", async(reaction, user) => {
+    if (reaction.message.id == config.enrollmentMessageId) {
+        let guild = reaction.message.guild;
+
+        let [member, role] = await Promise.all([
+            guild.members.fetch(user),
+            guild.roles.fetch(ReactionRoleMap[reaction.emoji.name])
+        ]);
+
+        member.roles.add(role);
+    }
+});
+
+client.on("messageReactionRemove", async(reaction, user) => {
+    if (reaction.message.id == config.enrollmentMessageId) {
+        let guild = reaction.message.guild;
+
+        let [member, role] = await Promise.all([
+            guild.members.fetch(user),
+            guild.roles.fetch(ReactionRoleMap[reaction.emoji.name])
+        ]);
+
+        member.roles.remove(role);
+    }
+});
+//#endregion Region Listener
 
 //#region Interaction Listener
 client.on("interactionCreate", (interaction) => {

@@ -27,7 +27,6 @@ export default class Commands {
     static musicRemoveCommands = new Array("rm", "remove");
     static musicClearCommands = new Array("clr", "clear");
     static musicQueueCommands = new Array("q", "queue");
-    static musicFilterCommands = new Array("f", "filter");
     static musicLoopCommands = new Array("l", "loop");
     static r6Commands = new Array("r6");
     static localMusicCommands = new Array("music");
@@ -41,6 +40,7 @@ export default class Commands {
     static _8ballCommands = new Array("8ball", "8b");
     static coinFlipCommands = new Array("coin", "coinflip");
     static wheelCommands = new Array("wheel");
+    static treeCommands = new Array("tree");
     //#endregion Commands
 
     //#region Commands Description
@@ -56,7 +56,6 @@ export default class Commands {
     static musicRemoveDescription = "Removes selected song from queue";
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
-    static musicFilterDescription = "Filters the song queue";
     static musicLoopDescription = "Loops/Unloops the current track";
     static r6Description = "Display Rainbow Six: Siege player stats";
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
@@ -68,13 +67,13 @@ export default class Commands {
     static _8ballDescription = "8-ball lmao";
     static coinFlipDescription = "Does a random coin flip";
     static wheelDescription = "Does a wheel spin (randomizer)";
+    static treeDescription = "Generate a tree :)";
     //#endregion Commands Description
 
     //#region Dictionary
     static greetingDictionary = new Command(this.greetingCommands, this.greetingDescription, (msg) => { EventManager.sendGreeting(msg); });
     static musicPlayDictionary = new Command(this.musicPlayCommands, this.musicPlayDescription, (msg, cmds) => { EventManager.playMusic(msg, cmds); });
     static musicRemoveDictionary = new Command(this.musicRemoveCommands, this.musicRemoveDescription, (msg, cmds) => { EventManager.removeMusic(msg, cmds); });
-    static musicFilterDictionary = new Command(this.musicFilterCommands, this.musicFilterDescription, (msg, cmds) => { EventManager.setQueueFilter(msg, cmds); });
     static musicJoinDictionary = new Command(this.musicJoinCommands, this.musicJoinDescription, this.musicActionResolve)
     static musicPauseDictionary = new Command(this.musicPauseCommands, this.musicPauseDescription, this.musicActionResolve);
     static musicResumeDictionary = new Command(this.musicResumeCommands, this.musicResumeDescription, this.musicActionResolve);
@@ -95,6 +94,7 @@ export default class Commands {
     static _8ballDictionary = new Command(this._8ballCommands, this._8ballDescription, (msg) => { EventManager.reply8Ball(msg); })
     static coinFlipDictionary = new Command(this.coinFlipCommands, this.coinFlipDescription, (msg) => { EventManager.coinFlip(msg); });
     static wheelDictionary = new Command(this.wheelCommands, this.wheelDescription, (msg, cmds) => { EventManager.wheel(msg, cmds); });
+    static treeDictionary = new Command(this.treeCommands, this.treeDescription, (msg) => { EventManager.tree(msg); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -104,15 +104,11 @@ export default class Commands {
     //#region DictionaryList
     static dictionaries = new Array(this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
-        this.musicFilterDictionary, this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
+        this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary,
-        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary);
+        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary);
     //#endregion DictionaryList
-
-    //#region Others
-    static distubeFilterList = new Array("3d", "bassboost", "echo", "karoke", "nightcore", "vaporwave", "flanger", "gate", "haas", "reverse", "surround", "mcompand", "phaser", "tremolo", "earwax");
-    //#endregion Others
 
     //#region Functions
     static musicActionResolve(message, messageCommands) {

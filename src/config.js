@@ -15,4 +15,5 @@ export default {
     ticTacToeMidRow: ["⬅", "⏺", "➡"],
     ticTacToeBotRow: ["↙", "⬇", "↘"],
     eightBallReplies: ["Ummm, yeah... maybe..", "Yes", "No", "HAHAHHAHAHAHHA, oh you're being serious", "Yeah, sure, whatever", "Stop asking me bro damn", "Yeah nah", "Get juked", "Horizon cracked"],
+    enrollmentMessageId: "767060651478482984"
 }

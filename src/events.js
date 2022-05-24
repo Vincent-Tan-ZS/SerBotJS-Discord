@@ -300,58 +300,6 @@ export default class EventManager {
         }
     }
 
-    static setQueueFilter(message, commands) {
-        if (typeof(commands) == 'string') return;
-
-        let allowedCommands = Commands.distubeFilterList.concat("list", "ls");
-        commands.shift();
-        let command = commands[0];
-
-        if (commands.length > 1 || !allowedCommands.includes(command)) {
-            Utils.sendEmbed({
-                message: message,
-                isError: true,
-                title: "Queue Filter",
-                description: "Invalid command"
-            });
-        } else {
-            if (command == "list" || command == "ls") {
-                let description = Commands.distubeFilterList.join("\n");
-                Utils.sendEmbed({
-                    message: message,
-                    title: "Queue Filter List",
-                    description: description
-                });
-            } else {
-                let queue = Distube.getQueue(message);
-
-                if (!queue || !queue.playing) {
-                    Utils.sendEmbed({
-                        message: message,
-                        isError: true,
-                        title: "Queue Filter",
-                        description: "No song playing"
-                    });
-                    return;
-                }
-
-                Distube.setFilter(queue, command);
-
-                let description = queue.filters.includes(command) ?
-                    `Queue Filter ${command} disabled` :
-                    `Queue Filter ${command} enabled`;
-
-                Utils.sendEmbed({
-                    message: message,
-                    title: "Queue Filter",
-                    description: description
-                });
-
-                console.log(`${description} by ${message.author.username}`)
-            }
-        }
-    }
-
     static sendDay(message) {
         let today = moment().tz("Asia/Kuala_Lumpur").format("dddd");
         message.channel.send(`[GMT+8] ${today}`);
@@ -680,6 +628,57 @@ export default class EventManager {
 
         let index = Math.floor((Math.random() * listOfOptions.length));
         message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
+    }
+
+    static tree(message) {
+        const seasonDates = {
+            Spring: ["01/09/1990", "30/11/1990"],
+            Summer: ["01/12/1990", "28/02/1990"],
+            Autumn: ["01/03/1990", "31/05/1990"],
+            Winter: ["01/06/1990", "31/08/1990"]
+        }
+
+        const seasonLeaves = {
+            Spring: '🟪',
+            Summer: '🟩',
+            Autumn: '🟧',
+            Winter: '⬜',
+            Christmas: '🟩'
+        }
+
+        let seasonStart;
+        let seasonEnd;
+
+        let nowMoment = moment().tz("Asia/Kuala_Lumpur");
+        let isChristmas = nowMoment.month() == 11 && nowMoment.date() == 25;
+        let season = "Christmas";
+
+        if (!isChristmas) {
+            season = Object.keys(seasonDates).find(key => {
+                seasonStart = moment(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
+                seasonEnd = moment(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
+
+                return nowMoment.isBetween(seasonStart, seasonEnd, undefined, []);
+            });
+        }
+
+        let now = nowMoment.format("DD MMMM YYYY");
+        let label = `${season} ${now} Tree`;
+
+        let leaf = seasonLeaves[season];
+        let specialLeaf = isChristmas ? '🟥' : leaf;
+        let specialLeaf2 = isChristmas ? '🟦' : leaf;
+        let trunk = '🟫';
+
+        let msg = `${label}\n`;
+        msg += `\t\t\t${leaf}\n`;
+        msg += `\t  ${specialLeaf}${leaf}${leaf}\n`;
+        msg += `${leaf}${specialLeaf2}${leaf}${specialLeaf}${leaf}\n`;
+        msg += `\t\t\t${trunk}\n`;
+        msg += `\t\t\t${trunk}\n`;
+        msg += `\t\t\t${trunk}\n`;
+
+        message.channel.send(msg);
     }
 
     // Helper functions
