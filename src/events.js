@@ -711,7 +711,7 @@ export default class EventManager {
                     `;
 
                 sharpBuffer = Buffer.from(svgImage);
-                outputBuffer = await sharp(`${imgFolder}\\psycho-card.png`)
+                outputBuffer = await sharp(`${imgFolder}/psycho-card.png`)
                     .composite([{
                         input: Buffer.from(sharpBuffer)
                     }]).toBuffer();
@@ -722,7 +722,7 @@ export default class EventManager {
                 msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
 
                 sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
-                outputBuffer = await sharp(`${imgFolder}\\patrick-bateman.png`)
+                outputBuffer = await sharp(`${imgFolder}/patrick-bateman.png`)
                     .composite([{
                         input: Buffer.from(sharpBuffer)
                     }]).toBuffer();
