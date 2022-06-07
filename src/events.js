@@ -681,6 +681,13 @@ export default class EventManager {
         message.channel.send(msg);
     }
 
+    static psycho(message) {
+        if (message.author === undefined) return;
+        let msg = `There is an idea of a ${message.author.username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
+
+        message.channel.send(msg);
+    }
+
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
         let availableSeasonIds = Object.keys(availableSeasons);

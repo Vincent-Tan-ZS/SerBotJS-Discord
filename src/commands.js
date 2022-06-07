@@ -41,6 +41,7 @@ export default class Commands {
     static coinFlipCommands = new Array("coin", "coinflip");
     static wheelCommands = new Array("wheel");
     static treeCommands = new Array("tree");
+    static psychoCommands = new Array("psycho");
     //#endregion Commands
 
     //#region Commands Description
@@ -68,6 +69,7 @@ export default class Commands {
     static coinFlipDescription = "Does a random coin flip";
     static wheelDescription = "Does a wheel spin (randomizer)";
     static treeDescription = "Generate a tree :)";
+    static psychoDescription = "Let's see Paul Allen's card";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -95,6 +97,7 @@ export default class Commands {
     static coinFlipDictionary = new Command(this.coinFlipCommands, this.coinFlipDescription, (msg) => { EventManager.coinFlip(msg); });
     static wheelDictionary = new Command(this.wheelCommands, this.wheelDescription, (msg, cmds) => { EventManager.wheel(msg, cmds); });
     static treeDictionary = new Command(this.treeCommands, this.treeDescription, (msg) => { EventManager.tree(msg); });
+    static psychoDictionary = new Command(this.psychoCommands, this.psychoDescription, (msg) => { EventManager.psycho(msg); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -107,7 +110,7 @@ export default class Commands {
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary,
-        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary);
+        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary);
     //#endregion DictionaryList
 
     //#region Functions
