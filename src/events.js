@@ -3,6 +3,8 @@ import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
+import axios from 'axios';
 
 //import { refreshLocalMusicFiles } from './local.js';
 import { distube as Distube } from './setup.js';
@@ -681,11 +683,60 @@ export default class EventManager {
         message.channel.send(msg);
     }
 
-    static psycho(message) {
+    static async psycho(message, commands) {
         if (message.author === undefined) return;
-        let msg = `There is an idea of a ${message.author.username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
+        commands.shift();
 
-        message.channel.send(msg);
+        const username = message.author.username.substring(0, 24);;
+        const imgFolder = path.resolve("./img");
+        let sharpBuffer;
+        let outputBuffer;
+        let msg;
+
+        try {
+            // Card
+            if (commands.length > 0 && commands[0] == "card") {
+                msg = `Let's see ${username}'s card`;
+
+                const svgImage = `
+                    <svg width="1389" height="500">
+                        <style>
+                            .title { fill: #423e3d; font-size: 56px; font-weight: bold;}
+                        </style>
+                        <g transform="rotate(9, 0, 0)" >
+                            <rect width="320" height="60" style="fill:rgb(144, 144, 158)" x="39%" y="27%"/>
+                            <text x="51%" y="38%" text-anchor="middle" class="title">${username.toUpperCase()}</text>
+                        </g>
+                    </svg>
+                    `;
+
+                sharpBuffer = Buffer.from(svgImage);
+                outputBuffer = await sharp(`${imgFolder}\\psycho-card.png`)
+                    .composite([{
+                        input: Buffer.from(sharpBuffer)
+                    }]).toBuffer();
+            }
+            // Monologue
+            else {
+                let avatarImg = await sharp((await axios({ url: message.author.avatarURL(), responseType: "arraybuffer" })).data);
+                msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
+
+                sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
+                outputBuffer = await sharp(`${imgFolder}\\patrick-bateman.png`)
+                    .composite([{
+                        input: Buffer.from(sharpBuffer)
+                    }]).toBuffer();
+            }
+        } catch (e) {
+            console.log(e);
+        } finally {
+            message.channel.send({
+                content: msg,
+                files: [{
+                    attachment: outputBuffer
+                }]
+            });
+        }
     }
 
     // Helper functions

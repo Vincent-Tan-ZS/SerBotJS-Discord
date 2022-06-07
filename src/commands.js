@@ -97,7 +97,7 @@ export default class Commands {
     static coinFlipDictionary = new Command(this.coinFlipCommands, this.coinFlipDescription, (msg) => { EventManager.coinFlip(msg); });
     static wheelDictionary = new Command(this.wheelCommands, this.wheelDescription, (msg, cmds) => { EventManager.wheel(msg, cmds); });
     static treeDictionary = new Command(this.treeCommands, this.treeDescription, (msg) => { EventManager.tree(msg); });
-    static psychoDictionary = new Command(this.psychoCommands, this.psychoDescription, (msg) => { EventManager.psycho(msg); });
+    static psychoDictionary = new Command(this.psychoCommands, this.psychoDescription, (msg, cmds) => { EventManager.psycho(msg, cmds); });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
