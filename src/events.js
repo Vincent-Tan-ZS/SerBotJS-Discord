@@ -881,8 +881,6 @@ export default class EventManager {
                 seasonalStats = seasonRanks.find(x => x.region == region);
             }
 
-            if (seasonalStats.wins + seasonalStats.losses + seasonalStats.abandons <= 0) return;
-
             let rankIcon = R6Utils.getRankIconFromRankId(seasonalStats.rank, seasonId);
 
             let seasonStats = new Object({
