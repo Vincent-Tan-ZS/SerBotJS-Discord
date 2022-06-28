@@ -16,7 +16,7 @@ import TicTacToe from './tictactoe.js';
 import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageSelectMenu, MessageButton } from 'discord.js';
+import { MessageActionRow, MessageSelectMenu } from 'discord.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 

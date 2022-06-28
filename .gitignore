@@ -1,3 +1,4 @@
 local.js
 node_modules/
 PushToHeroku.ps1
+.env

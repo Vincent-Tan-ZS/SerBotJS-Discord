@@ -6,7 +6,7 @@ import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
-import cron from 'node-cron';
+import schedule from 'node-schedule';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -35,6 +35,19 @@ const ReactionRoleMap = {
     rocketleague: "767006976097386517",
     weirdchamp: "978622725469921320" //League of Legends
 }
+
+const ac15Dates = [
+    { title: "Origins", date: new Date(2022, 7, 5) },
+    { title: "Syndicate", date: new Date(2022, 7, 12) },
+    { title: "Unity", date: new Date(2022, 7, 19) },
+    { title: "Rogue", date: new Date(2022, 7, 26) },
+    { title: "IV Black Flag", date: new Date(2022, 8, 2) },
+    { title: "III", date: new Date(2022, 8, 9) },
+    { title: "Revelations", date: new Date(2022, 8, 16) },
+    { title: "Brotherhood", date: new Date(2022, 8, 23) },
+    { title: "II", date: new Date(2022, 8, 30) },
+    { title: "I", date: new Date(2022, 9, 6) }
+];
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
@@ -68,8 +81,21 @@ distube.on('playSong', (queue, song) => {
 //#endregion Distube EventListener
 
 //#region Discord Client EventListeners
-client.on('ready', () => {
+client.on('ready', async() => {
     console.log("SerBot is now online!");
+
+    const ac15UserIds = process.env.AC15_USERS.split(',').filter(x => x.length > 0);
+    const users = await Promise.all(ac15UserIds.map(x => client.users.fetch(x)));
+
+    ac15Dates.forEach(acDate => {
+        console.log(`[Schedule] AC15 (${acDate.title}) Job scheduled for ${acDate.date.getDate()}/${acDate.date.getMonth()}/${acDate.date.getFullYear()}`);
+
+        schedule.scheduleJob(`0 0 12 ${acDate.date.getDate()} ${acDate.date.getMonth()} ${acDate.date.getFullYear()}`, () => {
+            users.forEach(user => {
+                user.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${acDate.title}\nhttps://www.assassinscreed15.com/12-trials`);
+            })
+        });
+    });
 })
 
 client.on('voiceStateUpdate', (oldState, newState) => {
@@ -159,23 +185,3 @@ client.on("interactionCreate", (interaction) => {
     }
 });
 //#endregion Interaction Listener
-
-const ac15Dates = [
-    { title: "Origins", date: new Date(2022, 7, 5) },
-    { title: "Syndicate", date: new Date(2022, 7, 12) },
-    { title: "Unity", date: new Date(2022, 7, 19) },
-    { title: "Rogue", date: new Date(2022, 7, 26) },
-    { title: "IV Black Flag", date: new Date(2022, 8, 2) },
-    { title: "III", date: new Date(2022, 8, 9) },
-    { title: "Revelations", date: new Date(2022, 8, 16) },
-    { title: "Brotherhood", date: new Date(2022, 8, 23) },
-    { title: "II", date: new Date(2022, 8, 30) },
-    { title: "I", date: new Date(2022, 9, 6) }
-];
-
-ac15Dates.forEach(date => {
-    cron.schedule(`* 0 12 ${date.date.getDate()} ${date.date.getMonth()} ${date.date.getFullYear()}`), () => {
-        client.channels.fetch(config.testChannelId)
-            .then(channel => channel.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${date.title}\nhttps://www.assassinscreed15.com/12-trials`));
-    };
-})
