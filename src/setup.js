@@ -6,6 +6,7 @@ import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
+import cron from 'node-cron';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -158,3 +159,23 @@ client.on("interactionCreate", (interaction) => {
     }
 });
 //#endregion Interaction Listener
+
+const ac15Dates = [
+    { title: "Origins", date: new Date(2022, 7, 5) },
+    { title: "Syndicate", date: new Date(2022, 7, 12) },
+    { title: "Unity", date: new Date(2022, 7, 19) },
+    { title: "Rogue", date: new Date(2022, 7, 26) },
+    { title: "IV Black Flag", date: new Date(2022, 8, 2) },
+    { title: "III", date: new Date(2022, 8, 9) },
+    { title: "Revelations", date: new Date(2022, 8, 16) },
+    { title: "Brotherhood", date: new Date(2022, 8, 23) },
+    { title: "II", date: new Date(2022, 8, 30) },
+    { title: "I", date: new Date(2022, 9, 6) }
+];
+
+ac15Dates.forEach(date => {
+    cron.schedule(`* 0 12 ${date.date.getDate()} ${date.date.getMonth()} ${date.date.getFullYear()}`), () => {
+        client.channels.fetch(config.testChannelId)
+            .then(channel => channel.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${date.title}\nhttps://www.assassinscreed15.com/12-trials`));
+    };
+})
