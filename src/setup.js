@@ -37,7 +37,6 @@ const ReactionRoleMap = {
 }
 
 const ac15Dates = [
-    { title: "Origins", date: new Date(2022, 7, 5) },
     { title: "Syndicate", date: new Date(2022, 7, 12) },
     { title: "Unity", date: new Date(2022, 7, 19) },
     { title: "Rogue", date: new Date(2022, 7, 26) },
@@ -90,9 +89,9 @@ client.on('ready', async() => {
     ac15Dates.forEach(acDate => {
         console.log(`[Schedule] AC15 (${acDate.title}) Job scheduled for ${acDate.date.getDate()}/${acDate.date.getMonth()}/${acDate.date.getFullYear()}`);
 
-        schedule.scheduleJob(`0 0 12 ${acDate.date.getDate()} ${acDate.date.getMonth()} ${acDate.date.getFullYear()}`, () => {
+        schedule.scheduleJob({ year: acDate.date.getFullYear(), month: acDate.date.getMonth() - 1, date: acDate.date.getDate(), hour: 12, minute: 0, second: 0, tz: "Asia/Kuala_Lumpur" }, () => {
             users.forEach(user => {
-                user.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${acDate.title}\nhttps://www.assassinscreed15.com/12-trials`);
+                user.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${acDate.title}\n\nhttps://www.assassinscreed15.com/12-trials`);
             })
         });
     });
