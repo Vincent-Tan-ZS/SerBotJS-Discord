@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import axios from 'axios';
 
 //import { refreshLocalMusicFiles } from './local.js';
-import { distube as Distube } from './setup.js';
+import { client, distube as Distube } from './setup.js';
 import config from './config.js';
 import Commands from './commands.js';
 import Utils from './utils.js';
@@ -16,7 +16,8 @@ import TicTacToe from './tictactoe.js';
 import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageSelectMenu } from 'discord.js';
+import { MessageActionRow, MessageButton, MessageSelectMenu } from 'discord.js';
+import { tierListModel, tierListUserMappingModel } from './mongo-conn.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -503,26 +504,6 @@ export default class EventManager {
         });
     }
 
-    static sunbreakCountdown(message) {
-        let sunbreakRelease = moment("20220630");
-        let difference = sunbreakRelease.diff(moment(), 'days', true);
-
-        if (difference < 0) return;
-
-        let description = difference <= 0 ?
-            "TODAY" : difference <= 1 ?
-            "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
-
-        Utils.sendEmbed({
-            message: message,
-            title: "Monster Hunter Rise: Sunbreak",
-            embedURL: "https://www.monsterhunter.com/rise-sunbreak/en-uk/",
-            embedImage: "http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg",
-            fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")}`, inline: true }, { name: 'Countdown', value: description, inline: true }),
-            setTimestamp: true
-        });
-    }
-
     static createRhombus(message, commands) {
         commands.shift();
         if (Number.isNaN(commands[0])) return;
@@ -736,6 +717,129 @@ export default class EventManager {
                     attachment: outputBuffer
                 }]
             });
+        }
+    }
+
+    static async tierList(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const invalidEmbed = {
+            message: message,
+            title: "Tier List",
+            description: "Please use 'create' to start a new tier list or 'view [name]' to view a tier list :)"
+        };
+
+
+        if (commands.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        let tierListName = "";
+        let tierList;
+        let userId = "";
+
+        switch (commands[0]) {
+            case "create":
+            case "c":
+                message.author.send({
+                    content: 'Click below to start creating your tier list!\nNote: Due to Discord limitations, we can only have up to 4 tiers at the moment, sorry :(',
+                    components: [
+                        new MessageActionRow()
+                        .addComponents(
+                            new MessageButton()
+                            .setCustomId('create-tier-list')
+                            .setLabel('Start')
+                            .setStyle('PRIMARY')
+                        )
+                    ]
+                });
+                break;
+            case "view":
+            case "v":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Tier List",
+                        description: "Please use 'view [name]' to view a tier list :)"
+                    });
+                    return;
+                }
+
+                commands.shift();
+                tierListName = commands.join(" ");
+                tierList = await tierListModel.findOne({ Name: tierListName });
+
+                if (tierList === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Tier List",
+                        description: "The tier list doesn't exist :("
+                    });
+                    return;
+                }
+
+                userId = (await tierListUserMappingModel.findOne({ TierListId: tierList._id.toString() }).select('UserId')).UserId;
+                const user = await client.users.fetch(userId);
+
+                const desc = tierList.Tiers.map(tier => {
+                    return `${tier}: ${tierList.List.filter(l => l.Tier === tier).map(l => l.Data).join(", ")}`
+                }).join("\n");
+
+                Utils.sendEmbed({
+                    message: message,
+                    title: tierListName,
+                    description: desc,
+                    author: user.username,
+                    authorIcon: user.avatarURL({ dynamic: true })
+                });
+                break;
+            case "delete":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Tier List",
+                        description: "Please use 'delete [name]' to delete a tier list :)"
+                    });
+                    return;
+                }
+
+                commands.shift();
+                tierListName = commands.join(" ");
+                tierList = await tierListModel.findOne({ Name: tierListName });
+
+                if (tierList === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Tier List",
+                        description: "The tier list doesn't exist :("
+                    });
+                    return;
+                }
+
+                let tierListId = tierList._id.toString();
+                userId = (await tierListUserMappingModel.findOne({ TierListId: tierListId }).select('UserId')).UserId;
+
+                if (userId !== message.author.id) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Tier List",
+                        description: "Only the list creator can delete their own lists, sorry!"
+                    });
+                    return;
+                }
+
+                await Promise.all([
+                    tierListModel.deleteOne({ Name: tierListName }),
+                    tierListUserMappingModel.deleteOne({ TierListId: tierListId })
+                ]);
+
+                message.channel.send("Tier List deleted!");
+                break;
+            default:
+                Utils.sendEmbed(invalidEmbed);
+                break;
         }
     }
 

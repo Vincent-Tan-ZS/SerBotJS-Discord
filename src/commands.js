@@ -31,7 +31,6 @@ export default class Commands {
     static r6Commands = new Array("r6");
     static localMusicCommands = new Array("music");
     static covidCommands = new Array("covid");
-    static sunbreakCommands = new Array("sunbreak");
     static rhombusCommands = new Array("rhombus");
     static wikiHowCommands = new Array("wikihow");
     static todayCommands = new Array("today");
@@ -42,6 +41,7 @@ export default class Commands {
     static wheelCommands = new Array("wheel");
     static treeCommands = new Array("tree");
     static psychoCommands = new Array("psycho");
+    static tierListCommands = new Array("tierlist", "tl");
     //#endregion Commands
 
     //#region Commands Description
@@ -58,18 +58,19 @@ export default class Commands {
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
     static musicLoopDescription = "Loops/Unloops the current track";
-    static r6Description = "Display Rainbow Six: Siege player stats";
-    static covidDescription = "Retrieves information on Covid-19 cases for a country";
-    static rhombusDescription = "Creates a rhombus of size n";
-    static wikiHowDescription = "Searches for a WikiHow page";
+    static r6Description = "Display Rainbow Six: Siege player stats [Commands: 'r6 {username}']";
+    static covidDescription = "Retrieves information on Covid-19 cases for a country [Commands: 'covid {country}']";
+    static rhombusDescription = "Creates a rhombus of size n [Commands: 'rhombus {size}']";
+    static wikiHowDescription = "Searches for a WikiHow page [Commands: 'wikihow {search}']";
     static todayDescription = "I'll tell you what day it is today";
-    static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server!";
-    static copypastaDescription = "Copypasta: mention a user and a game";
+    static tictactoeDescription = "Play Tic-Tac-Toe with someone in the server! [Commands: 'tictactoe @mention']";
+    static copypastaDescription = "Copypasta: mention a user and a game [Commands: 'copypasta @mention {game}']";
     static _8ballDescription = "8-ball lmao";
     static coinFlipDescription = "Does a random coin flip";
-    static wheelDescription = "Does a wheel spin (randomizer)";
+    static wheelDescription = "Does a wheel spin (randomizer) [Commands: 'wheel {option1, option2, option3, etc.}']";
     static treeDescription = "Generate a tree :)";
-    static psychoDescription = "Let's see Paul Allen's card";
+    static psychoDescription = "Let's see Paul Allen's card [Commands: 'psycho', 'psycho card']";
+    static tierListDescription = "Create/view Tier Lists! [Commands: 'create', 'view {name}', 'delete {name}']";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -98,10 +99,10 @@ export default class Commands {
     static wheelDictionary = new Command(this.wheelCommands, this.wheelDescription, (msg, cmds) => { EventManager.wheel(msg, cmds); });
     static treeDictionary = new Command(this.treeCommands, this.treeDescription, (msg) => { EventManager.tree(msg); });
     static psychoDictionary = new Command(this.psychoCommands, this.psychoDescription, (msg, cmds) => { EventManager.psycho(msg, cmds); });
+    static tierListDictionary = new Command(this.tierListCommands, this.tierListDescription, (msg, cmds) => { EventManager.tierList(msg, cmds) });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
-    static sunbreakDictionary = new Command(this.sunbreakCommands, "", (msg) => { EventManager.sunbreakCountdown(msg); });
     //#endregion Dictionary
 
     //#region DictionaryList
@@ -109,7 +110,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.localMusicDictionary, this.sunbreakDictionary, this.todayDictionary, this.tictactoeDictionary,
+        this.localMusicDictionary, this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary);
     //#endregion DictionaryList
 
@@ -157,5 +158,5 @@ export default class Commands {
         dictionary.Action(message, commands);
     }
 
-    //#endreigon Functions
+    //#endregion Functions
 }

@@ -7,6 +7,9 @@ import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
+import { ConnectDB, tierListModel, tierListUserMappingModel } from './mongo-conn.js';
+import { showModal } from 'discord-modals';
+import { createTierListModal } from './modals.js';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -37,8 +40,6 @@ const ReactionRoleMap = {
 }
 
 const ac15Dates = [
-    { title: "Syndicate", date: new Date(2022, 7, 12) },
-    { title: "Unity", date: new Date(2022, 7, 19) },
     { title: "Rogue", date: new Date(2022, 7, 26) },
     { title: "IV Black Flag", date: new Date(2022, 8, 2) },
     { title: "III", date: new Date(2022, 8, 9) },
@@ -83,13 +84,17 @@ distube.on('playSong', (queue, song) => {
 client.on('ready', async() => {
     console.log("SerBot is now online!");
 
+    // MongoDB
+    ConnectDB();
+
+    // AC15
     const ac15UserIds = process.env.AC15_USERS.split(',').filter(x => x.length > 0);
     const users = await Promise.all(ac15UserIds.map(x => client.users.fetch(x)));
 
     ac15Dates.forEach(acDate => {
         console.log(`[Schedule] AC15 (${acDate.title}) Job scheduled for ${acDate.date.getDate()}/${acDate.date.getMonth()}/${acDate.date.getFullYear()}`);
 
-        schedule.scheduleJob({ year: acDate.date.getFullYear(), month: acDate.date.getMonth() - 1, date: acDate.date.getDate(), hour: 12, minute: 0, second: 0, tz: "Asia/Kuala_Lumpur" }, () => {
+        schedule.scheduleJob({ year: acDate.date.getFullYear(), month: acDate.date.getMonth() - 1, date: acDate.date.getDate(), hour: 18, minute: 0, second: 0, tz: "Asia/Kuala_Lumpur" }, () => {
             users.forEach(user => {
                 user.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${acDate.title}\n\nhttps://www.assassinscreed15.com/12-trials`);
             })
@@ -182,5 +187,69 @@ client.on("interactionCreate", (interaction) => {
 
         interaction.deferUpdate();
     }
+    // Tier List Modal
+    else if (interaction.customId === "create-tier-list") {
+        showModal(createTierListModal, {
+            client: client,
+            interaction: interaction
+        });
+    }
 });
 //#endregion Interaction Listener
+
+//#region Modal
+client.on('modalSubmit', async(modal) => {
+    if (modal.customId === "create-tier-list-modal") {
+        const tierValues = modal.fields.map(x => x.value).filter(x => x !== null);
+
+        const tierListName = tierValues.shift();
+
+        if (tierValues.length <= 0) {
+            modal.reply("You need at least one tier, please try again :)");
+            return;
+        }
+
+        if (tierValues.find(x => !x.match(/^\w*:([ ]?\w*[,]?)+$/g)) !== undefined) {
+            modal.reply("Please follow the correct format for a tier list. {TierName}: {item1},{item2},etc...");
+            return;
+        }
+
+        let existing = await tierListModel.findOne({ Name: tierListName });
+
+        if (existing !== null) {
+            modal.reply("This tier list already exists! Name is the same as an existing one :(");
+            return;
+        }
+
+        const tiers = tierValues.map(x => x.split(":")[0]);
+
+        const newTierList = new tierListModel({
+            Name: tierListName,
+            Tiers: tiers,
+            List: tiers.reduce((prev, tier, index, arr) => {
+                let _data = tierValues.find(x => x.startsWith(tier)).split(":")[1].split(",").map(x => x.trim());
+
+                arr = prev.concat(_data.map(x => {
+                    return {
+                        Tier: tier,
+                        Data: x
+                    }
+                }))
+                return arr;
+            }, [])
+        });
+
+        const newTierListUserMap = new tierListUserMappingModel({
+            UserId: modal.user.id,
+            TierListId: newTierList._id.toString()
+        });
+
+        await Promise.all([
+            newTierList.save(),
+            newTierListUserMap.save()
+        ]);
+
+        modal.reply(`Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`);
+    }
+});
+//#endregion Modal
