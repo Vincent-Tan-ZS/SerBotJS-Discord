@@ -40,6 +40,12 @@ export default class EventManager {
         });
     }
 
+    // Ping
+    static ping(message) {
+        let channel = message.channel;
+        channel.send("Pong!");
+    }
+
     // Greeting Actions
     static sendGreeting(message) {
         let rng = Math.random();

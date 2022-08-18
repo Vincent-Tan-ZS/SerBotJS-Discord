@@ -14,6 +14,7 @@ export default class Commands {
     constructor() {}
 
     //#region Commands
+    static pingCommands = new Array("ping");
     static disconnectCommands = new Array("dc", "disconnect", "logout");
     static greetingCommands = new Array("hi", "hey", "hello", "sup");
     static helpCommands = new Array("help");
@@ -45,6 +46,7 @@ export default class Commands {
     //#endregion Commands
 
     //#region Commands Description
+    static pingDescription = "Ping Pong!";
     static disconnectDescription = "SerBot logs out (Administrators Only)";
     static greetingDescription = "Receive a greeting from SerBot";
     static musicJoinDescription = "Joins your voice channel";
@@ -74,6 +76,7 @@ export default class Commands {
     //#endregion Commands Description
 
     //#region Dictionary
+    static pingDictionary = new Command(this.pingCommands, this.pingDescription, (msg) => { EventManager.ping(msg); });
     static greetingDictionary = new Command(this.greetingCommands, this.greetingDescription, (msg) => { EventManager.sendGreeting(msg); });
     static musicPlayDictionary = new Command(this.musicPlayCommands, this.musicPlayDescription, (msg, cmds) => { EventManager.playMusic(msg, cmds); });
     static musicRemoveDictionary = new Command(this.musicRemoveCommands, this.musicRemoveDescription, (msg, cmds) => { EventManager.removeMusic(msg, cmds); });
@@ -111,7 +114,8 @@ export default class Commands {
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.localMusicDictionary, this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary,
-        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary);
+        this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
+        this.pingDictionary);
     //#endregion DictionaryList
 
     //#region Functions
