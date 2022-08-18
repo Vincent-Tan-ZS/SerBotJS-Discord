@@ -40,10 +40,6 @@ const ReactionRoleMap = {
 }
 
 const ac15Dates = [
-    { title: "Rogue", date: new Date(2022, 7, 26) },
-    { title: "IV Black Flag", date: new Date(2022, 8, 2) },
-    { title: "III", date: new Date(2022, 8, 9) },
-    { title: "Revelations", date: new Date(2022, 8, 16) },
     { title: "Brotherhood", date: new Date(2022, 8, 23) },
     { title: "II", date: new Date(2022, 8, 30) },
     { title: "I", date: new Date(2022, 9, 6) }
@@ -68,7 +64,7 @@ distube.on('playSong', (queue, song) => {
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
     })
-    .on('deleteQueue', (queue) => {
+    .on('finish', (queue) => {
         Utils.sleep(5 * 60 * 1000).then(() => {
             let newQueue = distube.getQueue(queue);
 

@@ -14,6 +14,6 @@ export default {
     ticTacToeTopRow: ["↖", "⬆", "↗"],
     ticTacToeMidRow: ["⬅", "⏺", "➡"],
     ticTacToeBotRow: ["↙", "⬇", "↘"],
-    eightBallReplies: ["Ummm, yeah... maybe..", "Yes", "No", "HAHAHHAHAHAHHA, oh you're being serious", "Yeah, sure, whatever", "Stop asking me bro damn", "Yeah nah", "Get juked", "Horizon cracked"],
+    eightBallReplies: ["Ummm, yeah... maybe..", "Yes", "No", "HAHAHHAHAHAHHA, oh you're being serious", "Yeah, sure, whatever", "Stop asking me bro damn", "Yeah nah", "Get juked", "Horizon cracked", "gg"],
     enrollmentMessageId: process.env.ENROLLMENT_MESSAGE_ID
 }

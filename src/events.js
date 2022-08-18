@@ -741,6 +741,9 @@ export default class EventManager {
         let userId = "";
 
         switch (commands[0]) {
+            case "list":
+            case "l":
+                break;
             case "create":
             case "c":
                 message.author.send({
