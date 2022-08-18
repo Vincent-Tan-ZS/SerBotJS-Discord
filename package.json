@@ -19,7 +19,7 @@
         "@discordjs/rest": "0.2.0-canary.0",
         "@discordjs/voice": "^0.7.5",
         "@distube/spotify": "^1.2.1",
-        "@distube/yt-dlp": "^1.0.2",
+        "@distube/yt-dlp": "^1.1.3",
         "@szmarczak/http-timer": "^5.0.1",
         "axios": "^0.27.2",
         "bufferutil": "^4.0.6",
