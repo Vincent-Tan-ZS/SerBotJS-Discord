@@ -17,7 +17,7 @@ import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { MessageActionRow, MessageButton, MessageSelectMenu } from 'discord.js';
-import { tierListModel, tierListUserMappingModel } from './mongo-conn.js';
+import { countdownModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 
@@ -848,6 +848,163 @@ export default class EventManager {
                 break;
             default:
                 Utils.sendEmbed(invalidEmbed);
+                break;
+        }
+    }
+
+    static async countdown(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const invalidEmbed = {
+            message: message,
+            title: "Countdown",
+            description: "Commands: create, list, [name], delete [name]"
+        };
+
+        if (commands.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        let countdownName = "";
+        let countdown;
+        let userId = "";
+
+        switch (commands[0]) {
+            case "list":
+            case "l":
+                let allCountdowns = await countdownModel.find({});
+
+                let description = allCountdowns.map(cd => cd.Name).join("\n");
+    
+                Utils.sendEmbed({
+                    message: message,
+                    title: "Countdown",
+                    description: description
+                });
+                break;
+            case "create":
+            case "c":
+                message.author.send({
+                    content: 'Click below to start creating a countdown!',
+                    components: [
+                        new MessageActionRow()
+                        .addComponents(
+                            new MessageButton()
+                            .setCustomId('create-countdown')
+                            .setLabel('Start')
+                            .setStyle('PRIMARY')
+                        )
+                    ]
+                });
+                break;
+            case "delete":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use 'delete [name]' to delete a countdown :)"
+                    });
+                    return;
+                }
+
+                commands.shift();
+                countdownName = commands.join(" ");
+                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                userId = countdown.UserId;
+
+                if (userId !== message.author.id) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Only the countdown creator can delete their own countdowns, sorry!"
+                    });
+                    return;
+                }
+
+                await Promise.all([
+                    countdownModel.deleteOne({ Name: countdownName })
+                ]);
+
+                message.channel.send("Countdown deleted!");
+                break;
+            default:
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use '[name]' to view a countdown :)"
+                    });
+                    return;
+                }
+
+                countdownName = commands.join(" ");
+                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                let releaseDateMoment = moment(countdown.Date);
+                let difference = releaseDateMoment.diff(moment(), 'days', true);
+
+                if (difference < 0) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: `${countdownName} should already be completed!`
+                    });
+                    return;
+                };
+
+                let releaseCountdown = difference <= 0 ?
+                    "TODAY" : difference <= 1 ?
+                    "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
+
+                let embedObj = {
+                    message: message,
+                    title: countdown.Name,
+                    fields: [{
+                        name: "Release Date",
+                        value: moment(countdown.Date).format("DD/MM/YYYY"),
+                        inline: true
+                    }, {
+                        name: "Countdown",
+                        value: releaseCountdown,
+                        inline: true
+                    }],
+                    setTimestamp: true
+                };
+
+                if (countdown.Description !== undefined && countdown.Description.length > 0) {
+                    embedObj.description = countdown.Description;
+                }
+
+                if (countdown.Image !== undefined && countdown.Image.length > 0) {
+                    embedObj.embedImage = countdown.Image;
+                }
+
+                if (countdown.URL !== undefined && countdown.URL.length > 0) {
+                    embedObj.embedURL = countdown.URL;
+                }
+
+                Utils.sendEmbed(embedObj);
                 break;
         }
     }

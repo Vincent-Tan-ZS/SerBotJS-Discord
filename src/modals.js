@@ -1,4 +1,4 @@
-import { Modal, TextInputComponent, SelectMenuComponent } from 'discord-modals';
+import { Modal, TextInputComponent } from 'discord-modals';
 
 const createTierListModal = new Modal()
     .setCustomId('create-tier-list-modal')
@@ -32,4 +32,37 @@ const createTierListModal = new Modal()
         .setStyle('LONG')
     );
 
-export { createTierListModal };
+const countdownModal = new Modal()
+    .setCustomId('create-countdown-modal')
+    .setTitle("Countdown Creator")
+    .addComponents(
+        new TextInputComponent()
+        .setCustomId('countdown-name')
+        .setLabel('Countdown Name')
+        .setPlaceholder('The hit TV Series Bimpson')
+        .setStyle('SHORT')
+        .setRequired(true),
+        new TextInputComponent()
+        .setCustomId('countdown-date')
+        .setLabel('Release Date')
+        .setPlaceholder('')
+        .setStyle('SHORT')
+        .setRequired(true),
+        new TextInputComponent()
+        .setCustomId('countdown-description')
+        .setLabel('Description')
+        .setPlaceholder('Bimpson is the best tv series')
+        .setStyle('SHORT'),
+        new TextInputComponent()
+        .setCustomId('countdown-image')
+        .setLabel('Image URL')
+        .setPlaceholder('https://image.com/something.png')
+        .setStyle('SHORT'),
+        new TextInputComponent()
+        .setCustomId('countdown-url')
+        .setLabel('Countdown URL')
+        .setPlaceholder('https://countdown-news.com')
+        .setStyle('SHORT')
+    );
+
+export { createTierListModal, countdownModal };

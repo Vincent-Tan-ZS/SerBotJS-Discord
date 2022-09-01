@@ -3,7 +3,9 @@ import { MessageActionRow } from 'discord.js';
 import config from './config.js';
 
 export default class Utils {
-    constructor() {}
+    constructor() {
+        this.timeoutId = "";
+    }
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
@@ -20,10 +22,16 @@ export default class Utils {
         return num / den;
     }
 
-    static sleep(ms) {
-        return new Promise(function(resolve) {
-            setTimeout(resolve, ms);
-        });
+    static cancelTimeout() {
+        if (this.timeoutId.length <= 0) return;
+        clearTimeout(this.timeoutId);
+        this.timeoutId = "";
+    }
+
+    static timeout(func, ms) {
+        this.timeoutId = setTimeout(() => {
+            func();
+        }, ms);
     }
 
     static createEmbed({
@@ -66,7 +74,10 @@ export default class Utils {
         }
 
         if (footer.length > 0) {
-            embed.setFooter(footer, footerIcon);
+            embed.setFooter({
+                text: footer,
+                iconURL: footerIcon
+            });
         }
 
         if (thumbnail.length > 0) {

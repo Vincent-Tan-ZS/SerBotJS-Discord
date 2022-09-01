@@ -43,6 +43,7 @@ export default class Commands {
     static treeCommands = new Array("tree");
     static psychoCommands = new Array("psycho");
     static tierListCommands = new Array("tierlist", "tl");
+    static countdownCommands = new Array("countdown", "cd");
     //#endregion Commands
 
     //#region Commands Description
@@ -72,7 +73,8 @@ export default class Commands {
     static wheelDescription = "Does a wheel spin (randomizer) [Commands: 'wheel {option1, option2, option3, etc.}']";
     static treeDescription = "Generate a tree :)";
     static psychoDescription = "Let's see Paul Allen's card [Commands: 'psycho', 'psycho card']";
-    static tierListDescription = "Create/view Tier Lists! [Commands: 'create', 'view {name}', 'delete {name}']";
+    static tierListDescription = "Create/view Tier Lists!";
+    static countdownDescription = "Create/view Countdowns!";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -103,6 +105,7 @@ export default class Commands {
     static treeDictionary = new Command(this.treeCommands, this.treeDescription, (msg) => { EventManager.tree(msg); });
     static psychoDictionary = new Command(this.psychoCommands, this.psychoDescription, (msg, cmds) => { EventManager.psycho(msg, cmds); });
     static tierListDictionary = new Command(this.tierListCommands, this.tierListDescription, (msg, cmds) => { EventManager.tierList(msg, cmds) });
+    static countdownDictionary = new Command(this.countdownCommands, this.countdownDescription, (msg, cmds) => { EventManager.countdown(msg, cmds) });
 
     static helpDictionary = new Command(this.helpCommands, "", (msg) => { EventManager.sendCommandList(msg); });
     static localMusicDictionary = new Command(this.localMusicCommands, "", (msg, cmds) => { EventManager.playLocalMusic(msg, cmds); });
@@ -115,7 +118,7 @@ export default class Commands {
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.localMusicDictionary, this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
-        this.pingDictionary);
+        this.countdownDictionary, this.pingDictionary);
     //#endregion DictionaryList
 
     //#region Functions

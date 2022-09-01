@@ -7,9 +7,11 @@ import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
-import { ConnectDB, tierListModel, tierListUserMappingModel } from './mongo-conn.js';
+import { ConnectDB } from './mongo/mongo-conn.js';
 import { showModal } from 'discord-modals';
-import { createTierListModal } from './modals.js';
+import { countdownModal, createTierListModal } from './modals.js';
+import moment from 'moment';
+import { tierListModel, tierListUserMappingModel, countdownModel } from './mongo/mongo-schemas.js';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -40,8 +42,6 @@ const ReactionRoleMap = {
 }
 
 const ac15Dates = [
-    { title: "Brotherhood", date: new Date(2022, 8, 23) },
-    { title: "II", date: new Date(2022, 8, 30) },
     { title: "I", date: new Date(2022, 9, 6) }
 ];
 
@@ -65,13 +65,13 @@ distube.on('playSong', (queue, song) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('finish', (queue) => {
-        Utils.sleep(5 * 60 * 1000).then(() => {
+        Utils.timeout(() => {
             let newQueue = distube.getQueue(queue);
 
-            if ((newQueue == undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
+            if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
                 distube.voices.leave(queue);
             }
-        });
+        }, 5 * 6 * 1000);
     });
 
 //#endregion Distube EventListener
@@ -189,63 +189,113 @@ client.on("interactionCreate", (interaction) => {
             client: client,
             interaction: interaction
         });
+    } else if (interaction.customId === "create-countdown") {
+        showModal(countdownModal, {
+            client: client,
+            interaction: interaction
+        });
     }
 });
 //#endregion Interaction Listener
 
 //#region Modal
 client.on('modalSubmit', async(modal) => {
-    if (modal.customId === "create-tier-list-modal") {
-        const tierValues = modal.fields.map(x => x.value).filter(x => x !== null);
+    let reply = "";
 
-        const tierListName = tierValues.shift();
+    switch (modal.customId) {
+        case "create-tier-list-modal":
+            const tierValues = modal.fields.map(x => x.value).filter(x => x !== null);
 
-        if (tierValues.length <= 0) {
-            modal.reply("You need at least one tier, please try again :)");
-            return;
-        }
+            const tierListName = tierValues.shift();
 
-        if (tierValues.find(x => !x.match(/^\w*:([ ]?\w*[,]?)+$/g)) !== undefined) {
-            modal.reply("Please follow the correct format for a tier list. {TierName}: {item1},{item2},etc...");
-            return;
-        }
+            if (tierValues.length <= 0) {
+                reply = "You need at least one tier, please try again :)";
+                return;
+            }
 
-        let existing = await tierListModel.findOne({ Name: tierListName });
+            if (tierValues.find(x => !x.match(/^\w*:([ ]?\w*[,]?)+$/g)) !== undefined) {
+                reply = "Please follow the correct format for a tier list. {TierName}: {item1},{item2},etc...";
+                return;
+            }
 
-        if (existing !== null) {
-            modal.reply("This tier list already exists! Name is the same as an existing one :(");
-            return;
-        }
+            let existing = await tierListModel.findOne({ Name: tierListName });
 
-        const tiers = tierValues.map(x => x.split(":")[0]);
+            if (existing !== null) {
+                reply = "This tier list already exists! Name is the same as an existing one :(";
+                return;
+            }
 
-        const newTierList = new tierListModel({
-            Name: tierListName,
-            Tiers: tiers,
-            List: tiers.reduce((prev, tier, index, arr) => {
-                let _data = tierValues.find(x => x.startsWith(tier)).split(":")[1].split(",").map(x => x.trim());
+            const tiers = tierValues.map(x => x.split(":")[0]);
 
-                arr = prev.concat(_data.map(x => {
-                    return {
-                        Tier: tier,
-                        Data: x
-                    }
-                }))
-                return arr;
-            }, [])
-        });
+            const newTierList = new tierListModel({
+                Name: tierListName,
+                Tiers: tiers,
+                List: tiers.reduce((prev, tier, index, arr) => {
+                    let _data = tierValues.find(x => x.startsWith(tier)).split(":")[1].split(",").map(x => x.trim());
 
-        const newTierListUserMap = new tierListUserMappingModel({
-            UserId: modal.user.id,
-            TierListId: newTierList._id.toString()
-        });
+                    arr = prev.concat(_data.map(x => {
+                        return {
+                            Tier: tier,
+                            Data: x
+                        }
+                    }))
+                    return arr;
+                }, [])
+            });
 
-        await Promise.all([
-            newTierList.save(),
-            newTierListUserMap.save()
-        ]);
+            const newTierListUserMap = new tierListUserMappingModel({
+                UserId: modal.user.id,
+                TierListId: newTierList._id.toString()
+            });
 
-        modal.reply(`Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`);
+            await Promise.all([
+                newTierList.save(),
+                newTierListUserMap.save()
+            ]);
+
+            reply = `Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`;
+            break;
+        case "create-countdown-modal":
+            const countdownName = modal.getTextInputValue("countdown-name");
+            const countdownDate = modal.getTextInputValue("countdown-date");
+            const countdownDesc = modal.getTextInputValue("countdown-description");
+            const countdownImage = modal.getTextInputValue("countdown-image");
+            const countdownURL = modal.getTextInputValue("countdown-url");
+
+            const momentDate = moment(countdownDate);
+
+            if (countdownName.length <= 0) {
+                reply = "Please give this countdown a name!";
+                return;
+            }
+
+            if (countdownDate.length <= 0 || momentDate.isValid() !== true) {
+                reply = "Please give insert a valid date!";
+                return;
+            }
+
+            let existingCD = await countdownModel.findOne({ Name: countdownName });
+
+            if (existingCD !== null) {
+                reply = "This countdown already exists!";
+                return;
+            }
+
+            const newCountdown = new countdownModel({
+                Name: countdownName,
+                Date: countdownDate,
+                Description: countdownDesc ?? "",
+                Image: countdownImage ?? "",
+                URL: countdownURL ?? "",
+                UserId: modal.user.id
+            });
+
+            await newCountdown.save();
+
+            reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdownName}'!`;
+            break;
     }
+
+    modal.reply(reply);
 });
 //#endregion Modal
