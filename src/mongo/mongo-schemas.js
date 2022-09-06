@@ -63,4 +63,25 @@ const countdownSchema = mongoose.Schema({
 });
 const countdownModel = mongoose.model('Countdown', countdownSchema, 'Countdown');
 
-export { tierListUserMappingModel, tierListModel, countdownModel };
+// Logging
+const loggingSchema = mongoose.Schema({
+    Timestamp: {
+        type: Date,
+        required: true
+    },
+    Type: {
+        type: String,
+        required: true,
+    },
+    LogType: {
+        type: String,
+        required: true,
+    },
+    Message: {
+        type: String,
+        required: true
+    }
+});
+const loggingModel = mongoose.model('Logging', loggingSchema, 'Logging');
+
+export { tierListUserMappingModel, tierListModel, countdownModel, loggingModel };

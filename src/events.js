@@ -613,7 +613,7 @@ export default class EventManager {
         let optionStr = commands.join(' ');
         let listOfOptions = optionStr.split(",");
 
-        if (listOfOptions.length <= 0) return;
+        if (listOfOptions.length <= 1) return;
 
         let index = Math.floor((Math.random() * listOfOptions.length));
         message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
@@ -845,6 +845,7 @@ export default class EventManager {
                 ]);
 
                 message.channel.send("Tier List deleted!");
+                Utils.Log(Utils.LogType_INFO, `${message.author.username} deleted ${tierListName} Tier List`, "Tier List");
                 break;
             default:
                 Utils.sendEmbed(invalidEmbed);
@@ -937,6 +938,7 @@ export default class EventManager {
                     countdownModel.deleteOne({ Name: countdownName })
                 ]);
 
+                Utils.Log(Utils.LogType_INFO, `${message.author.username} deleted ${countdownName} Countdown`, "Countdown");
                 message.channel.send("Countdown deleted!");
                 break;
             default:

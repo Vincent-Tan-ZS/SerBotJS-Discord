@@ -6,7 +6,7 @@ import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
-// import schedule from 'node-schedule';
+import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import { showModal } from 'discord-modals';
 import { countdownModal, createTierListModal } from './modals.js';
@@ -48,7 +48,7 @@ distube.on('playSong', (queue, song) => {
             title: "Now Playing",
             description: song.name
         });
-        console.log(`[Distube] Playing ${song.name}`);
+        Utils.Log(Utils.LogType_INFO, `Playing ${song.name}`, "DistubeJS");
     })
     .on('initQueue', queue => {
         queue.autoplay = false;
@@ -56,9 +56,11 @@ distube.on('playSong', (queue, song) => {
     })
     .on('searchNoResult', (message, query) => {
         message.channel.send(`[Distube] ${query} not found.`);
+        Utils.Log(Utils.LogType_INFO, `${query} not found`, "DistubeJS");
     })
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
+        Utils.Log(Utils.LogType_ERROR, e.message, "DistubeJS");
     })
     .on('addSong', (queue, song) => {
         Utils.cancelTimeout("leaveVC");
@@ -77,37 +79,41 @@ distube.on('playSong', (queue, song) => {
 
 //#region Discord Client EventListeners
 client.on('ready', async() => {
-    console.log("SerBot is now online!");
+    Utils.Log(Utils.LogType_INFO, "SerBot is now online!");
 
     // MongoDB
     ConnectDB();
 
     // node-schedule refer
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});
+
+    const user = await client.users.fetch(process.env.REMINDER_USER);
+
+    schedule.scheduleJob({year: 2022, month: 10, date: 25, hour: 9, minute: 0, second: 0, tz:"Asia/Kuala_Lumpur"}, () => {
+        user.send("Heroku Free will no longer be available starting 28th November 2022, check Reddit saved comments for alternatives");
+    });
 })
 
 client.on('voiceStateUpdate', (oldState, newState) => {
     let user = oldState.member.user;
     if (user.bot !== true && user.username !== "SerBot") return;
 
-    const nowString = moment().format("DD-MM-YYYY HH:mm:ss");
-
     let voice = distube.voices.get(newState.guild);
     if (voice == null) {
-        console.log(`[${nowString}] SerBot left ${oldState.channel.name}`);
+        Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
         Utils.cancelTimeout("leaveVC");
         return;
     };
 
     if (!voice.selfDeaf) voice.setSelfDeaf(true);
 
-    console.log(`[${nowString}] SerBot joined ${newState.channel.name}`);
+    Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
 })
 
 client.on('error', (e) => {
-        console.log(`DiscordJs Error: ${e}`);
-    })
-    //#endregion Discord Client EventListeners
+    Utils.Log(Utils.LogType_ERROR, e.message, "DiscordJS");
+})
+//#endregion Discord Client EventListeners
 
 //#region Message Listener
 client.on('messageCreate', (message) => {
@@ -250,6 +256,7 @@ client.on('modalSubmit', async(modal) => {
             ]);
 
             reply = `Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`;
+            Utils.Log(Utils.LogType_INFO, `${modal.member.user.username} created ${tierListName} Tier List`, "Tier List");
             break;
         case "create-countdown-modal":
             const countdownName = modal.getTextInputValue("countdown-name");
@@ -289,6 +296,7 @@ client.on('modalSubmit', async(modal) => {
             await newCountdown.save();
 
             reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdownName}'!`;
+            Utils.Log(Utils.LogType_INFO, `${modal.member.user.username} created ${countdownName} Countdown`, "Countdown");
             break;
     }
 

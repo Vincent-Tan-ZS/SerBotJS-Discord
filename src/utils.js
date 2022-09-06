@@ -3,9 +3,13 @@ import { MessageActionRow } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import moment from 'moment';
+import { loggingModel } from './mongo/mongo-schemas.js';
 
 export default class Utils {
     constructor() {}
+
+    static LogType_INFO = "INFO";
+    static LogType_ERROR = "ERROR";
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
@@ -169,5 +173,22 @@ export default class Utils {
         let start = discordMention.FirstDigitIndex();
         let end = discordMention.lastIndexOf(">") - start;
         return discordMention.substr(start, end);
+    }
+
+    static Log = (logType, msg, type = "General") => {
+        if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO) return;
+
+        let currentTime = new Date();
+        let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss");
+
+        console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
+
+        const newLog = new loggingModel({
+            Timestamp: currentTime,
+            Type: type,
+            LogType: logType,
+            Message: msg
+        });
+        newLog.save();
     }
 }
