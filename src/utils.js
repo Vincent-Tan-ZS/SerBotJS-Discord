@@ -179,7 +179,7 @@ export default class Utils {
         if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO) return;
 
         let currentTime = new Date();
-        let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss");
+        let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
 
         console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
 
