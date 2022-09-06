@@ -1,11 +1,11 @@
 import Discord from 'discord.js';
 import { MessageActionRow } from 'discord.js';
 import config from './config.js';
+import schedule from 'node-schedule';
+import moment from 'moment';
 
 export default class Utils {
-    constructor() {
-        this.timeoutId = "";
-    }
+    constructor() {}
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
@@ -22,16 +22,14 @@ export default class Utils {
         return num / den;
     }
 
-    static cancelTimeout() {
-        if (this.timeoutId.length <= 0) return;
-        clearTimeout(this.timeoutId);
-        this.timeoutId = "";
+    static cancelTimeout(name) {
+        schedule.cancelJob(name);
     }
 
-    static timeout(func, ms) {
-        this.timeoutId = setTimeout(() => {
-            func();
-        }, ms);
+    static timeout(name, minutes, func) {
+        let time = moment().add(minutes, "minutes").toDate();
+
+        schedule.scheduleJob(name, time, func);
     }
 
     static createEmbed({

@@ -45,7 +45,7 @@ const countdownModal = new Modal()
         new TextInputComponent()
         .setCustomId('countdown-date')
         .setLabel('Release Date')
-        .setPlaceholder('')
+        .setPlaceholder('DD/MM/YYYY')
         .setStyle('SHORT')
         .setRequired(true),
         new TextInputComponent()

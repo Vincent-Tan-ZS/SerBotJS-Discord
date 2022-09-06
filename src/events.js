@@ -170,7 +170,7 @@ export default class EventManager {
         }).then(() => {
             let queue = Distube.getQueue(message);
 
-            if (queue != undefined && queue.songs.length > 1) {
+            if (queue !== undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
                 Utils.sendEmbed({

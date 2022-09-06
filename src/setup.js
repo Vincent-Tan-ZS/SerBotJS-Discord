@@ -6,7 +6,7 @@ import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
 import EventManager from './events.js';
-import schedule from 'node-schedule';
+// import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import { showModal } from 'discord-modals';
 import { countdownModal, createTierListModal } from './modals.js';
@@ -61,16 +61,16 @@ distube.on('playSong', (queue, song) => {
         channel.send(`Distube Error: ${e}`);
     })
     .on('addSong', (queue, song) => {
-        Utils.cancelTimeout();
+        Utils.cancelTimeout("leaveVC");
     })
     .on('finish', (queue) => {
-        Utils.timeout(() => {
+        Utils.timeout("leaveVC", 5, () => {
             let newQueue = distube.getQueue(queue);
 
             if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
                 distube.voices.leave(queue);
             }
-        }, 5 * 6 * 1000);
+        });
     });
 
 //#endregion Distube EventListener
@@ -88,12 +88,20 @@ client.on('ready', async() => {
 
 client.on('voiceStateUpdate', (oldState, newState) => {
     let user = oldState.member.user;
-    if (!user.bot && !user.username == "SerBot") return;
+    if (user.bot !== true && user.username !== "SerBot") return;
+
+    const nowString = moment().format("DD-MM-YYYY HH:mm:ss");
 
     let voice = distube.voices.get(newState.guild);
-    if (voice == null) return;
+    if (voice == null) {
+        console.log(`[${nowString}] SerBot left ${oldState.channel.name}`);
+        Utils.cancelTimeout("leaveVC");
+        return;
+    };
 
     if (!voice.selfDeaf) voice.setSelfDeaf(true);
+
+    console.log(`[${nowString}] SerBot joined ${newState.channel.name}`);
 })
 
 client.on('error', (e) => {
@@ -250,7 +258,7 @@ client.on('modalSubmit', async(modal) => {
             const countdownImage = modal.getTextInputValue("countdown-image");
             const countdownURL = modal.getTextInputValue("countdown-url");
 
-            const momentDate = moment(countdownDate);
+            const momentDate = moment(countdownDate, "DD/MM/YYYY");
 
             if (countdownName.length <= 0) {
                 reply = "Please give this countdown a name!";
