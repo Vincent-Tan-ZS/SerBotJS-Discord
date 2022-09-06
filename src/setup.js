@@ -41,10 +41,6 @@ const ReactionRoleMap = {
     weirdchamp: "978622725469921320" //League of Legends
 }
 
-const ac15Dates = [
-    { title: "I", date: new Date(2022, 9, 6) }
-];
-
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
         Utils.sendEmbed({
@@ -63,6 +59,9 @@ distube.on('playSong', (queue, song) => {
     })
     .on('error', (channel, e) => {
         channel.send(`Distube Error: ${e}`);
+    })
+    .on('addSong', (queue, song) => {
+        Utils.cancelTimeout();
     })
     .on('finish', (queue) => {
         Utils.timeout(() => {
@@ -83,19 +82,8 @@ client.on('ready', async() => {
     // MongoDB
     ConnectDB();
 
-    // AC15
-    const ac15UserIds = process.env.AC15_USERS.split(',').filter(x => x.length > 0);
-    const users = await Promise.all(ac15UserIds.map(x => client.users.fetch(x)));
-
-    ac15Dates.forEach(acDate => {
-        console.log(`[Schedule] AC15 (${acDate.title}) Job scheduled for ${acDate.date.getDate()}/${acDate.date.getMonth()}/${acDate.date.getFullYear()}`);
-
-        schedule.scheduleJob({ year: acDate.date.getFullYear(), month: acDate.date.getMonth() - 1, date: acDate.date.getDate(), hour: 18, minute: 0, second: 0, tz: "Asia/Kuala_Lumpur" }, () => {
-            users.forEach(user => {
-                user.send(`Do the Assassin's Creed 15th Anniversary Twelve Trials today!\nThis week's game: Assassin's Creed ${acDate.title}\n\nhttps://www.assassinscreed15.com/12-trials`);
-            })
-        });
-    });
+    // node-schedule refer
+    // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});
 })
 
 client.on('voiceStateUpdate', (oldState, newState) => {
