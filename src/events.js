@@ -942,7 +942,7 @@ export default class EventManager {
                 message.channel.send("Countdown deleted!");
                 break;
             default:
-                if (commands.length <= 1) {
+                if (commands.length <= 0) {
                     Utils.sendEmbed({
                         message: message,
                         title: "Countdown",

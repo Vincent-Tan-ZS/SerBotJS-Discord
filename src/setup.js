@@ -204,6 +204,7 @@ client.on("interactionCreate", (interaction) => {
 client.on('modalSubmit', async(modal) => {
     let reply = "";
 
+    modal_switch:
     switch (modal.customId) {
         case "create-tier-list-modal":
             const tierValues = modal.fields.map(x => x.value).filter(x => x !== null);
@@ -212,19 +213,19 @@ client.on('modalSubmit', async(modal) => {
 
             if (tierValues.length <= 0) {
                 reply = "You need at least one tier, please try again :)";
-                return;
+                break modal_switch;
             }
 
             if (tierValues.find(x => !x.match(/^\w*:([ ]?\w*[,]?)+$/g)) !== undefined) {
                 reply = "Please follow the correct format for a tier list. {TierName}: {item1},{item2},etc...";
-                return;
+                break modal_switch;
             }
 
             let existing = await tierListModel.findOne({ Name: tierListName });
 
             if (existing !== null) {
                 reply = "This tier list already exists! Name is the same as an existing one :(";
-                return;
+                break modal_switch;
             }
 
             const tiers = tierValues.map(x => x.split(":")[0]);
@@ -256,7 +257,7 @@ client.on('modalSubmit', async(modal) => {
             ]);
 
             reply = `Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${modal.member.user.username} created ${tierListName} Tier List`, "Tier List");
+            Utils.Log(Utils.LogType_INFO, `${modal.user.username} created ${tierListName} Tier List`, "Tier List");
             break;
         case "create-countdown-modal":
             const countdownName = modal.getTextInputValue("countdown-name");
@@ -269,34 +270,34 @@ client.on('modalSubmit', async(modal) => {
 
             if (countdownName.length <= 0) {
                 reply = "Please give this countdown a name!";
-                return;
+                break modal_switch;
             }
 
             if (countdownDate.length <= 0 || momentDate.isValid() !== true) {
                 reply = "Please give insert a valid date!";
-                return;
+                break modal_switch;
             }
 
             let existingCD = await countdownModel.findOne({ Name: countdownName });
 
             if (existingCD !== null) {
                 reply = "This countdown already exists!";
-                return;
+                break modal_switch;
             }
 
             const newCountdown = new countdownModel({
                 Name: countdownName,
-                Date: countdownDate,
+                Date: momentDate.format("MM/DD/YYYY"),
                 Description: countdownDesc ?? "",
                 Image: countdownImage ?? "",
                 URL: countdownURL ?? "",
                 UserId: modal.user.id
             });
 
-            await newCountdown.save();
+            newCountdown.save();
 
             reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdownName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${modal.member.user.username} created ${countdownName} Countdown`, "Countdown");
+            Utils.Log(Utils.LogType_INFO, `${modal.user.username} created ${countdownName} Countdown`, "Countdown");
             break;
     }
 
