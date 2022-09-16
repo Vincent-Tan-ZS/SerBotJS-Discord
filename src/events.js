@@ -1139,7 +1139,12 @@ export default class EventManager {
 
         let allSeasonStats = [];
         seasonIds.forEach((seasonId) => {
-            let seasonRanks = ranks.find(rank => rank[0].season == seasonId);
+            let seasonRanks = ranks.find(rank => {
+                if (rank !== undefined) {
+                    return rank[0].season == seasonId
+                }
+            });
+            
             let season = R6Constants.SEASONS[seasonId];
 
             let seasonalStats = seasonRanks[0];
