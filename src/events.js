@@ -20,6 +20,24 @@ import { MessageActionRow, MessageButton, MessageSelectMenu } from 'discord.js';
 import { countdownModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
+const r6Seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
+const r6Regions = Object.keys(R6Constants.REGIONS);
+const r6PlatformTexts = ["PC", "PS", "XBOX"];
+
+const seasonDates = {
+    Spring: ["01/09/1990", "30/11/1990"],
+    Summer: ["01/12/1990", "28/02/1990"],
+    Autumn: ["01/03/1990", "31/05/1990"],
+    Winter: ["01/06/1990", "31/08/1990"]
+}
+
+const seasonLeaves = {
+    Spring: '🟪',
+    Summer: '🟩',
+    Autumn: '🟧',
+    Winter: '⬜',
+    Christmas: '🟩'
+}
 
 export default class EventManager {
     constructor() {}
@@ -42,8 +60,7 @@ export default class EventManager {
 
     // Ping
     static ping(message) {
-        let channel = message.channel;
-        channel.send("Pong!");
+        message.channel.send("Pong!");
     }
 
     // Greeting Actions
@@ -421,8 +438,7 @@ export default class EventManager {
 
     // R6 functions
     static async updateR6Stats(username, platform, newSeasonId) {
-        let platformTexts = new Array("PC", "PS", "XBOX");
-        let selectedPlatform = R6Constants.PLATFORMS[platformTexts.indexOf(platform)];
+        let selectedPlatform = R6Constants.PLATFORMS[r6PlatformTexts.indexOf(platform)];
 
         let r6user = await r6api.findByUsername(selectedPlatform, username);
 
@@ -620,21 +636,6 @@ export default class EventManager {
     }
 
     static tree(message) {
-        const seasonDates = {
-            Spring: ["01/09/1990", "30/11/1990"],
-            Summer: ["01/12/1990", "28/02/1990"],
-            Autumn: ["01/03/1990", "31/05/1990"],
-            Winter: ["01/06/1990", "31/08/1990"]
-        }
-
-        const seasonLeaves = {
-            Spring: '🟪',
-            Summer: '🟩',
-            Autumn: '🟧',
-            Winter: '⬜',
-            Christmas: '🟩'
-        }
-
         let seasonStart;
         let seasonEnd;
 
@@ -1036,25 +1037,27 @@ export default class EventManager {
     }
 
     static async getR6Stats(r6UserId, platform) {
-        let seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
-        let r6Regions = Object.keys(R6Constants.REGIONS);
+        let rankedPromises = [];
 
-        let rankedPromises = seasons.filter(sId => sId >= 18).map((seasonId) => {
+        const GetCustomRankedStats = (seasonId, region) => {
             return r6api.custom(
                 R6Utils.getURL.RANKS(
-                    platform, [r6UserId], seasonId, "ncsa", "pvp_ranked"
+                    platform, [r6UserId], seasonId, region, "pvp_ranked"
                 )
             );
-        });
+        }
 
-        seasons.filter(sId => sId < 18).forEach(seasonId => {
-            r6Regions.forEach(region => {
-                rankedPromises.push(r6api.custom(
-                    R6Utils.getURL.RANKS(
-                        platform, [r6UserId], seasonId, region, "pvp_ranked"
-                    )
-                ));
-            });
+        r6Seasons.forEach(seasonId => {
+            if (seasonId < 18)
+            {
+                r6Regions.forEach(region => {
+                    rankedPromises.push(GetCustomRankedStats(seasonId, region));
+                });
+            }
+            else
+            {
+                rankedPromises.push(GetCustomRankedStats(seasonId, "ncsa"));
+            }
         });
 
         let [customStats, customProgression, customRanks] = await Promise.all([
@@ -1077,9 +1080,9 @@ export default class EventManager {
         let groupedCustomRanks = [];
 
         customRanks.forEach((customRank) => {
-            let seasonId = `${customRank.players[r6UserId].season}`;
+            let seasonId = customRank.players[r6UserId].season;
 
-            if (groupedCustomRanks[seasonId] == null) {
+            if (groupedCustomRanks[seasonId] === null) {
                 groupedCustomRanks[seasonId] = [];
             }
 
@@ -1090,8 +1093,6 @@ export default class EventManager {
     }
 
     static async findR6Stats(username) {
-        let platformTexts = new Array("PC", "PS", "XBOX");
-
         let r6user;
         let platformText = "";
         let selectedPlatform = "";
@@ -1111,7 +1112,7 @@ export default class EventManager {
         } else {
             r6user = allResults.find(x => x.length > 0);
             selectedPlatform = r6user[0].platform;
-            platformText = platformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
+            platformText = r6PlatformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
             statsFound = true;
         }
 
@@ -1138,7 +1139,7 @@ export default class EventManager {
 
         let allSeasonStats = [];
         seasonIds.forEach((seasonId) => {
-            let seasonRanks = ranks.filter(rank => rank[0].season == seasonId)[0];
+            let seasonRanks = ranks.find(rank => rank[0].season == seasonId);
             let season = R6Constants.SEASONS[seasonId];
 
             let seasonalStats = seasonRanks[0];
@@ -1150,7 +1151,7 @@ export default class EventManager {
                     return;
                 }
 
-                seasonalStats = seasonRanks.find(x => x.region == region);
+                seasonalStats = seasonRanks.find(x => x.region === region);
             }
 
             let rankIcon = R6Utils.getRankIconFromRankId(seasonalStats.rank, seasonId);
