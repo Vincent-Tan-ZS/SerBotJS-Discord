@@ -1082,7 +1082,7 @@ export default class EventManager {
         customRanks.forEach((customRank) => {
             let seasonId = customRank.players[r6UserId].season;
 
-            if (groupedCustomRanks[seasonId] === null) {
+            if (groupedCustomRanks[seasonId] == null) {
                 groupedCustomRanks[seasonId] = [];
             }
 
