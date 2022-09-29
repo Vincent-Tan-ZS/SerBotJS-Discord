@@ -84,4 +84,25 @@ const loggingSchema = mongoose.Schema({
 });
 const loggingModel = mongoose.model('Logging', loggingSchema, 'Logging');
 
-export { tierListUserMappingModel, tierListModel, countdownModel, loggingModel };
+// Commands
+const commandSchema = mongoose.Schema({
+    Title: {
+        type: String,
+        required: true
+    },
+    List: {
+        type: Array,
+        required: true
+    },
+    Description: {
+        type: String,
+        required: true
+    },
+    Usage: {
+        type: Array,
+        required: true
+    }
+});
+const commandModel = mongoose.model('Commands', commandSchema, 'Commands');
+
+export { tierListUserMappingModel, tierListModel, countdownModel, loggingModel, commandModel };

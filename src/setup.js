@@ -11,7 +11,7 @@ import { ConnectDB } from './mongo/mongo-conn.js';
 import { showModal } from 'discord-modals';
 import { countdownModal, createTierListModal } from './modals.js';
 import moment from 'moment';
-import { tierListModel, tierListUserMappingModel, countdownModel } from './mongo/mongo-schemas.js';
+import { tierListModel, tierListUserMappingModel, countdownModel, commandModel } from './mongo/mongo-schemas.js';
 
 export const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS,
@@ -82,7 +82,58 @@ client.on('ready', async() => {
     Utils.Log(Utils.LogType_INFO, "SerBot is now online!");
 
     // MongoDB
-    ConnectDB();
+    await ConnectDB();
+
+    // Save Commands in MongoDB
+    Utils.Log(Utils.LogType_INFO, "Initializing Commands List");
+    const dbCommandList = await commandModel.find({});
+    const dbCommandPromises = [];
+
+        // Add New Commands
+    Commands.dictionaries.forEach((dict) => {
+       const existing = dbCommandList.find(l => l.Title === dict.Title);
+
+       if (existing !== undefined)
+       {
+            // If any different
+            if (!Utils.ArrComp(existing.List, dict.Command) || existing.Description !== dict.Description || !Utils.ArrComp(existing.Usage, dict.Usage))
+            {
+                dbCommandPromises.push(
+                    commandModel.replaceOne({_id: existing._id}, { 
+                        List: dict.Command,
+                        Description: dict.Description,
+                        Usage: dict.Usage
+                    })
+                );
+            }
+       }
+       else
+       {
+            const newCommand = new commandModel({
+                Title: dict.Title,
+                List: dict.Command,
+                Description: dict.Description,
+                Usage: dict.Usage
+            });
+
+            dbCommandPromises.push(newCommand.save());
+        }
+    });
+
+        // Remove DB Commands that aren't in use anymore 
+    dbCommandList.filter(command => Commands.dictionaries.find(d => d.Title === command.Title) === undefined).forEach((command) => {
+        dbCommandPromises.push(command.remove());
+    });
+
+    try
+    {
+        await Promise.all(dbCommandPromises);
+        Utils.Log(Utils.LogType_INFO, "Done Initializing Commands List");
+    }
+    catch (e)
+    {
+        Utils.Log(Utils.LogType_ERROR, `Error Initializing Commands List: ${e.message}`);
+    }
 
     // node-schedule refer
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});

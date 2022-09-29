@@ -191,4 +191,8 @@ export default class Utils {
         });
         newLog.save();
     }
+
+    static ArrComp = (arr1, arr2) => {
+        return arr1.length === arr2.length && arr1.every((v, i) => arr2[i] === v);
+    }
 }

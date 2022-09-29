@@ -1,12 +1,10 @@
 import R6API, { utils as R6Utils, constants as R6Constants } from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
-import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import axios from 'axios';
 
-//import { refreshLocalMusicFiles } from './local.js';
 import { client, distube as Distube } from './setup.js';
 import config from './config.js';
 import Commands from './commands.js';
@@ -112,68 +110,6 @@ export default class EventManager {
                 fields: new Array({ name: 'Today', value: `${todayData.cases} / ${todayData.deaths} / ${todayData.recovered}` }, { name: 'Yesterday', value: `${yesterdayData.cases} / ${yesterdayData.deaths} / ${yesterdayData.recovered}` })
             });
         });
-    }
-
-    // Local Music Actions
-    static async playLocalMusic(message, commands) {
-        commands.shift();
-        let fileIndex = commands[0];
-        let musicIDList = [];
-        let songList = [];
-
-        if (fileIndex.toLowerCase() == "refresh") {
-            refreshLocalMusicFiles();
-        } else if (fileIndex == "random" || !Number.isNaN(fileIndex)) {
-            let musicTxt = path.resolve(process.cwd(), "./txt/music.txt");
-            var data = fs.readFileSync(musicTxt).toString();
-            songList = data.split("\n");
-
-            if (fileIndex == "random") {
-                fileIndex = Math.floor(Math.random() * songList.length) + 1;
-            } else {
-                fileIndex -= 1;
-            }
-
-            musicIDList.push(fileIndex);
-        } else {
-            Utils.sendEmbed({
-                message: message,
-                isError: true,
-                title: "Queue",
-                description: "Invalid command"
-            });
-        }
-
-        if (musicIDList.length > 0) {
-            for (var i = 0; i < musicIDList.length; ++i) {
-                let musicID = musicIDList[i];
-
-                if (musicID < songList.length) {
-                    await Distube.play(message, `${songList[musicID]} audio only`).then(() => {
-                        let queue = Distube.getQueue(message);
-                        let song = queue.songs[queue.songs.length - 1];
-                        let msgAuthor = message.author;
-
-                        Utils.sendEmbed({
-                            message: message,
-                            title: song.name,
-                            description: "",
-                            author: `${msgAuthor.username} Queued`,
-                            authorIcon: msgAuthor.avatarURL({ dynamic: true }),
-                            footer: ` | ${song.formattedDuration}`,
-                            footerIcon: config.embedPauseIconURL
-                        });
-                    });
-                } else {
-                    Utils.sendEmbed({
-                        message: message,
-                        isError: true,
-                        title: "Song Not Found",
-                        description: `There is only a total of ${songList.length} songs in the directory`
-                    });
-                }
-            }
-        }
     }
 
     // Music Actions
