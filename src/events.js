@@ -42,18 +42,7 @@ export default class EventManager {
 
     // Command List Action
     static sendCommandList(message) {
-        let description = "";
-        let filteredDictionaries = Commands.dictionaries.filter(x => x.Description.length > 0);
-
-        filteredDictionaries.forEach((dictionary) => {
-            description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
-        });
-
-        Utils.sendEmbed({
-            message: message,
-            title: "Command List",
-            description: description
-        });
+        message.channel.send(`${process.env.SITE_LINK}/commands`);
     }
 
     // Ping
