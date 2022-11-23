@@ -137,12 +137,6 @@ client.on('ready', async() => {
 
     // node-schedule refer
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});
-
-    const user = await client.users.fetch(process.env.REMINDER_USER);
-
-    schedule.scheduleJob({year: 2022, month: 10, date: 25, hour: 9, minute: 0, second: 0, tz:"Asia/Kuala_Lumpur"}, () => {
-        user.send("Heroku Free will no longer be available starting 28th November 2022, check Reddit saved comments for alternatives");
-    });
 })
 
 client.on('voiceStateUpdate', (oldState, newState) => {

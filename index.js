@@ -1,6 +1,6 @@
 import http from 'http';
-import { client } from './setup.js';
-import config from './config.js';
+import { client } from './src/setup.js';
+import config from './src/config.js';
 import moment from 'moment-timezone';
 import discordModals from 'discord-modals';
 
