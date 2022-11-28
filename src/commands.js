@@ -173,9 +173,9 @@ export default class Commands {
     }
 
     static disconnectActionResolve(message) {
-        if (!message.member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) return;
+        if (!message.member.permissions.has(Discord.Permissions.FLAGS.ADMINISTRATOR)) return;
 
-        message.channel.send("Logging out...")
+        message.channel.send(`${message.member.displayName} called for disconnect: Logging out...`)
             .then(message => client.destroy())
             .catch(console.error);
     }

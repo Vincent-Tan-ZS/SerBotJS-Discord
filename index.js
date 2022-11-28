@@ -4,16 +4,36 @@ import config from './src/config.js';
 import moment from 'moment-timezone';
 import discordModals from 'discord-modals';
 
-http.createServer(function(request, response) {
+const GetTime = () => {
+    let timezone = moment.tz.guess(true);
+    let time = moment().format("LT");
+
+    return `${timezone} ${time}`;
+}
+
+const server = http.createServer().listen(process.env.PORT);
+
+server.on('request', (req, res) => {
     response.writeHead(200, { 'Content-Type': 'text/plain' });
     response.write("SerBot enabled.");
     response.end();
 
-    let timezone = moment.tz.guess(true);
-    let time = moment().format("LT");
+    const time = GetTime();
 
-    console.log(`[${timezone} ${time}] Pinged SerBot`);
-}).listen(process.env.PORT)
+    console.log(`[${time}] Pinged SerBot`);
+});
+
+server.on('close', () => {
+    const time = GetTime();
+
+    console.log(`[${time}] SerBot closing`);
+});
+
+server.on('error', (err) => {
+    const time = GetTime();
+
+    console.log(`[${time}] SerBot closing`);
+});
 
 discordModals(client);
 
