@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, {Utils} from 'discord.js';
 import EventManager from './events.js';
 import { client } from './setup.js';
 
@@ -173,9 +173,13 @@ export default class Commands {
     }
 
     static disconnectActionResolve(message) {
-        if (!message.member.permissions.has(Discord.Permissions.FLAGS.ADMINISTRATOR)) return;
+        if (!message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)) return;
 
-        message.channel.send(`${message.member.displayName} called for disconnect: Logging out...`)
+        const msg = `${message.member.displayName} called for disconnect: Logging out...`;
+
+        Utils.Log(Utils.LogType_INFO, msg);
+
+        message.channel.send(msg)
             .then(message => client.destroy())
             .catch(console.error);
     }

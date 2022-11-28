@@ -1,4 +1,5 @@
 local.js
 node_modules/
-PushToHeroku.ps1
+Discloud.config
 .env
+SerBotJS-Discord.zip

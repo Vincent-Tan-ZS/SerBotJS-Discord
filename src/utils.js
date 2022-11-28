@@ -1,5 +1,4 @@
-import Discord from 'discord.js';
-import { MessageActionRow } from 'discord.js';
+import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import moment from 'moment';
@@ -52,16 +51,19 @@ export default class Utils {
         fields = new Array(),
         setTimestamp = false,
         timestampOverride = '',
-        components = new MessageActionRow(),
+        components = new ActionRowBuilder(),
     }) {
         if (isError) {
             title = `Error: ${title}`;
         }
 
-        let embed = new Discord.MessageEmbed()
+        let embed = new EmbedBuilder()
             .setTitle(title)
-            .setColor(embedColor)
-            .setDescription(description);
+            .setColor(embedColor);
+        
+        if (description.length > 0) {
+            embed.setDescription(description);
+        }
 
         if (embedURL.length > 0) {
             embed.setURL(embedURL);
@@ -72,14 +74,31 @@ export default class Utils {
         }
 
         if (author.length > 0) {
-            embed.setAuthor({ name: author, url: authorURL, iconURL: authorIcon });
+            let authorData = {
+                name: author
+            };
+
+            if (authorURL.length > 0) {
+                authorData.url = authorURL
+            }
+
+            if (authorIcon.length > 0) {
+                authorData.iconURL = authorIcon;
+            }
+
+            embed.setAuthor(authorData);
         }
 
         if (footer.length > 0) {
-            embed.setFooter({
-                text: footer,
-                iconURL: footerIcon
-            });
+            let footerData = {
+                text: footer
+            };
+
+            if (footerIcon.length > 0) {
+                footerData.iconURL = footerIcon;
+            }
+
+            embed.setFooter(footerData);
         }
 
         if (thumbnail.length > 0) {
@@ -87,13 +106,12 @@ export default class Utils {
         }
 
         if (fields.length > 0) {
-            fields.forEach(field => {
-                let inline = field.inline != undefined ?
-                    field.inline :
-                    false;
-
-                embed.addField(field.name, field.value, inline);
+            let fieldsData = fields.map(field => {
+                let inline = field.inline ?? false;
+                return { name: field.name, value: field.value, inline: inline };
             });
+
+            embed.addFields(fieldsData);
         }
 
         if (setTimestamp) {
@@ -135,7 +153,7 @@ export default class Utils {
         fields = new Array(),
         setTimestamp = false,
         timestampOverride = '',
-        components = new MessageActionRow(),
+        components = new ActionRowBuilder(),
     }) {
         if (message == undefined && channel == undefined) return;
 

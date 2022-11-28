@@ -14,7 +14,7 @@ import TicTacToe from './tictactoe.js';
 import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageButton, MessageSelectMenu } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, SelectMenuBuilder } from 'discord.js';
 import { countdownModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
@@ -681,12 +681,12 @@ export default class EventManager {
                 message.author.send({
                     content: 'Click below to start creating your tier list!\nNote: Due to Discord limitations, we can only have up to 4 tiers at the moment, sorry :(',
                     components: [
-                        new MessageActionRow()
+                        new ActionRowBuilder()
                         .addComponents(
-                            new MessageButton()
+                            new ButtonBuilder()
                             .setCustomId('create-tier-list')
                             .setLabel('Start')
-                            .setStyle('PRIMARY')
+                            .setStyle('Primary')
                         )
                     ]
                 });
@@ -816,12 +816,12 @@ export default class EventManager {
                 message.author.send({
                     content: 'Click below to start creating a countdown!',
                     components: [
-                        new MessageActionRow()
+                        new ActionRowBuilder()
                         .addComponents(
-                            new MessageButton()
+                            new ButtonBuilder()
                             .setCustomId('create-countdown')
                             .setLabel('Start')
-                            .setStyle('PRIMARY')
+                            .setStyle('Primary')
                         )
                     ]
                 });
@@ -943,7 +943,7 @@ export default class EventManager {
 
         if (availableSeasonIds.length <= 1) return;
 
-        let interactionSelect = new MessageSelectMenu()
+        let interactionSelect = new SelectMenuBuilder()
             .setCustomId("R6SeasonChange")
             .setDisabled(availableSeasons.length == 0);
 
@@ -958,7 +958,7 @@ export default class EventManager {
             interactionSelect.addOptions(option);
         });
 
-        return new MessageActionRow().addComponents(interactionSelect);
+        return new ActionRowBuilder().addComponents(interactionSelect);
     }
 
     static async getR6Stats(r6UserId, platform) {

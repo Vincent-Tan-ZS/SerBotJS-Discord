@@ -2,7 +2,6 @@ import http from 'http';
 import { client } from './src/setup.js';
 import config from './src/config.js';
 import moment from 'moment-timezone';
-import discordModals from 'discord-modals';
 
 const GetTime = () => {
     let timezone = moment.tz.guess(true);
@@ -34,7 +33,5 @@ server.on('error', (err) => {
 
     console.log(`[${time}] SerBot closing`);
 });
-
-discordModals(client);
 
 client.login(config.token);

@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import { DisTube } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
 import { YtDlpPlugin } from '@distube/yt-dlp'
@@ -8,27 +8,26 @@ import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
-import { showModal } from 'discord-modals';
 import { countdownModal, createTierListModal } from './modals.js';
 import moment from 'moment';
 import { tierListModel, tierListUserMappingModel, countdownModel, commandModel } from './mongo/mongo-schemas.js';
 
-export const client = new Discord.Client({
-    intents: [Discord.Intents.FLAGS.GUILDS,
-        Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-        Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
-        Discord.Intents.FLAGS.GUILD_INVITES,
-        Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-        Discord.Intents.FLAGS.GUILD_MESSAGES,
-        Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS
+export const client = new Client({
+    intents: [GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent
     ],
-    partials: ['MESSAGE', 'CHANNEL', 'REACTION']
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
 export const distube = new DisTube(client, {
     leaveOnStop: false,
     youtubeCookie: config.distubeCookie,
-    youtubeDL: false,
     plugins: [new SpotifyPlugin(), new YtDlpPlugin()]
 });
 
@@ -232,15 +231,9 @@ client.on("interactionCreate", (interaction) => {
     }
     // Tier List Modal
     else if (interaction.customId === "create-tier-list") {
-        showModal(createTierListModal, {
-            client: client,
-            interaction: interaction
-        });
+        interaction.showModal(createTierListModal);
     } else if (interaction.customId === "create-countdown") {
-        showModal(countdownModal, {
-            client: client,
-            interaction: interaction
-        });
+        interaction.showModal(countdownModal);
     }
 });
 //#endregion Interaction Listener

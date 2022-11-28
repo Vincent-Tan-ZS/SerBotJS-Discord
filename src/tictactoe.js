@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { MessageActionRow, MessageButton } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder } from 'discord.js';
 import config from './config.js';
 import "./extension.js";
 
@@ -85,9 +85,9 @@ export default class TicTacToe {
             midLabel = this.addTicTacToeEmoji(midEmoji);
             botLabel = this.addTicTacToeEmoji(botEmoji);
 
-            topButton = new MessageButton().setLabel(topLabel).setCustomId(`ttt${this._id}${topEmoji}`).setStyle(styleNo);
-            midButton = new MessageButton().setLabel(midLabel).setCustomId(`ttt${this._id}${midEmoji}`).setStyle(styleNo);
-            botButton = new MessageButton().setLabel(botLabel).setCustomId(`ttt${this._id}${botEmoji}`).setStyle(styleNo);
+            topButton = new ButtonBuilder().setLabel(topLabel).setCustomId(`ttt${this._id}${topEmoji}`).setStyle(styleNo);
+            midButton = new ButtonBuilder().setLabel(midLabel).setCustomId(`ttt${this._id}${midEmoji}`).setStyle(styleNo);
+            botButton = new ButtonBuilder().setLabel(botLabel).setCustomId(`ttt${this._id}${botEmoji}`).setStyle(styleNo);
 
             if (topLabel !== " " || winnerFound) topButton.setDisabled(true);
             if (midLabel !== " " || winnerFound) midButton.setDisabled(true);
@@ -98,12 +98,12 @@ export default class TicTacToe {
             botRowButtons.push(botButton);
         }
 
-        let cancelButton = new MessageButton().setLabel("❌").setCustomId(`ttt${this._id}❌`).setStyle(styleNo).setDisabled(winnerFound);
+        let cancelButton = new ButtonBuilder().setLabel("❌").setCustomId(`ttt${this._id}❌`).setStyle(styleNo).setDisabled(winnerFound);
 
-        let topRow = new MessageActionRow().setComponents(topRowButtons);
-        let midRow = new MessageActionRow().setComponents(midRowButtons);
-        let botRow = new MessageActionRow().setComponents(botRowButtons);
-        let cancelRow = new MessageActionRow().setComponents(cancelButton);
+        let topRow = new ActionRowBuilder().setComponents(topRowButtons);
+        let midRow = new ActionRowBuilder().setComponents(midRowButtons);
+        let botRow = new ActionRowBuilder().setComponents(botRowButtons);
+        let cancelRow = new ActionRowBuilder().setComponents(cancelButton);
 
         return {
             content: `${"Tic-Tac-Toe".ToBold()}\n${message}`,
