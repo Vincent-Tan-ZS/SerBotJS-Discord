@@ -14,9 +14,9 @@ const GetTime = () => {
 const server = http.createServer().listen(process.env.PORT);
 
 server.on('request', (req, res) => {
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.write("SerBot enabled.");
-    response.end();
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write("SerBot enabled.");
+    res.end();
 
     const time = GetTime();
 
