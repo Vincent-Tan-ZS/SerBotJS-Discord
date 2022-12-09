@@ -202,7 +202,7 @@ client.on("messageReactionRemove", async(reaction, user) => {
 //#endregion Region Listener
 
 //#region Interaction Listener
-client.on("interactionCreate", (interaction) => {
+client.on("interactionCreate", async (interaction) => {
     let message = interaction.message;
     let embed = message.embeds[0];
 
@@ -229,23 +229,27 @@ client.on("interactionCreate", (interaction) => {
 
         interaction.deferUpdate();
     }
-    // Tier List Modal
+    // Show Modals
     else if (interaction.customId === "create-tier-list") {
         interaction.showModal(createTierListModal);
     } else if (interaction.customId === "create-countdown") {
         interaction.showModal(countdownModal);
     }
+    // Modal Submits
+    else if (interaction.isModalSubmit())
+    {
+        await ModalSubmit(interaction);
+    }
 });
 //#endregion Interaction Listener
 
-//#region Modal
-client.on('modalSubmit', async(modal) => {
+const ModalSubmit = async (interaction) => {
     let reply = "";
 
     modal_switch:
-    switch (modal.customId) {
+    switch (interaction.customId) {
         case "create-tier-list-modal":
-            const tierValues = modal.fields.map(x => x.value).filter(x => x !== null);
+            const tierValues = interaction.fields.fields.map(x => x.value).filter(x => x !== null);
 
             const tierListName = tierValues.shift();
 
@@ -285,7 +289,7 @@ client.on('modalSubmit', async(modal) => {
             });
 
             const newTierListUserMap = new tierListUserMappingModel({
-                UserId: modal.user.id,
+                UserId: interaction.user.id,
                 TierListId: newTierList._id.toString()
             });
 
@@ -295,14 +299,14 @@ client.on('modalSubmit', async(modal) => {
             ]);
 
             reply = `Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${modal.user.username} created ${tierListName} Tier List`, "Tier List");
+            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${tierListName} Tier List`, "Tier List");
             break;
         case "create-countdown-modal":
-            const countdownName = modal.getTextInputValue("countdown-name");
-            const countdownDate = modal.getTextInputValue("countdown-date");
-            const countdownDesc = modal.getTextInputValue("countdown-description");
-            const countdownImage = modal.getTextInputValue("countdown-image");
-            const countdownURL = modal.getTextInputValue("countdown-url");
+            const countdownName = interaction.fields.getTextInputValue("countdown-name");
+            const countdownDate = interaction.fields.getTextInputValue("countdown-date");
+            const countdownDesc = interaction.fields.getTextInputValue("countdown-description");
+            const countdownImage = interaction.fields.getTextInputValue("countdown-image");
+            const countdownURL = interaction.fields.getTextInputValue("countdown-url");
 
             const momentDate = moment(countdownDate, "DD/MM/YYYY");
 
@@ -312,7 +316,7 @@ client.on('modalSubmit', async(modal) => {
             }
 
             if (countdownDate.length <= 0 || momentDate.isValid() !== true) {
-                reply = "Please give insert a valid date!";
+                reply = "Please insert a valid date!";
                 break modal_switch;
             }
 
@@ -329,16 +333,15 @@ client.on('modalSubmit', async(modal) => {
                 Description: countdownDesc ?? "",
                 Image: countdownImage ?? "",
                 URL: countdownURL ?? "",
-                UserId: modal.user.id
+                UserId: interaction.user.id
             });
 
             newCountdown.save();
 
             reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdownName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${modal.user.username} created ${countdownName} Countdown`, "Countdown");
+            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdownName} Countdown`, "Countdown");
             break;
     }
 
-    modal.reply(reply);
-});
-//#endregion Modal
+    interaction.reply(reply);
+}
