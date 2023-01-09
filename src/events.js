@@ -962,7 +962,7 @@ export default class EventManager {
             else {
                 let lineArr = [];
 
-                const lines = commands.reduce((cur, prev, ind, arr) => {
+                const lines = commands.reduce((prev, cur, ind, arr) => {
                     lineArr.push(cur);
 
                     if (lineArr.join(" ").length > 20)
