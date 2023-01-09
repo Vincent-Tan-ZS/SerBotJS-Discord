@@ -992,10 +992,6 @@ export default class EventManager {
                             prev.push(newLine);
                         }
                     }
-                    else
-                    {
-                        lineArr.push(cur);
-                    }
 
                     return prev;
                 }, []);
