@@ -976,10 +976,21 @@ export default class EventManager {
                         lineArr.push(lastWord);
                     }
 
+                    lineArr.push(cur);
+
                     if (ind === arr.length - 1)
                     {
-                        prev.push(line);
-                        prev.push(cur);
+                        let newLine = lineArr.join(" ");
+
+                        if (newLine.length > 20)
+                        {
+                            prev.push(line);
+                            prev.push(cur);
+                        }
+                        else
+                        {
+                            prev.push(newLine);
+                        }
                     }
                     else
                     {
