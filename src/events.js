@@ -937,6 +937,106 @@ export default class EventManager {
         }
     }
 
+    static async wisdomLlama(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const imgFolder = path.resolve("./img");
+        let sharpBuffer;
+        let outputBuffer;
+        let msg;
+
+        let errMsg = "";
+        let isErr = false;
+
+        try {
+            if (commands.length <= 0) {
+                isErr = true;
+                errMsg = "Please provide your wisdom :)";
+            }
+            else if (commands.join(" ").length > 100)
+            {
+                isErr = true;
+                errMsg = "Your wisdom is wise but too long bruv";
+            }
+            else {
+                let lineArr = [];
+
+                const lines = commands.reduce((prev, cur, ind, arr) => {
+                    let line = lineArr.join(" ");
+
+                    if (line.length > 20)
+                    {
+                        let lastWord = lineArr.pop();
+                        let newLine = lineArr.join(" ");
+
+                        prev.push(newLine);
+
+                        lineArr = [];
+                        lineArr.push(lastWord);
+                    }
+
+                    if (ind === arr.length - 1)
+                    {
+                        prev.push(line);
+                        prev.push(cur);
+                    }
+                    else
+                    {
+                        lineArr.push(cur);
+                    }
+
+                    return prev;
+                }, []);
+
+                const svgImage = `
+                    <svg width="522" height="269">
+                        <style>
+                            .title { fill: white; font-size: 30px; font-weight: bold;}
+                        </style>
+                        <g transform="translate(160 40)">
+                            <text text-anchor="middle" class="title">
+                                ${
+                                    lines.map((line, ind) => {
+                                        let dy = ind > 0 ? 'dy="1em"' : "";
+                                        return `<tspan x="0" ${dy}>${line}</tspan>`;
+                                    }).join("\n")
+                                }
+                            </text>
+                        </g>
+                    </svg>`;
+                
+                sharpBuffer = Buffer.from(svgImage);
+                outputBuffer = await sharp(`${imgFolder}/wisdom-llama.png`)
+                    .composite([{
+                        input: Buffer.from(sharpBuffer)
+                    }]).toBuffer();
+            }
+        } catch (e) {
+            isErr = true;
+            errMsg = e;
+        } finally {
+            if (isErr !== true)
+            {
+                message.channel.send({
+                    content: "",
+                    files: [{
+                        attachment: outputBuffer
+                    }]
+                });
+            }
+            else
+            {
+                Utils.sendEmbed({
+                    message: message,
+                    isError: true,
+                    title: "Wisdom Llama",
+                    description: errMsg
+                });
+            }
+        }
+    }
+
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
         let availableSeasonIds = Object.keys(availableSeasons);

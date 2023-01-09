@@ -45,6 +45,7 @@ export default class Commands {
     static psychoTitle = "American Psycho";
     static tierListTitle = "Tier List";
     static countdownTitle = "Countdown";
+    static wisdomTitle = "Wisdom Llama";
 
     //#region Commands
     static pingCommands = new Array("ping");
@@ -76,6 +77,7 @@ export default class Commands {
     static psychoCommands = new Array("psycho");
     static tierListCommands = new Array("tierlist", "tl");
     static countdownCommands = new Array("countdown", "cd");
+    static wisdomCommands = new Array("wisdom");
     //#endregion Commands
 
     //#region Commands Description
@@ -108,6 +110,7 @@ export default class Commands {
     static psychoDescription = "Let's see Paul Allen's card";
     static tierListDescription = "Create/view Tier Lists!";
     static countdownDescription = "Create/view Countdowns!";
+    static wisdomDescription = "Generate a Wisdom Llama image";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -139,6 +142,7 @@ export default class Commands {
     static psychoDictionary = new Command(this.psychoTitle, this.psychoCommands, this.psychoDescription, ["", "card"], (msg, cmds) => { EventManager.psycho(msg, cmds); });
     static tierListDictionary = new Command(this.tierListTitle, this.tierListCommands, this.tierListDescription, [""], (msg, cmds) => { EventManager.tierList(msg, cmds) });
     static countdownDictionary = new Command(this.countdownTitle, this.countdownCommands, this.countdownDescription, [""], (msg, cmds) => { EventManager.countdown(msg, cmds) });
+    static wisdomDictionary = new Command(this.wisdomTitle, this.wisdomCommands, this.wisdomDescription, ["{text}"], (msg, cmds) => { EventManager.wisdomLlama(msg, cmds) });
 
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
@@ -148,7 +152,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary,
+        this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary, this.wisdomDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
         this.countdownDictionary, this.pingDictionary);
     //#endregion DictionaryList
