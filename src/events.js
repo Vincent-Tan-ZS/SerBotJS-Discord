@@ -962,35 +962,20 @@ export default class EventManager {
             else {
                 let lineArr = [];
 
-                const lines = commands.reduce((prev, cur, ind, arr) => {
-                    let line = lineArr.join(" ");
-
-                    if (line.length > 20)
-                    {
-                        let lastWord = lineArr.pop();
-                        let newLine = lineArr.join(" ");
-
-                        prev.push(newLine);
-
-                        lineArr = [];
-                        lineArr.push(lastWord);
-                    }
-
+                const lines = commands.reduce((cur, prev, ind, arr) => {
                     lineArr.push(cur);
+
+                    if (lineArr.join(" ").length > 20)
+                    {
+                        lineArr.pop();
+                        prev.push(lineArr.join(" "));
+                        lineArr = [];
+                        lineArr.push(cur);
+                    }
 
                     if (ind === arr.length - 1)
                     {
-                        let newLine = lineArr.join(" ");
-
-                        if (newLine.length > 20)
-                        {
-                            prev.push(line);
-                            prev.push(cur);
-                        }
-                        else
-                        {
-                            prev.push(newLine);
-                        }
+                        prev.push(lineArr.join(" "));
                     }
 
                     return prev;
