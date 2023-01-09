@@ -6,6 +6,7 @@ kill_timeout = 5
 processes = []
 
 [env]
+  FONTCONFIG_PATH = "./fonts"
 
 [experimental]
   allowed_public_ports = []
