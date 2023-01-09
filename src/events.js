@@ -626,7 +626,7 @@ export default class EventManager {
                 sharpBuffer = Buffer.from(svgImage);
                 outputBuffer = await sharp(`${imgFolder}/psycho-card.png`)
                     .composite([{
-                        input: Buffer.from(sharpBuffer)
+                        input: sharpBuffer
                     }]).toBuffer();
             }
             // Monologue
@@ -637,7 +637,7 @@ export default class EventManager {
                 sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
                 outputBuffer = await sharp(`${imgFolder}/patrick-bateman.png`)
                     .composite([{
-                        input: Buffer.from(sharpBuffer)
+                        input: sharpBuffer
                     }]).toBuffer();
             }
         } catch (e) {
@@ -989,27 +989,17 @@ export default class EventManager {
                     return prev;
                 }, []);
 
-                const svgImage = `
-                    <svg width="522" height="269">
-                        <style>
-                            .title { fill: white; font-size: 30px; font-weight: bold;}
-                        </style>
-                        <g transform="translate(160 40)">
-                            <text text-anchor="middle" class="title">
-                                ${
-                                    lines.map((line, ind) => {
-                                        let dy = ind > 0 ? 'dy="1em"' : "";
-                                        return `<tspan x="0" ${dy}>${line}</tspan>`;
-                                    }).join("\n")
-                                }
-                            </text>
-                        </g>
-                    </svg>`;
-                
+                const svgText = lines.map((line, ind) => {
+                        let dy = ind > 0 ? 'dy="1em"' : "";
+                        return `<tspan x="0" ${dy}>${line}</tspan>`;
+                    }).join("");
+
+                const svgImage = `<svg width="522" height="269"><style>.title { fill: white; font-size: 30px; font-weight: bold;}</style><g transform="translate(160 40)"><text text-anchor="middle" class="title">${svgText}</text></g></svg>`;
+
                 sharpBuffer = Buffer.from(svgImage);
                 outputBuffer = await sharp(`${imgFolder}/wisdom-llama.png`)
                     .composite([{
-                        input: Buffer.from(sharpBuffer)
+                        input: sharpBuffer
                     }]).toBuffer();
             }
         } catch (e) {
