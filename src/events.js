@@ -994,7 +994,15 @@ export default class EventManager {
                         return `<tspan x="0" ${dy}>${line}</tspan>`;
                     }).join("");
 
-                const svgImage = `<svg width="522" height="269"><style>.title { fill: white; font-size: 30px; font-weight: bold;}</style><g transform="translate(160 40)"><text text-anchor="middle" class="title">${svgText}</text></g></svg>`;
+                const svgImage = `
+                    <svg width="522" height="269">
+                        <style>
+                            .title { fill: white; font-size: 30px; font-weight: bold;}
+                        </style>
+                        <g transform="translate(160 40)">
+                            <text text-anchor="middle" class="title">${svgText}</text>
+                        </g>
+                    </svg>`;
 
                 sharpBuffer = Buffer.from(svgImage);
                 outputBuffer = await sharp(`${imgFolder}/wisdom-llama.png`)
