@@ -1028,7 +1028,7 @@ export default class EventManager {
     }
 
     static xxx(message) {
-        let rng = Math.random();
+        let rng = Math.random() === 0 ? 1 : Math.random();
         let { channel, author: { username } } = message;
 
         let rngStr = rng.toFixed(2);
@@ -1043,6 +1043,50 @@ export default class EventManager {
             channel.send(`Lmao sexless`);
         }
     } 
+
+    static currentTrack(message) {
+        let { channel: { guild } } = message;
+        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
+
+        if (voiceConnection === undefined) {
+            message.channel.send("I'm not in a voice channel.");
+            return;
+        }
+
+        const queue = Distube.getQueue(guild.id);
+
+        if (queue === undefined) {
+            message.channel.send("Queue not found.");
+            return;
+        }
+
+        if (queue.songs.length <= 0) {
+            message.channel.send("No song is currently playing.");
+            return;
+        }
+
+        const curSong = queue.songs[0];
+
+        const name = curSong.name;
+        const duration = curSong.formattedDuration;
+        const thumbnail = curSong.thumbnail;
+        const playbackMs = Math.floor(voiceConnection.playbackDuration);
+
+        let minutesNum = Math.floor(playbackMs / 60);
+        let secondsNum = playbackMs - (minutes * 60);
+
+        let minutes = minutesNum < 10 ? `0${minutesNum}` : minutesNum.toString();
+        let seconds = secondsNum < 10 ? `0${secondsNum}` : secondsNum.toString();
+        
+        const desc = `${minutes}:${seconds} / ${duration}`;
+
+        Utils.sendEmbed({
+            message: message,
+            title: name,
+            description: desc,
+            thumbnail: thumbnail
+        });
+    }
 
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
