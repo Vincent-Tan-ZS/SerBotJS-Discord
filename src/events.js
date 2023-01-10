@@ -1027,6 +1027,23 @@ export default class EventManager {
         }
     }
 
+    static xxx(message) {
+        let rng = Math.random();
+        let { channel, author: { username } } = message;
+
+        let rngStr = rng.toFixed(2);
+
+        if (rng > 0.5) {
+            channel.send(`Congratulations ${username}! You have a ${rngStr}% chance of getting SEX the following week!`);
+        }
+        else if (rng > 0) {
+            channel.send(`Ouch ${username}! Looks like you only have a ${rngStr}% chance of getting SEX the following week!`);
+        }
+        else {
+            channel.send(`Lmao sexless`);
+        }
+    } 
+
     // Helper functions
     static getR6InteractionRow(availableSeasons, seasonId) {
         let availableSeasonIds = Object.keys(availableSeasons);
