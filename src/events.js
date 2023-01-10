@@ -1073,7 +1073,7 @@ export default class EventManager {
         const playbackMs = Math.floor(voiceConnection.playbackDuration);
 
         let minutesNum = Math.floor(playbackMs / 60);
-        let secondsNum = playbackMs - (minutes * 60);
+        let secondsNum = playbackMs - (minutesNum * 60);
 
         let minutes = minutesNum < 10 ? `0${minutesNum}` : minutesNum.toString();
         let seconds = secondsNum < 10 ? `0${secondsNum}` : secondsNum.toString();
