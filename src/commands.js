@@ -48,41 +48,43 @@ export default class Commands {
     static wisdomTitle = "Wisdom Llama";
     static xxxTitle = "xxx";
     static trackTitle = "Current Track";
+    static replayTitle = "Replay Previous Song";
     //#endregion Title
 
     //#region Commands
-    static pingCommands = new Array("ping");
-    static disconnectCommands = new Array("dc", "disconnect", "logout");
-    static greetingCommands = new Array("hi", "hey", "hello", "sup");
-    static helpCommands = new Array("help");
-    static musicJoinCommands = new Array("join");
-    static musicPlayCommands = new Array("p", "play");
-    static musicPauseCommands = new Array("pause");
-    static musicResumeCommands = new Array("resume");
-    static musicSkipCommands = new Array("skip");
-    static musicStopCommands = new Array("stop");
-    static musicLeaveCommands = new Array("leave");
-    static musicRemoveCommands = new Array("rm", "remove");
-    static musicClearCommands = new Array("clr", "clear");
-    static musicQueueCommands = new Array("q", "queue");
-    static musicLoopCommands = new Array("l", "loop");
-    static r6Commands = new Array("r6");
-    static covidCommands = new Array("covid");
-    static rhombusCommands = new Array("rhombus");
-    static wikiHowCommands = new Array("wikihow");
-    static todayCommands = new Array("today");
-    static tictactoeCommands = new Array("tictactoe");
-    static copypastaCommands = new Array("copypasta");
-    static _8ballCommands = new Array("8ball", "8b");
-    static coinFlipCommands = new Array("coin", "coinflip");
-    static wheelCommands = new Array("wheel");
-    static treeCommands = new Array("tree");
-    static psychoCommands = new Array("psycho");
-    static tierListCommands = new Array("tierlist", "tl");
-    static countdownCommands = new Array("countdown", "cd");
-    static wisdomCommands = new Array("wisdom");
-    static xxxCommands = new Array("sex");
-    static trackCommands = new Array("track", "song");
+    static pingCommands = ["ping"];
+    static disconnectCommands = ["dc", "disconnect", "logout"];
+    static greetingCommands = ["hi", "hey", "hello", "sup"];
+    static helpCommands = ["help"];
+    static musicJoinCommands = ["join"];
+    static musicPlayCommands = ["p", "play"];
+    static musicPauseCommands = ["pause"];
+    static musicResumeCommands = ["resume"];
+    static musicSkipCommands = ["skip"];
+    static musicStopCommands = ["stop"];
+    static musicLeaveCommands = ["leave"];
+    static musicRemoveCommands = ["rm", "remove"];
+    static musicClearCommands = ["clr", "clear"];
+    static musicQueueCommands = ["q", "queue"];
+    static musicLoopCommands = ["l", "loop"];
+    static r6Commands = ["r6"];
+    static covidCommands = ["covid"];
+    static rhombusCommands = ["rhombus"];
+    static wikiHowCommands = ["wikihow"];
+    static todayCommands = ["today"];
+    static tictactoeCommands = ["tictactoe"];
+    static copypastaCommands = ["copypasta"];
+    static _8ballCommands = ["8ball", "8b"];
+    static coinFlipCommands = ["coin", "coinflip"];
+    static wheelCommands = ["wheel"];
+    static treeCommands = ["tree"];
+    static psychoCommands = ["psycho"];
+    static tierListCommands = ["tierlist", "tl"];
+    static countdownCommands = ["countdown", "cd"];
+    static wisdomCommands = ["wisdom"];
+    static xxxCommands = ["sex"];
+    static trackCommands = ["track", "song"];
+    static replayCommands = ["replay"];
     //#endregion Commands
 
     //#region Commands Description
@@ -118,6 +120,7 @@ export default class Commands {
     static wisdomDescription = "Generate a Wisdom Llama image";
     static xxxDescription = "Tell your fortune in terms of SEX in the following week";
     static trackDescription = "Displays information about current song";
+    static replayDescription = "Replays the previous song (if applicable)";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -152,19 +155,20 @@ export default class Commands {
     static wisdomDictionary = new Command(this.wisdomTitle, this.wisdomCommands, this.wisdomDescription, ["{text}"], (msg, cmds) => { EventManager.wisdomLlama(msg, cmds) });
     static xxxDictionary = new Command(this.xxxTitle, this.xxxCommands, this.xxxDescription, [""], (msg) => { EventManager.xxx(msg) });
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });
+    static replayDictionary = new Command(this.replayTitle, this.replayCommands, this.replayDescription, [""], (msg) => { EventManager.replayPrevTrack(msg) });
 
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
 
     //#region DictionaryList
-    static dictionaries = new Array(this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
+    static dictionaries = [this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary, this.wisdomDictionary, this.xxxDictionary,
-        this.trackDictionary,
+        this.trackDictionary, this.replayDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
-        this.countdownDictionary, this.pingDictionary);
+        this.countdownDictionary, this.pingDictionary];
     //#endregion DictionaryList
 
     //#region Functions

@@ -7,11 +7,9 @@ import axios from 'axios';
 
 import { client, distube as Distube } from './setup.js';
 import config from './config.js';
-import Commands from './commands.js';
 import Utils from './utils.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
-import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { ActionRowBuilder, ButtonBuilder, SelectMenuBuilder } from 'discord.js';
@@ -52,7 +50,7 @@ export default class EventManager {
 
     // Greeting Actions
     static sendGreeting(message) {
-        let rng = Math.random();
+        let rng = Utils.RandNum();
         let channel = message.channel;
         let greeter = message.author;
 
@@ -111,6 +109,7 @@ export default class EventManager {
             textChannel: message.channel
         }).then(() => {
             let queue = Distube.getQueue(message);
+            console.log(`Play Queue Length: ${queue.songs.length}`);
 
             if (queue !== undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
@@ -123,6 +122,8 @@ export default class EventManager {
                     footer: ` | ${song.formattedDuration}`,
                     footerIcon: config.embedPauseIconURL
                 });
+
+                this.previousSong = song;
             }
         });
     }
@@ -149,6 +150,7 @@ export default class EventManager {
         if (command != "q" && command != "queue") return;
 
         let queue = Distube.getQueue(message);
+        console.log(`Queue Length: ${queue.songs.length}`);
 
         let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
             queue.songs.map((song, index) => {
@@ -533,17 +535,12 @@ export default class EventManager {
     }
 
     static reply8Ball(message) {
-        let rng = Math.floor((Math.random() * config.eightBallReplies.length) + 1) - 1;
-
+        const rng = Utils.MaxRandNum(config.eightBallReplies.length);
         message.channel.send(config.eightBallReplies[rng]);
     }
 
     static coinFlip(message) {
-        let rng = Math.floor((Math.random() * 10));
-        let msg = rng >= 5 ?
-            "Heads" :
-            "Tails";
-
+        const msg = RandNum() >= 0.5 ? "Heads" : "Tails";
         message.channel.send(`🪙 ${msg}`);
     }
 
@@ -556,7 +553,7 @@ export default class EventManager {
 
         if (listOfOptions.length <= 1) return;
 
-        let index = Math.floor((Math.random() * listOfOptions.length));
+        const index = Utils.MaxRandNum(listOfOptions.length);
         message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
     }
 
@@ -573,7 +570,12 @@ export default class EventManager {
                 seasonStart = moment(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
                 seasonEnd = moment(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
 
-                return nowMoment.isBetween(seasonStart, seasonEnd, undefined, []);
+                if (seasonEnd.isBefore(seasonStart))
+                {
+                    seasonStart = seasonStart.subtract(1, 'y');
+                }
+
+                return nowMoment.isBetween(seasonStart, seasonEnd, undefined, '[]');
             });
         }
 
@@ -1028,20 +1030,19 @@ export default class EventManager {
     }
 
     static xxx(message) {
-        let rng = Math.random() === 0 ? 1 : Math.random();
         let { channel, author: { username } } = message;
+        const rng = Utils.RandNum();
 
-        let rngStr = rng.toFixed(2);
+        let msg = "Lmao sexless";
 
         if (rng > 0.5) {
-            channel.send(`Congratulations ${username}! You have a ${rngStr}% chance of getting SEX the following week!`);
+            msg = `Congratulations ${username}! You have a ${rng}% chance of getting SEX the following week!`;
         }
         else if (rng > 0) {
-            channel.send(`Ouch ${username}! Looks like you only have a ${rngStr}% chance of getting SEX the following week!`);
+            msg = `Ouch ${username}! Looks like you only have a ${rng}% chance of getting SEX the following week!`;
         }
-        else {
-            channel.send(`Lmao sexless`);
-        }
+
+        channel.send(msg);
     } 
 
     static currentTrack(message) {
@@ -1085,6 +1086,21 @@ export default class EventManager {
             title: name,
             description: desc,
             thumbnail: thumbnail
+        });
+    }
+
+    static replayPrevTrack(message) {
+        let { channel, member } = message;
+
+        if (this.previousSong === undefined)
+        {
+            channel.send("There is no song to replay :(");
+            return;
+        }
+
+        Distube.play(member.voice.channel, this.previousSong, {
+            member: member,
+            textChannel: channel
         });
     }
 

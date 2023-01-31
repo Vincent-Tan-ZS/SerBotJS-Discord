@@ -213,4 +213,18 @@ export default class Utils {
     static ArrComp = (arr1, arr2) => {
         return arr1.length === arr2.length && arr1.every((v, i) => arr2[i] === v);
     }
+
+    static RandNum = (decimal = 2) => {
+        const GenNum = () => {
+            return Math.random().toFixed(decimal);
+        }
+
+        return Number(GenNum()) === 0
+            ? 1
+            : Number(GenNum());
+    }
+
+    static MaxRandNum = (max) => {
+        return Math.floor((Math.random() * max) + 1) - 1;
+    }
 }
