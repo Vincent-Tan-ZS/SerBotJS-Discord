@@ -10,6 +10,8 @@ export default class Utils {
     static LogType_INFO = "INFO";
     static LogType_ERROR = "ERROR";
 
+    static PreviousSong = undefined;
+
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
         let den = parseFloat(denominator);

@@ -42,6 +42,8 @@ const ReactionRoleMap = {
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
+        Utils.PreviousSong = song;
+
         Utils.sendEmbed({
             channel: queue.textChannel,
             title: "Now Playing",

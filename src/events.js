@@ -104,13 +104,20 @@ export default class EventManager {
         if (message.member.voice.channel == null) return;
 
         commands.shift();
-        Distube.play(message.member.voice.channel, commands.join(" "), {
+        let songTitle = commands.join(" ");
+
+        // Check if YT link is part of a playlist, only play current video if so
+        if (songTitle.includes("&list="))
+        {
+            songTitle = songTitle.split("&list=")[0];
+        }
+
+        Distube.play(message.member.voice.channel, songTitle, {
             member: message.member,
             textChannel: message.channel
         }).then(() => {
             let queue = Distube.getQueue(message);
-            console.log(`Play Queue Length: ${queue.songs.length}`);
-
+            
             if (queue !== undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
@@ -122,8 +129,6 @@ export default class EventManager {
                     footer: ` | ${song.formattedDuration}`,
                     footerIcon: config.embedPauseIconURL
                 });
-
-                this.previousSong = song;
             }
         });
     }
@@ -150,7 +155,6 @@ export default class EventManager {
         if (command != "q" && command != "queue") return;
 
         let queue = Distube.getQueue(message);
-        console.log(`Queue Length: ${queue.songs.length}`);
 
         let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
             queue.songs.map((song, index) => {
@@ -1092,13 +1096,13 @@ export default class EventManager {
     static replayPrevTrack(message) {
         let { channel, member } = message;
 
-        if (this.previousSong === undefined)
+        if (Utils.PreviousSong === undefined)
         {
             channel.send("There is no song to replay :(");
             return;
         }
 
-        Distube.play(member.voice.channel, this.previousSong, {
+        Distube.play(member.voice.channel, Utils.PreviousSong, {
             member: member,
             textChannel: channel
         });
