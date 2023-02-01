@@ -7,10 +7,16 @@ import { loggingModel } from './mongo/mongo-schemas.js';
 export default class Utils {
     constructor() {}
 
+    static PreviousSong = undefined;
+
+    static CurSongInfo = {
+        name: "",
+        duration: 0,
+        startTime: undefined
+    };
+
     static LogType_INFO = "INFO";
     static LogType_ERROR = "ERROR";
-
-    static PreviousSong = undefined;
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);

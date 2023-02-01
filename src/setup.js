@@ -42,6 +42,13 @@ const ReactionRoleMap = {
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
+        // Workaround for song not playing when hosted
+        Utils.CurSongInfo = {
+            name: song.name,
+            duration: song.duration,
+            startTime: new Date()
+        };
+
         Utils.PreviousSong = song;
 
         Utils.sendEmbed({
@@ -74,6 +81,31 @@ distube.on('playSong', (queue, song) => {
                 distube.voices.leave(queue);
             }
         });
+    })
+    .on('finishSong', (queue, song) => {
+        // Workaround for song not playing when hosted
+        if (song.name === Utils.PreviousSongInfo.name)
+        {
+            let songPlayedFor = moment().diff(moment(Utils.PreviousSongInfo.startTime), 'seconds');
+            if (Utils.PreviousSongInfo.duration > songPlayedFor)
+            {
+                const msg = "Song did not complete, playing workaround song";
+
+                if (queue.textChannel !== undefined)
+                {
+                    queue.textChannel.send(`[Distube] ${msg}`);
+                }
+
+                Utils.Log(Utils.LogType_INFO, msg, "DistubeJS");
+                distube.play(queue.voiceChannel, `${song.name} lyrics soundtrack`);
+            }
+        }
+
+        Utils.CurSongInfo = {
+            name: "",
+            duration: 0,
+            startTime: undefined
+        };
     });
 
 //#endregion Distube EventListener
