@@ -130,6 +130,8 @@ export default class EventManager {
                     footerIcon: config.embedPauseIconURL
                 });
             }
+        }).catch((e) => {
+            Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
         });
     }
 
