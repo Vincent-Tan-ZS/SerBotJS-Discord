@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
-import { DisTube } from 'distube';
+import { DisTube, RepeatMode } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
 import { YtDlpPlugin } from '@distube/yt-dlp'
 import Utils from './utils.js';
@@ -42,21 +42,33 @@ const ReactionRoleMap = {
 
 //#region Distube EventListener
 distube.on('playSong', (queue, song) => {
-        // Workaround for song not playing when hosted
-        Utils.CurSongInfo = {
-            name: song.name,
-            duration: song.duration,
-            startTime: new Date()
-        };
+        let logMessage = "";
 
-        Utils.PreviousSong = song;
+        if (queue.repeatMode === RepeatMode.DISABLED)
+        {
+            // Workaround for song not playing when hosted
+            Utils.CurSongInfo = {
+                name: song.name,
+                duration: song.duration,
+                startTime: new Date()
+            };
+    
+            Utils.PreviousSong = song;
 
-        Utils.sendEmbed({
-            channel: queue.textChannel,
-            title: "Now Playing",
-            description: song.name
-        });
-        Utils.Log(Utils.LogType_INFO, `Playing ${song.name}`, "DistubeJS");
+            Utils.sendEmbed({
+                channel: queue.textChannel,
+                title: "Now Playing",
+                description: song.name
+            });
+        }
+        else
+        {
+            logMessage += "[Loop] ";
+        }
+
+        logMessage += `Playing ${song.name}`;
+
+        Utils.Log(Utils.LogType_INFO, logMessage, "DistubeJS");
     })
     .on('initQueue', queue => {
         queue.autoplay = false;
@@ -83,6 +95,8 @@ distube.on('playSong', (queue, song) => {
         });
     })
     .on('finishSong', (queue, song) => {
+        if (queue.repeatMode === RepeatMode.SONG) return;
+
         // Workaround for song not playing when hosted
         if (song.name === Utils.CurSongInfo.name)
         {
