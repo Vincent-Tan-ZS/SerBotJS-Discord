@@ -84,10 +84,10 @@ distube.on('playSong', (queue, song) => {
     })
     .on('finishSong', (queue, song) => {
         // Workaround for song not playing when hosted
-        if (song.name === Utils.PreviousSongInfo.name)
+        if (song.name === Utils.CurSongInfo.name)
         {
-            let songPlayedFor = moment().diff(moment(Utils.PreviousSongInfo.startTime), 'seconds');
-            if (Utils.PreviousSongInfo.duration > songPlayedFor)
+            let songPlayedFor = moment().diff(moment(Utils.CurSongInfo.startTime), 'seconds');
+            if (Utils.CurSongInfo.duration > songPlayedFor)
             {
                 const msg = "Song did not complete, playing workaround song";
 
