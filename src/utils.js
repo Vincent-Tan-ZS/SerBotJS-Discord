@@ -13,6 +13,8 @@ export default class Utils {
         name: "",
         duration: 0,
         startTime: undefined
+        startTime: undefined,
+        isWorkaround: false
     };
 
     static LogType_INFO = "INFO";
