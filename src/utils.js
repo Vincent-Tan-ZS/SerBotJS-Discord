@@ -12,7 +12,6 @@ export default class Utils {
     static CurSongInfo = {
         name: "",
         duration: 0,
-        startTime: undefined
         startTime: undefined,
         isWorkaround: false
     };
