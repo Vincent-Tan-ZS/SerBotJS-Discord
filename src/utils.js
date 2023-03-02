@@ -3,6 +3,7 @@ import config from './config.js';
 import schedule from 'node-schedule';
 import moment from 'moment';
 import { loggingModel } from './mongo/mongo-schemas.js';
+import {modalIds, modals} from './modals.js';
 
 export default class Utils {
     constructor() {}
@@ -15,6 +16,16 @@ export default class Utils {
         startTime: undefined,
         isWorkaround: false
     };
+    
+    /*
+        name: countdownName,
+        date: moment(countdown.Date).format("DD/MM/YYYY"),
+        description: countdown.Description,
+        image: countdown.Image,
+        url: countdown.URL,
+        userId: userId
+    */
+    static OriginalCountdownList = [];
 
     static LogType_INFO = "INFO";
     static LogType_ERROR = "ERROR";
@@ -235,5 +246,72 @@ export default class Utils {
 
     static MaxRandNum = (max) => {
         return Math.floor((Math.random() * max) + 1) - 1;
+    }
+
+    static IsShowModal = (modalId) => {
+        return modalIds.includes(`${modalId}-modal`);
+    }
+
+    static ShowModal = (interaction) => {
+        switch (interaction.customId)
+        {
+            case "create-tier-list":
+                interaction.showModal(modals.createTierListModal);
+                break;
+            case "create-countdown":
+                interaction.showModal(modals.countdownModal);
+                break;
+            case "update-countdown":
+                let updateCDModal = modals.updateCountdownModal;
+                const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
+
+                updateCDModal.setTitle(`Update ${userOriCD.name} Countdown`);
+                
+                updateCDModal.components[0].components[0].data.placeholder = updateCDModal.components[0].components[0].data.value = userOriCD.date;
+                updateCDModal.components[1].components[0].data.placeholder = updateCDModal.components[1].components[0].data.value = userOriCD.description;
+                updateCDModal.components[2].components[0].data.placeholder = updateCDModal.components[2].components[0].data.value = userOriCD.image;
+                updateCDModal.components[3].components[0].data.placeholder = updateCDModal.components[3].components[0].data.value = userOriCD.url;
+
+                interaction.showModal(updateCDModal);
+                break;
+            default:
+                return false;
+        }
+    }
+
+    static ExtractModalValues = (type, interaction) => {
+        switch (type)
+        {
+            case "countdown":
+                let cdObj = {
+                    name: interaction.fields.getTextInputValue("countdown-name"),
+                    date: interaction.fields.getTextInputValue("countdown-date"),
+                    desc: interaction.fields.getTextInputValue("countdown-description"),
+                    image: interaction.fields.getTextInputValue("countdown-image"),
+                    url: interaction.fields.getTextInputValue("countdown-url")
+                };
+
+                cdObj.momentDate = moment(cdObj.date, "DD/MM/YYYY");
+
+                return cdObj;
+            case "update-countdown":
+                const oriCDIndex = this.OriginalCountdownList.findIndex(x => x.userId === interaction.user.id);
+                const oriCD = this.OriginalCountdownList[oriCDIndex];
+
+                let updateCDObj = {
+                    index: oriCDIndex,
+                    name: oriCD.name,
+                    date: interaction.fields.getTextInputValue("countdown-date"),
+                    desc: interaction.fields.getTextInputValue("countdown-description"),
+                    image: interaction.fields.getTextInputValue("countdown-image"),
+                    url: interaction.fields.getTextInputValue("countdown-url")
+                };
+
+                updateCDObj.momentDate = moment(updateCDObj.date, "DD/MM/YYYY");
+
+                return updateCDObj;
+            default:
+                break;
+        }
     }
 }

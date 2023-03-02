@@ -1,7 +1,8 @@
 import { ModalBuilder, TextInputBuilder } from '@discordjs/builders';
-import {ActionRowBuilder} from 'discord.js';
+import { ActionRowBuilder } from 'discord.js';
 
-const createTierListModal = new ModalBuilder()
+const modals = {
+    createTierListModal: new ModalBuilder()
     .setCustomId('create-tier-list-modal')
     .setTitle("Tier List Creator")
     .addComponents(
@@ -44,9 +45,8 @@ const createTierListModal = new ModalBuilder()
             .setStyle('Paragraph')
             .setRequired(false)
         )
-    );
-
-const countdownModal = new ModalBuilder()
+    ),
+    countdownModal: new ModalBuilder()
     .setCustomId('create-countdown-modal')
     .setTitle("Countdown Creator")
     .addComponents(
@@ -88,6 +88,41 @@ const countdownModal = new ModalBuilder()
             .setStyle('Short')
             .setRequired(false)
         )
-    );
+    ),
+    updateCountdownModal: new ModalBuilder()
+    .setCustomId('update-countdown-modal')
+    .setTitle("Countdown Updater")
+    .addComponents(
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+            .setCustomId('countdown-date')
+            .setLabel('Release Date')
+            .setStyle('Short')
+        ),
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+            .setCustomId('countdown-description')
+            .setLabel('Description')
+            .setStyle('Short')
+            .setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+            .setCustomId('countdown-image')
+            .setLabel('Image URL')
+            .setStyle('Short')
+            .setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+            .setCustomId('countdown-url')
+            .setLabel('Countdown URL')
+            .setStyle('Short')
+            .setRequired(false)
+        )
+    ),
+}
 
-export { createTierListModal, countdownModal };
+const modalIds = Object.values(modals).map(x => x.data.custom_id);
+
+export { modals, modalIds };

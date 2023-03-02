@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ActionRowBuilder, ButtonBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import config from './config.js';
 import "./extension.js";
 
@@ -58,7 +58,7 @@ export default class TicTacToe {
     }
 
     addTicTacToeEmoji(emojiToCheck) {
-        if (!this._emojiList.includes(emojiToCheck)) return " ";
+        if (!this._emojiList.includes(emojiToCheck)) return emojiToCheck;
 
         let emojiIndex = this._emojiList.indexOf(emojiToCheck);
         return emojiIndex % 2 == 0 ? this._player1Emoji : this._player2Emoji;
@@ -66,7 +66,6 @@ export default class TicTacToe {
 
     createOrUpdateMessage(winnerFound = false) {
         let message = `${this._player1Username} vs ${this._player2Username}\n\n`;
-        const styleNo = 1;
 
         let topRowButtons = [];
         let midRowButtons = [];
@@ -85,26 +84,25 @@ export default class TicTacToe {
             midLabel = this.addTicTacToeEmoji(midEmoji);
             botLabel = this.addTicTacToeEmoji(botEmoji);
 
-            topButton = new ButtonBuilder().setLabel(topLabel).setCustomId(`ttt${this._id}${topEmoji}`).setStyle(styleNo);
-            midButton = new ButtonBuilder().setLabel(midLabel).setCustomId(`ttt${this._id}${midEmoji}`).setStyle(styleNo);
-            botButton = new ButtonBuilder().setLabel(botLabel).setCustomId(`ttt${this._id}${botEmoji}`).setStyle(styleNo);
+            topButton = new ButtonBuilder().setLabel(topLabel).setCustomId(`ttt${this._id}${topEmoji}`).setStyle(ButtonStyle.Primary);
+            midButton = new ButtonBuilder().setLabel(midLabel).setCustomId(`ttt${this._id}${midEmoji}`).setStyle(ButtonStyle.Primary);
+            botButton = new ButtonBuilder().setLabel(botLabel).setCustomId(`ttt${this._id}${botEmoji}`).setStyle(ButtonStyle.Primary);
 
-            if (topLabel !== " " || winnerFound) topButton.setDisabled(true);
-            if (midLabel !== " " || winnerFound) midButton.setDisabled(true);
-            if (botLabel !== " " || winnerFound) botButton.setDisabled(true);
+            if (topLabel !== topEmoji || winnerFound) topButton.setDisabled(true);
+            if (midLabel !== midEmoji || winnerFound) midButton.setDisabled(true);
+            if (botLabel !== botEmoji || winnerFound) botButton.setDisabled(true);
 
             topRowButtons.push(topButton);
             midRowButtons.push(midButton);
             botRowButtons.push(botButton);
         }
 
-        let cancelButton = new ButtonBuilder().setLabel("❌").setCustomId(`ttt${this._id}❌`).setStyle(styleNo).setDisabled(winnerFound);
+        let cancelButton = new ButtonBuilder().setLabel("❌").setCustomId(`ttt${this._id}❌`).setStyle(ButtonStyle.Danger).setDisabled(winnerFound);
 
         let topRow = new ActionRowBuilder().setComponents(topRowButtons);
         let midRow = new ActionRowBuilder().setComponents(midRowButtons);
         let botRow = new ActionRowBuilder().setComponents(botRowButtons);
         let cancelRow = new ActionRowBuilder().setComponents(cancelButton);
-
         return {
             content: `${"Tic-Tac-Toe".ToBold()}\n${message}`,
             components: [topRow, midRow, botRow, cancelRow]

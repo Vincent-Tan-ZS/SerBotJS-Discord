@@ -12,7 +12,7 @@ import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { ActionRowBuilder, ButtonBuilder, SelectMenuBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
 import { countdownModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
@@ -794,7 +794,7 @@ export default class EventManager {
         const invalidEmbed = {
             message: message,
             title: "Countdown",
-            description: "Commands: create, list, [name], delete [name]"
+            description: "Commands: list, [name], create, update [name], delete [name]"
         };
 
         if (commands.length <= 0) {
@@ -830,6 +830,79 @@ export default class EventManager {
                             .setCustomId('create-countdown')
                             .setLabel('Start')
                             .setStyle('Primary')
+                        )
+                    ]
+                });
+                break;
+            case "update":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use 'update [name]' to update a countdown :)"
+                    });
+                    return;
+                }
+
+                commands.shift();
+                countdownName = commands.join(" ");
+                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                userId = countdown.UserId;
+
+                if (userId !== message.author.id) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Only the countdown creator can update their own countdowns, sorry!"
+                    });
+                    return;
+                }
+
+                let existingOriginalCountdownIndex = Utils.OriginalCountdownList.findIndex(x => x.userId === userId);
+
+                const origCD = {  
+                    name: countdownName,
+                    date: moment(countdown.Date).format("DD/MM/YYYY"),
+                    description: countdown.Description,
+                    image: countdown.Image,
+                    url: countdown.URL,
+                    userId: userId
+                };
+
+                if (existingOriginalCountdownIndex >= 0)
+                {
+                    Utils.OriginalCountdownList[existingOriginalCountdownIndex] = origCD;
+                }
+                else
+                {
+                    Utils.OriginalCountdownList.push(origCD)
+                }
+                
+                message.author.send({
+                    content: `Click below to start updating the ${countdownName} countdown!`,
+                    components: [
+                        new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId('update-countdown')
+                            .setLabel('Update Countdown')
+                            .setStyle('Primary')
+                        )
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId('update-countdown-cancel')
+                            .setLabel('Cancel')
+                            .setStyle(ButtonStyle.Danger)
                         )
                     ]
                 });

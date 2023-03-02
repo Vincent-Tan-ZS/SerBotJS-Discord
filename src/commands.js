@@ -151,7 +151,7 @@ export default class Commands {
     static treeDictionary = new Command(this.treeTitle, this.treeCommands, this.treeDescription, [""], (msg) => { EventManager.tree(msg); });
     static psychoDictionary = new Command(this.psychoTitle, this.psychoCommands, this.psychoDescription, ["", "card"], (msg, cmds) => { EventManager.psycho(msg, cmds); });
     static tierListDictionary = new Command(this.tierListTitle, this.tierListCommands, this.tierListDescription, [""], (msg, cmds) => { EventManager.tierList(msg, cmds) });
-    static countdownDictionary = new Command(this.countdownTitle, this.countdownCommands, this.countdownDescription, [""], (msg, cmds) => { EventManager.countdown(msg, cmds) });
+    static countdownDictionary = new Command(this.countdownTitle, this.countdownCommands, this.countdownDescription, ["list", "create", "update", "delete", "{countdown}"], (msg, cmds) => { EventManager.countdown(msg, cmds) });
     static wisdomDictionary = new Command(this.wisdomTitle, this.wisdomCommands, this.wisdomDescription, ["{text}"], (msg, cmds) => { EventManager.wisdomLlama(msg, cmds) });
     static xxxDictionary = new Command(this.xxxTitle, this.xxxCommands, this.xxxDescription, [""], (msg) => { EventManager.xxx(msg) });
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });

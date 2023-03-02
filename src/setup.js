@@ -8,9 +8,9 @@ import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
-import { countdownModal, createTierListModal } from './modals.js';
 import moment from 'moment';
 import { tierListModel, tierListUserMappingModel, countdownModel, commandModel } from './mongo/mongo-schemas.js';
+import {modals} from './modals.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -285,11 +285,18 @@ client.on("interactionCreate", async (interaction) => {
 
         interaction.deferUpdate();
     }
+    // Cancel Update Countdown
+    else if (interaction.customId === "update-countdown-cancel")
+    {
+        const oriCDIndex = Utils.OriginalCountdownList.findIndex(x => x.userId === interaction.user.id);
+        Utils.OriginalCountdownList.splice(oriCDIndex, 1);
+
+        interaction.reply("Update Countdown has been cancelled, you may proceed with another update if you wish to :D");
+    }
     // Show Modals
-    else if (interaction.customId === "create-tier-list") {
-        interaction.showModal(createTierListModal);
-    } else if (interaction.customId === "create-countdown") {
-        interaction.showModal(countdownModal);
+    else if (Utils.IsShowModal(interaction.customId))
+    {
+        Utils.ShowModal(interaction);
     }
     // Modal Submits
     else if (interaction.isModalSubmit())
@@ -301,6 +308,9 @@ client.on("interactionCreate", async (interaction) => {
 
 const ModalSubmit = async (interaction) => {
     let reply = "";
+
+    // Countdown variables
+    let countdown;
 
     modal_switch:
     switch (interaction.customId) {
@@ -358,25 +368,19 @@ const ModalSubmit = async (interaction) => {
             Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${tierListName} Tier List`, "Tier List");
             break;
         case "create-countdown-modal":
-            const countdownName = interaction.fields.getTextInputValue("countdown-name");
-            const countdownDate = interaction.fields.getTextInputValue("countdown-date");
-            const countdownDesc = interaction.fields.getTextInputValue("countdown-description");
-            const countdownImage = interaction.fields.getTextInputValue("countdown-image");
-            const countdownURL = interaction.fields.getTextInputValue("countdown-url");
+            countdown = Utils.ExtractModalValues("countdown", interaction);
 
-            const momentDate = moment(countdownDate, "DD/MM/YYYY");
-
-            if (countdownName.length <= 0) {
+            if (countdown.name.length <= 0) {
                 reply = "Please give this countdown a name!";
                 break modal_switch;
             }
 
-            if (countdownDate.length <= 0 || momentDate.isValid() !== true) {
+            if (countdown.date.length <= 0 || countdown.momentDate.isValid() !== true) {
                 reply = "Please insert a valid date!";
                 break modal_switch;
             }
 
-            let existingCD = await countdownModel.findOne({ Name: countdownName });
+            existingCD = await countdownModel.findOne({ Name: countdown.name });
 
             if (existingCD !== null) {
                 reply = "This countdown already exists!";
@@ -384,18 +388,48 @@ const ModalSubmit = async (interaction) => {
             }
 
             const newCountdown = new countdownModel({
-                Name: countdownName,
-                Date: momentDate.format("MM/DD/YYYY"),
-                Description: countdownDesc ?? "",
-                Image: countdownImage ?? "",
-                URL: countdownURL ?? "",
+                Name: countdown.name,
+                Date: countdown.momentDate.format("MM/DD/YYYY"),
+                Description: countdown.desc ?? "",
+                Image: countdown.image ?? "",
+                URL: countdown.url ?? "",
                 UserId: interaction.user.id
             });
 
             newCountdown.save();
 
-            reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdownName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdownName} Countdown`, "Countdown");
+            reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdown.name}'!`;
+            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdown.name} Countdown`, "Countdown");
+            break;
+        case "update-countdown-modal":
+            countdown = Utils.ExtractModalValues("update-countdown", interaction);
+
+            if (countdown.date.length <= 0 || countdown.momentDate.isValid() !== true) {
+                reply = "Please insert a valid date!";
+                break modal_switch;
+            }
+
+            let existingCD = await countdownModel.findOne({ Name: countdown.name });
+
+            if (existingCD === null) {
+                reply = "This countdown doesn't exist!";
+                break modal_switch;
+            }
+
+            existingCD.set({
+                Name: countdown.name,
+                Date: countdown.momentDate.format("MM/DD/YYYY"),
+                Description: countdown.desc ?? "",
+                Image: countdown.image ?? "",
+                URL: countdown.url ?? "",
+                UserId: interaction.user.id
+            });
+            existingCD.save();
+
+            Utils.OriginalCountdownList.splice(countdown.index, 1);
+
+            reply = `Thanks for updating your countdown! You can view it by calling 'ser countdown ${countdown.name}'!`;
+            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} updated ${countdown.name} Countdown`, "Countdown");
             break;
     }
 
