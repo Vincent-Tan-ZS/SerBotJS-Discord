@@ -17,18 +17,11 @@ export default class Utils {
         isWorkaround: false
     };
     
-    /*
-        name: countdownName,
-        date: moment(countdown.Date).format("DD/MM/YYYY"),
-        description: countdown.Description,
-        image: countdown.Image,
-        url: countdown.URL,
-        userId: userId
-    */
     static OriginalCountdownList = [];
 
     static LogType_INFO = "INFO";
     static LogType_ERROR = "ERROR";
+    static LogType_DEBUG = "DEBUG";
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
@@ -214,20 +207,23 @@ export default class Utils {
     }
 
     static Log = (logType, msg, type = "General") => {
-        if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO) return;
+        if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO && logType !== this.LogType_DEBUG) return;
 
         let currentTime = new Date();
         let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
 
         console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
 
-        const newLog = new loggingModel({
-            Timestamp: currentTime,
-            Type: type,
-            LogType: logType,
-            Message: msg
-        });
-        newLog.save();
+        if (logType !== this.LogType_DEBUG)
+        {
+            const newLog = new loggingModel({
+                Timestamp: currentTime,
+                Type: type,
+                LogType: logType,
+                Message: msg
+            });
+            newLog.save();
+        }
     }
 
     static ArrComp = (arr1, arr2) => {

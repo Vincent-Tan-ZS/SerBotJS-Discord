@@ -48,7 +48,7 @@ distube.on('playSong', (queue, song) => {
         {
             // Workaround for song not playing when hosted
             Utils.CurSongInfo.name = song.name;
-            Utils.CurSongInfo.duration = song.duration;
+            Utils.CurSongInfo.duration = song.duration - 1; // song.duration for some reason is almost always 1 millisecond more than the supposed length 
             Utils.CurSongInfo.startTime = new Date();
     
             Utils.PreviousSong = song;
@@ -94,39 +94,47 @@ distube.on('playSong', (queue, song) => {
     })
     .on('finishSong', (queue, song) => {
         if (queue.repeatMode === RepeatMode.SONG) return;
+        if (song.name !== Utils.CurSongInfo.name) 
+        {
+            Utils.CurSongInfo = {
+                name: "",
+                duration: 0,
+                startTime: undefined,
+                isWorkaround: false
+            };
+            return;
+        }
 
         // Workaround for song not playing when hosted
-        if (song.name === Utils.CurSongInfo.name)
+        let songPlayedFor = moment().diff(moment(Utils.CurSongInfo.startTime), 'seconds');
+
+        if (Utils.CurSongInfo.duration > songPlayedFor && Utils.CurSongInfo.isWorkaround !== true)
         {
-            let songPlayedFor = moment().diff(moment(Utils.CurSongInfo.startTime), 'seconds');
-            if (Utils.CurSongInfo.duration > songPlayedFor && Utils.CurSongInfo.isWorkaround !== true)
+            const msg = "Song did not complete, playing workaround song";
+
+            if (queue.textChannel !== undefined)
             {
-                const msg = "Song did not complete, playing workaround song";
-
-                if (queue.textChannel !== undefined)
-                {
-                    queue.textChannel.send(`[Distube] ${msg}`);
-                }
-
-                Utils.Log(Utils.LogType_INFO, msg, "DistubeJS");
-                distube.play(queue.voiceChannel, `${song.name} lyrics soundtrack`);
-
-                Utils.CurSongInfo.isWorkaround = true;
+                queue.textChannel.send(`[Distube] ${msg}`);
             }
-            else
+
+            Utils.Log(Utils.LogType_INFO, msg, "DistubeJS");
+            distube.play(queue.voiceChannel, `${song.name} lyrics soundtrack`);
+
+            Utils.CurSongInfo.isWorkaround = true;
+        }
+        else
+        {
+            if (queue.textChannel !== undefined && Utils.CurSongInfo.isWorkaround === true)
             {
-                if (queue.textChannel !== undefined && Utils.CurSongInfo.isWorkaround === true)
-                {
-                    queue.textChannel.send(`[Distube] Workaround cannot be played`);
-                }
-
-                Utils.CurSongInfo = {
-                    name: "",
-                    duration: 0,
-                    startTime: undefined,
-                    isWorkaround: false
-                };
+                queue.textChannel.send(`[Distube] Workaround cannot be played`);
             }
+
+            Utils.CurSongInfo = {
+                name: "",
+                duration: 0,
+                startTime: undefined,
+                isWorkaround: false
+            };
         }
     });
 
