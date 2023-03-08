@@ -48,7 +48,7 @@ distube.on('playSong', (queue, song) => {
         {
             // Workaround for song not playing when hosted
             Utils.CurSongInfo.name = song.name;
-            Utils.CurSongInfo.duration = song.duration - 1; // song.duration for some reason is almost always 1 millisecond more than the supposed length 
+            Utils.CurSongInfo.duration = song.duration - 1; // song.duration for some reason is almost always 1 second more than the supposed length 
             Utils.CurSongInfo.startTime = new Date();
     
             Utils.PreviousSong = song;
