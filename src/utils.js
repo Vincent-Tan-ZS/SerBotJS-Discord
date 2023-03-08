@@ -23,6 +23,9 @@ export default class Utils {
     static LogType_ERROR = "ERROR";
     static LogType_DEBUG = "DEBUG";
 
+    // TODO: Delete when '1 minute voiceconnection' issue fixed
+    static VoiceConnection = undefined;
+
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
         let den = parseFloat(denominator);
