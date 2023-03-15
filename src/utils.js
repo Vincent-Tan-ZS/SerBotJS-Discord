@@ -264,8 +264,14 @@ export default class Utils {
                 let updateCDModal = modals.updateCountdownModal;
                 const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
 
-                updateCDModal.setTitle(`Update ${userOriCD.name} Countdown`);
-                
+                // 45 chars max
+                let title = `Update ${userOriCD.name} Countdown`;
+                if (title.length > 45)
+                {
+                    title = "Update Countdown";
+                }
+                updateCDModal.setTitle(title);
+
                 updateCDModal.components[0].components[0].data.placeholder = updateCDModal.components[0].components[0].data.value = userOriCD.date;
                 updateCDModal.components[1].components[0].data.placeholder = updateCDModal.components[1].components[0].data.value = userOriCD.description;
                 updateCDModal.components[2].components[0].data.placeholder = updateCDModal.components[2].components[0].data.value = userOriCD.image;

@@ -227,10 +227,12 @@ export default class EventManager {
                 } else {
                     Distube.stop(queue);
                 }
+                Utils.CurSongInfo.isWorkaround = false;
                 message.react('👍');
                 break;
             case "stop":
                 Distube.stop(queue);
+                Utils.CurSongInfo.isWorkaround = false;
                 break;
             case "clear":
                 if (queue.songs.length > 0) {
