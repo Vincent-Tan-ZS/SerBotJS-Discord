@@ -23,6 +23,10 @@ export default class Utils {
     static LogType_ERROR = "ERROR";
     static LogType_DEBUG = "DEBUG";
 
+    static Reminder_Frequency_Single = 0;
+    static Reminder_Frequency_Daily = 1;
+    static Reminder_Frequency_Weekly = 2;
+
     // TODO: Delete when '1 minute voiceconnection' issue fixed
     static VoiceConnection = undefined;
 

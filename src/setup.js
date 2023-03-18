@@ -9,8 +9,7 @@ import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import moment from 'moment';
-import { tierListModel, tierListUserMappingModel, countdownModel, commandModel } from './mongo/mongo-schemas.js';
-import {modals} from './modals.js';
+import { tierListModel, tierListUserMappingModel, countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -152,7 +151,7 @@ client.on('ready', async() => {
     const dbCommandList = await commandModel.find({});
     const dbCommandPromises = [];
 
-        // Add New Commands
+    // Add New Commands
     Commands.dictionaries.forEach((dict) => {
        const existing = dbCommandList.find(l => l.Title === dict.Title);
 
@@ -183,7 +182,7 @@ client.on('ready', async() => {
         }
     });
 
-        // Remove DB Commands that aren't in use anymore 
+    // Remove DB Commands that aren't in use anymore 
     dbCommandList.filter(command => Commands.dictionaries.find(d => d.Title === command.Title) === undefined).forEach((command) => {
         dbCommandPromises.push(command.remove());
     });
@@ -197,6 +196,51 @@ client.on('ready', async() => {
     {
         Utils.Log(Utils.LogType_ERROR, `Error Initializing Commands List: ${e.message}`);
     }
+
+    // Daily Reminder Check
+    let reminderRule = new schedule.RecurrenceRule();
+    reminderRule.tz = "Asia/Kuala_Lumpur";
+    reminderRule.second = 0;
+    reminderRule.minute = 0;
+    reminderRule.hour = 9;
+
+    schedule.scheduleJob(reminderRule, async () => {
+        const allReminders = reminderModel.find({});
+        const todayDates = allReminders.filter(x => moment(x.RemindDate).isSame(new moment(), 'day'));
+        const todayDaily = allReminders.filter(x => Number(x.Frequency) === Utils.Reminder_Frequency_Daily);
+        const todayWeekly = allReminders.filter(x => moment().diff(x.LastMessageDate, 'd') % 7 === 0 && Number(x.Frequency) === Utils.Reminder_Frequency_Weekly);
+        
+        const userIdSet = new Set([].concat(todayDates.map(x => x.UserId)).concat(todayDaily.map(x => x.UserId)).concat(todayWeekly.map(x => x.UserId)));
+        const userIds = Array.from(userIdSet);
+        const users = await Promise.all(userIds.map(x => client.users.fetch(x)));
+
+        todayDates.forEach((reminder) => {
+            const user = users.find(u => u.id === reminder.UserId);
+            user.send(`[${moment(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
+
+            reminderModel.deleteOne({ _id: reminder._id });
+        });
+
+        todayDaily.forEach((reminder) => {
+            const user = users.find(u => u.id === reminder.UserId);
+            user.send(`[Daily Reminder] ${reminder.Message}`);
+
+            reminder.set({
+                LastMessageDate: moment().format("MM/DD/YYYY")
+            });
+            reminder.save();
+        });
+
+        todayWeekly.forEach((reminder) => {
+            const user = users.find(u => u.id === reminder.UserId);
+            user.send(`[Weekly Reminder] ${reminder.Message}`);
+            
+            reminder.set({
+                LastMessageDate: moment().format("MM/DD/YYYY")
+            });
+            reminder.save();
+        });
+    });
 
     // node-schedule refer
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});

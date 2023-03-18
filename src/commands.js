@@ -49,6 +49,7 @@ export default class Commands {
     static xxxTitle = "xxx";
     static trackTitle = "Current Track";
     static replayTitle = "Replay Previous Song";
+    static reminderTitle = "Create a Reminder for you";
     //#endregion Title
 
     //#region Commands
@@ -85,6 +86,7 @@ export default class Commands {
     static xxxCommands = ["sex"];
     static trackCommands = ["track", "song"];
     static replayCommands = ["replay"];
+    static reminderCommands = ["remind"];
     //#endregion Commands
 
     //#region Commands Description
@@ -121,6 +123,7 @@ export default class Commands {
     static xxxDescription = "Tell your fortune in terms of SEX in the following week";
     static trackDescription = "Displays information about current song";
     static replayDescription = "Replays the previous song (if applicable)";
+    static reminderDescription = "Set a reminder for you, either a set date, or daily/weekly!";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -156,6 +159,7 @@ export default class Commands {
     static xxxDictionary = new Command(this.xxxTitle, this.xxxCommands, this.xxxDescription, [""], (msg) => { EventManager.xxx(msg) });
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });
     static replayDictionary = new Command(this.replayTitle, this.replayCommands, this.replayDescription, [""], (msg) => { EventManager.replayPrevTrack(msg) });
+    static reminderDictionary = new Command(this.reminderTitle, this.reminderCommands, this.reminderDescription, ["{dd/mm/yyyy}", "{message} (auto-remind to tomorrow)", "daily", "weekly", "weekly [day]"], (msg, cmds) => { EventManager.createReminder(msg, cmds) });
 
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
@@ -166,7 +170,7 @@ export default class Commands {
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary, this.wisdomDictionary, this.xxxDictionary,
-        this.trackDictionary, this.replayDictionary,
+        this.trackDictionary, this.replayDictionary, this.reminderDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
         this.countdownDictionary, this.pingDictionary];
     //#endregion DictionaryList

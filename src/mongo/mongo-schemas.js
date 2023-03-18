@@ -105,4 +105,30 @@ const commandSchema = mongoose.Schema({
 });
 const commandModel = mongoose.model('Commands', commandSchema, 'Commands');
 
-export { tierListUserMappingModel, tierListModel, countdownModel, loggingModel, commandModel };
+// Reminder
+const reminderSchema = mongoose.Schema({
+    UserId: {
+        type: String,
+        required: true
+    },
+    Frequency: {
+        type: Number,
+        required: true
+    },
+    // Used only for Single Frequency
+    RemindDate: {
+        type: Date,
+        required: false
+    },
+    Message: {
+        type: String,
+        required: true
+    },
+    LastMessageDate: {
+        type: Date,
+        required: false
+    }
+});
+const reminderModel = mongoose.model('Reminders', reminderSchema, 'Reminders');
+
+export { tierListUserMappingModel, tierListModel, countdownModel, loggingModel, commandModel, reminderModel };

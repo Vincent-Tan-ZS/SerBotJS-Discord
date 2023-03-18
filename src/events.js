@@ -13,7 +13,7 @@ import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
-import { countdownModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
+import { countdownModel, reminderModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
 const r6Seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
@@ -34,6 +34,8 @@ const seasonLeaves = {
     Winter: '⬜',
     Christmas: '🟩'
 }
+
+const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export default class EventManager {
     constructor() {}
@@ -1183,6 +1185,130 @@ export default class EventManager {
             member: member,
             textChannel: channel
         });
+    }
+
+    static async createReminder(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const invalidEmbed = {
+            message: message,
+            title: "Reminder",
+            description: "Commands: {dd/mm/yyyy}, daily, weekly"
+        };
+
+        if (commands.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        const frequencyStr = commands[0];
+        commands.shift();
+
+        let modelFrequency = Utils.Reminder_Frequency_Single;
+        let lastMessageDate = "";
+        let remindDate = "";
+
+        switch (frequencyStr)
+        {
+            case "daily":
+                modelFrequency = Utils.Reminder_Frequency_Daily;
+                lastMessageDate = moment().format("MM/DD/YYYY");
+                break;
+            case "weekly":
+                modelFrequency = Utils.Reminder_Frequency_Weekly;
+
+                if (commands[0].startsWith("-"))
+                {
+                    const supposedDay = commands[0].substring(1).toLowerCase();
+                    const listOfDays = days.filter(d => d.startsWith(supposedDay));
+
+                    if (listOfDays.length <= 0 || listOfDays.length > 1)
+                    {
+                        invalidEmbed.description = "Please insert a proper day :(";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+
+                    const day = listOfDays[0];
+                    const todayMoment = moment();
+                    const reminderDayMoment = moment().day(day);
+
+                    const actualMoment = todayMoment.day() === reminderDayMoment.day()
+                        ? todayMoment
+                        : reminderDayMoment;
+
+                    lastMessageDate = actualMoment.format("MM/DD/YYYY");
+                    commands.shift();
+                }
+                else
+                {
+                    lastMessageDate = moment().format("MM/DD/YYYY");
+                }
+                break;
+            default:
+                let dateMoment = moment(frequencyStr, "DD/MM/YYYY");
+
+                if (!dateMoment.isValid())
+                {
+                    // Tomorrow
+                    if (dateMoment.invalidAt() < 0)
+                    {
+                        dateMoment = moment().add(1, 'day');
+                        commands.unshift(frequencyStr);
+                    }
+                    // Attempted date
+                    else
+                    {
+                        invalidEmbed.description = "Invalid date, the format is DD/MM/YYYY";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+                }
+
+                if (dateMoment.isSameOrBefore(new moment(), 'day'))
+                {
+                    invalidEmbed.description = "Date has to be after today :(";
+                    Utils.sendEmbed(invalidEmbed);
+                    return;
+                }
+
+                remindDate = dateMoment.format("MM/DD/YYYY");
+                break;
+        }
+
+        const remindMessage = commands.join(" ");
+
+        if (remindMessage === undefined || remindMessage === null || remindMessage?.length <= 0)
+        {
+            invalidEmbed.description = "Message cannot be empty :(";
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        const userId = message.author.id;
+
+        const existingReminder = await reminderModel.findOne({ UserId: userId, Frequency: modelFrequency, Message: remindMessage });
+        if (existingReminder !== null)
+        {
+            invalidEmbed.description = "Reminder already exists :(";
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        let modelObj = {
+            UserId: userId,
+            Frequency: modelFrequency,
+            Message: remindMessage,
+        };
+
+        if (remindDate.length > 0) modelObj.RemindDate = remindDate;
+        if (lastMessageDate.length > 0) modelObj.LastMessageDate = lastMessageDate;
+    
+        const newReminder = new reminderModel(modelObj);
+        newReminder.save();
+
+        message.channel.send(`Reminder added! I will do my best to remind you around 9:00AM GMT+8!`);
     }
 
     // Helper functions
