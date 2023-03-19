@@ -205,11 +205,11 @@ client.on('ready', async() => {
     reminderRule.hour = 9;
 
     schedule.scheduleJob(reminderRule, async () => {
-        const allReminders = reminderModel.find({});
-        const todayDates = allReminders.filter(x => moment(x.RemindDate).isSame(new moment(), 'day'));
+        const allReminders = await reminderModel.find();
+        const todayDates = allReminders.filter(x => x.RemindDate !== undefined).filter(x => moment(x.RemindDate).isSame(new moment(), 'day'));
         const todayDaily = allReminders.filter(x => Number(x.Frequency) === Utils.Reminder_Frequency_Daily);
-        const todayWeekly = allReminders.filter(x => moment().diff(x.LastMessageDate, 'd') % 7 === 0 && Number(x.Frequency) === Utils.Reminder_Frequency_Weekly);
-        
+        const todayWeekly = allReminders.filter(x => x.LastMessageDate !== undefined).filter(x => moment().diff(x.LastMessageDate, 'd') % 7 === 0 && Number(x.Frequency) === Utils.Reminder_Frequency_Weekly);
+
         const userIdSet = new Set([].concat(todayDates.map(x => x.UserId)).concat(todayDaily.map(x => x.UserId)).concat(todayWeekly.map(x => x.UserId)));
         const userIds = Array.from(userIdSet);
         const users = await Promise.all(userIds.map(x => client.users.fetch(x)));
