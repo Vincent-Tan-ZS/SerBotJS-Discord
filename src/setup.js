@@ -401,6 +401,7 @@ const ModalSubmit = async (interaction) => {
 
     // Countdown variables
     let countdown;
+    let existingCD;
 
     modal_switch:
     switch (interaction.customId) {
@@ -499,7 +500,7 @@ const ModalSubmit = async (interaction) => {
                 break modal_switch;
             }
 
-            let existingCD = await countdownModel.findOne({ Name: countdown.name });
+            existingCD = await countdownModel.findOne({ Name: countdown.name });
 
             if (existingCD === null) {
                 reply = "This countdown doesn't exist!";
