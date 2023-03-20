@@ -214,16 +214,32 @@ client.on('ready', async() => {
         const userIds = Array.from(userIdSet);
         const users = await Promise.all(userIds.map(x => client.users.fetch(x)));
 
-        todayDates.forEach((reminder) => {
+        todayDates.forEach(async (reminder) => {
             const user = users.find(u => u.id === reminder.UserId);
-            user.send(`[${moment(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
+            try
+            {
+                await user.send(`[${moment(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
+                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+            }
+            catch (e)
+            {
+                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+            }
 
             reminderModel.deleteOne({ _id: reminder._id });
         });
 
-        todayDaily.forEach((reminder) => {
+        todayDaily.forEach(async (reminder) => {
             const user = users.find(u => u.id === reminder.UserId);
-            user.send(`[Daily Reminder] ${reminder.Message}`);
+            try
+            {
+                await user.send(`[Daily Reminder] ${reminder.Message}`);
+                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+            }
+            catch (e)
+            {
+                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+            }
 
             reminder.set({
                 LastMessageDate: moment().format("MM/DD/YYYY")
@@ -231,9 +247,17 @@ client.on('ready', async() => {
             reminder.save();
         });
 
-        todayWeekly.forEach((reminder) => {
+        todayWeekly.forEach(async (reminder) => {
             const user = users.find(u => u.id === reminder.UserId);
-            user.send(`[Weekly Reminder] ${reminder.Message}`);
+            try
+            {
+                await user.send(`[Weekly Reminder] ${reminder.Message}`);
+                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+            }
+            catch (e)
+            {
+                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+            }
             
             reminder.set({
                 LastMessageDate: moment().format("MM/DD/YYYY")
