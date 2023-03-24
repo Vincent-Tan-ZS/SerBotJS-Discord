@@ -14,7 +14,8 @@ export default class Utils {
         name: "",
         duration: 0,
         startTime: undefined,
-        isWorkaround: false
+        isWorkaround: false,
+        isSkip: false
     };
     
     static OriginalCountdownList = [];

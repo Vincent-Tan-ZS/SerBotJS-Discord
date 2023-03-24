@@ -107,7 +107,7 @@ distube.on('playSong', (queue, song) => {
         // Workaround for song not playing when hosted
         let songPlayedFor = moment().diff(moment(Utils.CurSongInfo.startTime), 'seconds');
 
-        if (Utils.CurSongInfo.duration > songPlayedFor && Utils.CurSongInfo.isWorkaround !== true)
+        if (Utils.CurSongInfo.duration > songPlayedFor && Utils.CurSongInfo.isWorkaround !== true && Utils.CurSongInfo.isSkip !== true)
         {
             const msg = "Song did not complete, playing workaround song";
 
@@ -226,7 +226,7 @@ client.on('ready', async() => {
                 Utils.Log(Utils.LogType_ERROR, e, "Reminder");
             }
 
-            reminderModel.deleteOne({ _id: reminder._id });
+            await reminderModel.deleteOne({ id: reminder.id });
         });
 
         todayDaily.forEach(async (reminder) => {
