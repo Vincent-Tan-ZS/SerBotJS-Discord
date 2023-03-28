@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits, Partials } from 'discord.js';
 import { DisTube, RepeatMode } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
 import { YtDlpPlugin } from '@distube/yt-dlp'
@@ -233,6 +233,19 @@ client.on('ready', async() => {
             const user = users.find(u => u.id === reminder.UserId);
             try
             {
+                await user.send({
+                    content: `[Daily Reminder] ${reminder.Message}`,
+                    components: [
+                        new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId(`delete-reminder-${reminder.id}`)
+                            .setLabel('Delete Reminder')
+                            .setStyle(ButtonStyle.Primary)
+                        )
+                    ]
+                });
+
                 await user.send(`[Daily Reminder] ${reminder.Message}`);
                 Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
             }
@@ -251,6 +264,19 @@ client.on('ready', async() => {
             const user = users.find(u => u.id === reminder.UserId);
             try
             {
+                await user.send({
+                    content: `[Weekly Reminder] ${reminder.Message}`,
+                    components: [
+                        new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId(`delete-reminder-${reminder.id}`)
+                            .setLabel('Delete Reminder')
+                            .setStyle(ButtonStyle.Primary)
+                        )
+                    ]
+                });
+
                 await user.send(`[Weekly Reminder] ${reminder.Message}`);
                 Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
             }
@@ -382,6 +408,25 @@ client.on("interactionCreate", async (interaction) => {
         Utils.OriginalCountdownList.splice(oriCDIndex, 1);
 
         interaction.reply("Update Countdown has been cancelled, you may proceed with another update if you wish to :D");
+    }
+    // Delete recurring reminder
+    else if (interaction.customId.startsWith("delete-reminder"))
+    {
+        const reminderId = interaction.customId.split("-")[2];
+
+        reminderModel.deleteOne({id: reminderId}).then((resp) => {
+            if (resp.deletedCount > 0)
+            {
+                interaction.reply("Reminder has been deleted!");
+            }
+            else
+            {
+                throw "No reminder deleted, are you sure it's not already deleted?";
+            }
+        }).catch((e) => {
+            interaction.reply(e);
+            Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+        });
     }
     // Show Modals
     else if (Utils.IsShowModal(interaction.customId))
