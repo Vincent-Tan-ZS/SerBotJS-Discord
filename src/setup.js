@@ -246,7 +246,6 @@ client.on('ready', async() => {
                     ]
                 });
 
-                await user.send(`[Daily Reminder] ${reminder.Message}`);
                 Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
             }
             catch (e)
@@ -277,7 +276,6 @@ client.on('ready', async() => {
                     ]
                 });
 
-                await user.send(`[Weekly Reminder] ${reminder.Message}`);
                 Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
             }
             catch (e)
@@ -418,6 +416,7 @@ client.on("interactionCreate", async (interaction) => {
             if (resp.deletedCount > 0)
             {
                 interaction.reply("Reminder has been deleted!");
+                Utils.Log(Utils.LogType_DEBUG, `User deleting reminder ${reminderId}`, "Reminder");
             }
             else
             {
