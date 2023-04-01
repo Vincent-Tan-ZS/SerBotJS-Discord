@@ -226,7 +226,7 @@ client.on('ready', async() => {
                 Utils.Log(Utils.LogType_ERROR, e, "Reminder");
             }
 
-            await reminderModel.deleteOne({ id: reminder.id });
+            await reminderModel.deleteOne({ _id: reminder.id });
         });
 
         todayDaily.forEach(async (reminder) => {
@@ -412,11 +412,10 @@ client.on("interactionCreate", async (interaction) => {
     {
         const reminderId = interaction.customId.split("-")[2];
 
-        reminderModel.deleteOne({id: reminderId}).then((resp) => {
+        reminderModel.deleteOne({ _id: reminderId }).then((resp) => {
             if (resp.deletedCount > 0)
             {
                 interaction.reply("Reminder has been deleted!");
-                Utils.Log(Utils.LogType_DEBUG, `User deleting reminder ${reminderId}`, "Reminder");
             }
             else
             {
