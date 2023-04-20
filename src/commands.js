@@ -159,7 +159,7 @@ export default class Commands {
     static xxxDictionary = new Command(this.xxxTitle, this.xxxCommands, this.xxxDescription, [""], (msg) => { EventManager.xxx(msg) });
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });
     static replayDictionary = new Command(this.replayTitle, this.replayCommands, this.replayDescription, [""], (msg) => { EventManager.replayPrevTrack(msg) });
-    static reminderDictionary = new Command(this.reminderTitle, this.reminderCommands, this.reminderDescription, ["{dd/mm/yyyy}", "{message} (auto-remind to tomorrow)", "daily", "weekly", "weekly [day]"], (msg, cmds) => { EventManager.createReminder(msg, cmds) });
+    static reminderDictionary = new Command(this.reminderTitle, this.reminderCommands, this.reminderDescription, ["{dd/mm/yyyy} {message}", "{message} (auto-remind to tomorrow)", "daily {message}", "weekly {message}", "weekly [day] {message}"], (msg, cmds) => { EventManager.createReminder(msg, cmds) });
 
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
