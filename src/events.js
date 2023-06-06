@@ -549,7 +549,7 @@ export default class EventManager {
     }
 
     static coinFlip(message) {
-        const msg = RandNum() >= 0.5 ? "Heads" : "Tails";
+        const msg = Utils.RandNum() >= 0.5 ? "Heads" : "Tails";
         message.channel.send(`🪙 ${msg}`);
     }
 
