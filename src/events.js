@@ -1,4 +1,6 @@
-import R6API, { utils as R6Utils, constants as R6Constants } from 'r6api.js';
+import R6API, { SERVICES as R6Services, SERVICES_EXTENDED as R6ExtendedServices } from 'r6api.js-next';
+// import * as R6Utils from 'r6api.js-next/dist/utils.js'
+// import * as R6Constants from 'r6api.js-next/dist/constants.js'
 import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
 import path from 'path';
@@ -16,9 +18,10 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 
 import { countdownModel, reminderModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
 
 const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
-const r6Seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
-const r6Regions = Object.keys(R6Constants.REGIONS);
+// const r6Seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
+// const r6Regions = Object.keys(R6Constants.REGIONS);
 const r6PlatformTexts = ["PC", "PS", "XBOX"];
+const r6Seasons = ["Black Ice", "Dust Line", "Skull Rain", "Red Crow", "Velvet Shell", "Health", "Blood Orchid", "White Noise", "Chimera", "Para Bellum", "Grim Sky", "Wind Bastion", "Burnt Horizon", "Phantom Sight", "Ember Rise", "Shifting Tides", "Void Edge", "Steel Wave", "Shadow Legacy", "Neon Dawn", "Crimson Heist", "North Star", "Crystal Guard", "High Calibre", "Demon Veil", "Vector Glare", "Brutal Swarm", "Solar Raid", "Commanding Force"];
 
 const seasonDates = {
     Spring: ["01/09/1990", "30/11/1990"],
@@ -419,9 +422,9 @@ export default class EventManager {
             return;
         }
 
-        username = r6user[0].username;
+        username = r6user.username;
 
-        let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
+        let [stats, level, ranks] = await this.getR6Stats(r6user.userId, selectedPlatform);
 
         //No matches played at all (Casual & Ranked)
         if (Object.keys(stats.results).length <= 0) {
@@ -435,7 +438,7 @@ export default class EventManager {
             return;
         }
 
-        let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
+        let r6Stats = this.scrapeR6Stats(r6user, stats, level, ranks);
         let latestStats = r6Stats[r6Stats.length - 1];
 
         let availableSeasonIds = r6Stats.map(x => x.seasonId);
@@ -1335,82 +1338,102 @@ export default class EventManager {
     }
 
     static async getR6Stats(r6UserId, platform) {
-        let rankedPromises = [];
+        const statPromises = [
+            // Level
+            r6api.getUserProgression({ platform: platform, profileIds: [r6UserId] }),
 
-        const GetCustomRankedStats = (seasonId, region) => {
-            return r6api.custom(
-                R6Utils.getURL.RANKS(
-                    platform, [r6UserId], seasonId, region, "pvp_ranked"
-                )
-            );
-        }
+            // General Stats
+            r6api.getUserStats({ platform: platform, profileId: r6UserId, view: "seasonal", aggregation: "summary", gameModes: ['all'] }),
 
-        r6Seasons.forEach(seasonId => {
-            if (seasonId < 18)
-            {
-                r6Regions.forEach(region => {
-                    rankedPromises.push(GetCustomRankedStats(seasonId, region));
-                });
-            }
-            else
-            {
-                rankedPromises.push(GetCustomRankedStats(seasonId, "ncsa"));
-            }
+            // Casual Stats
+            r6api.getUserStats({ platform: platform, profileId: r6UserId, view: "seasonal", aggregation: "summary", gameModes: ['casual'] }),
+
+            // RankedStats
+            r6api.getUserStats({ platform: platform, profileId: r6UserId, view: "seasonal", aggregation: "summary", gameModes: ['ranked'] }),
+
+            // Seasonal (6 - 17) Stats
+            //r6api.getUserSeasonal({ platform: platform, profileIds: [r6UserId], seasonIds: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], regionSlugs: ['apac', 'emea', 'ncsa'] }),
+
+            // Seasonal (>= 18) Stats
+             r6api.getUserSeasonal({ platform: platform, profileIds: [r6UserId], seasonIds: ['all'] })
+        ];
+
+        const [progressionStats, generalStats, casualStats, rankedStats, afterGlobalSeasonalStats] = await Promise.all(statPromises);
+
+        const { level } = progressionStats[0];
+
+        const overallMatchStats = generalStats.reduce((prev, cur, int, arr) => {
+            prev.gen_wins += cur.rounds.wins;
+            prev.gen_played += cur.rounds.played;
+            prev.gen_kills += cur.kills;
+            prev.gen_deaths += cur.death;
+
+            return prev;
+        }, {
+            gen_wins: 0,
+            gen_played: 0,
+            gen_kills: 0,
+            gen_deaths: 0
         });
 
-        let [customStats, customProgression, customRanks] = await Promise.all([
-            r6api.custom(
-                R6Utils.getURL.STATS(
-                    platform, [r6UserId], ['generalpvp_matchwon', 'generalpvp_matchlost', 'generalpvp_kills', 'generalpvp_death',
-                        'casualpvp_matchwon', 'casualpvp_matchlost', 'casualpvp_kills', 'casualpvp_death',
-                        'rankedpvp_matchwon', 'rankedpvp_matchlost', 'rankedpvp_kills', 'rankedpvp_death'
-                    ]
-                )
-            ),
-            r6api.custom(
-                R6Utils.getURL.PROGRESS(
-                    platform, [r6UserId]
-                )
-            ),
-            await Promise.all(rankedPromises)
-        ]);
+        const casualMatchStats = casualStats.reduce((prev, cur, int, arr) => {
+            prev.cas_wins += cur.rounds.wins;
+            prev.cas_played += cur.rounds.played;
+            prev.cas_kills += cur.kills;
+            prev.cas_deaths += cur.death;
 
-        let groupedCustomRanks = [];
-
-        customRanks.forEach((customRank) => {
-            let seasonId = customRank.players[r6UserId].season;
-
-            if (groupedCustomRanks[seasonId] == null) {
-                groupedCustomRanks[seasonId] = [];
-            }
-
-            groupedCustomRanks[seasonId].push(customRank.players[r6UserId]);
+            return prev;
+        }, {
+            cas_wins: 0,
+            cas_played: 0,
+            cas_kills: 0,
+            cas_deaths: 0
         });
 
-        return [customStats, customProgression.player_profiles[0].level, groupedCustomRanks];
+        const rankedMatchStats = rankedStats.reduce((prev, cur, int, arr) => {
+            prev.ranked_wins += cur.rounds.wins;
+            prev.ranked_played += cur.rounds.played;
+            prev.ranked_kills += cur.kills;
+            prev.ranked_deaths += cur.death;
+
+            return prev;
+        }, {
+            ranked_wins: 0,
+            ranked_played: 0,
+            ranked_kills: 0,
+            ranked_deaths: 0
+        });
+
+        const playerStats = {
+            Overall: overallMatchStats,
+            Casual: casualMatchStats,
+            Ranked: rankedMatchStats
+        };
+
+        //console.log(beforeGlobalSeasonalStats);
+        console.log(afterGlobalSeasonalStats);
+
+        return [playerStats, level, -1];
     }
 
-    static async findR6Stats(username) {
+    static async findR6Stats(r6Username) {
         let r6user;
         let platformText = "";
         let selectedPlatform = "";
         let statsFound = false;
-        let usernamePromises = [];
 
-        R6Constants.PLATFORMS.forEach(platform => {
-            usernamePromises.push(r6api.findByUsername(platform, username))
+        const usernamePromises = R6ExtendedServices.map((service) => {
+            return r6api.findUserByUsername({ platform: service, usernames: [r6Username] });
         });
 
         let allResults = await Promise.all(usernamePromises);
+        let foundResult = allResults.find(x => x.length > 0);
 
-        if (allResults.every(res => {
-                return res.length <= 0;
-            })) {
-            statsFound = false;
-        } else {
-            r6user = allResults.find(x => x.length > 0);
-            selectedPlatform = r6user[0].platform;
-            platformText = r6PlatformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
+        if (foundResult != null && foundResult != undefined)
+        {
+            r6user = foundResult[0];
+            selectedPlatform = r6user.platform;
+            platformText = r6PlatformTexts[R6Services.indexOf(selectedPlatform)];
             statsFound = true;
         }
 
