@@ -39,6 +39,10 @@ const tierListModel = mongoose.model('TierList', tierListSchema, 'TierList');
 
 // Countdown
 const countdownSchema = mongoose.Schema({
+    Id: {
+        type: Number,
+        required: true
+    },
     Name: {
         type: String,
         required: true
