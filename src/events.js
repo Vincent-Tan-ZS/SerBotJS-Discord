@@ -718,7 +718,7 @@ export default class EventManager {
             case "l":
                 let allCountdowns = await countdownModel.find({});
 
-                let description = allCountdowns.map(cd => cd.Name).join("\n");
+                let description = allCountdowns.map(cd => `${cd.Id}. ${cd.Name}`).join("\n");
     
                 Utils.sendEmbed({
                     message: message,
@@ -753,7 +753,10 @@ export default class EventManager {
 
                 commands.shift();
                 countdownName = commands.join(" ");
-                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                countdown = isNaN(countdownName)
+                    ? await countdownModel.findOne({ Name: countdownName })
+                    : await countdownModel.findOne({ Id: Number(countdownName) })
 
                 if (countdown === null) {
                     Utils.sendEmbed({
@@ -778,7 +781,7 @@ export default class EventManager {
                 let existingOriginalCountdownIndex = Utils.OriginalCountdownList.findIndex(x => x.userId === userId);
 
                 const origCD = {  
-                    name: countdownName,
+                    name: countdown.Name,
                     date: moment(countdown.Date).format("DD/MM/YYYY"),
                     description: countdown.Description,
                     image: countdown.Image,
@@ -796,7 +799,7 @@ export default class EventManager {
                 }
                 
                 message.author.send({
-                    content: `Click below to start updating the ${countdownName} countdown!`,
+                    content: `Click below to start updating the ${countdown.Name} countdown!`,
                     components: [
                         new ActionRowBuilder()
                         .addComponents(
@@ -866,7 +869,10 @@ export default class EventManager {
                 }
 
                 countdownName = commands.join(" ");
-                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                countdown = isNaN(countdownName)
+                ? await countdownModel.findOne({ Name: countdownName })
+                : await countdownModel.findOne({ Id: Number(countdownName) })
 
                 if (countdown === null) {
                     Utils.sendEmbed({

@@ -521,18 +521,22 @@ const ModalSubmit = async (interaction) => {
                 break modal_switch;
             }
 
+            let topIdCD = await countdownModel.find().sort({ "Id" : -1 }).limit(1);
+            const newId = Number(topIdCD[0].Id) + 1;
+
             const newCountdown = new countdownModel({
                 Name: countdown.name,
                 Date: countdown.momentDate.format("MM/DD/YYYY"),
                 Description: countdown.desc ?? "",
                 Image: countdown.image ?? "",
                 URL: countdown.url ?? "",
-                UserId: interaction.user.id
+                UserId: interaction.user.id,
+                Id: newId
             });
 
             newCountdown.save();
 
-            reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdown.name}'!`;
+            reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdown.name}' or 'ser countdown ${newId}'!`;
             Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdown.name} Countdown`, "Countdown");
             break;
         case "update-countdown-modal":
@@ -562,7 +566,7 @@ const ModalSubmit = async (interaction) => {
 
             Utils.OriginalCountdownList.splice(countdown.index, 1);
 
-            reply = `Thanks for updating your countdown! You can view it by calling 'ser countdown ${countdown.name}'!`;
+            reply = `Thanks for updating your countdown! You can view it by calling 'ser countdown ${countdown.name}' or 'ser countdown ${existingCD.Id}'!`;
             Utils.Log(Utils.LogType_INFO, `${interaction.user.username} updated ${countdown.name} Countdown`, "Countdown");
             break;
     }
