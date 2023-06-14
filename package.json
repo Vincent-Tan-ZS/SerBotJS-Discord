@@ -33,8 +33,6 @@
         "node-superfetch": "^0.3.3",
         "novelcovid": "^3.0.2",
         "opusscript": "0.0.8",
-        "r6api.js": "^4.4.1",
-        "r6api.js-next": "^4.5.4",
         "sharp": "^0.31.2",
         "ytdl-core": "^4.11.2"
     }

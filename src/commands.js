@@ -31,7 +31,6 @@ export default class Commands {
     static musicClearTitle = "Clear Queue";
     static musicQueueTitle = "Display Song Queue";
     static musicLoopTitle = "Loop Current Song";
-    static r6Title = "Rainbow Six: Siege Player Statistics";
     static covidTitle = "Display Country's Covid Statistics";
     static rhombusTitle = "Rhombus";
     static wikiHowTitle = "Wikihow Article";
@@ -68,7 +67,6 @@ export default class Commands {
     static musicClearCommands = ["clr", "clear"];
     static musicQueueCommands = ["q", "queue"];
     static musicLoopCommands = ["l", "loop"];
-    static r6Commands = ["r6"];
     static covidCommands = ["covid"];
     static rhombusCommands = ["rhombus"];
     static wikiHowCommands = ["wikihow"];
@@ -105,7 +103,6 @@ export default class Commands {
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
     static musicLoopDescription = "Loops/Unloops the current track";
-    static r6Description = "Display Rainbow Six: Siege player stats";
     static covidDescription = "Retrieves information on Covid-19 cases for a country";
     static rhombusDescription = "Creates a rhombus of size n";
     static wikiHowDescription = "Searches for a WikiHow page";
@@ -141,7 +138,6 @@ export default class Commands {
     static musicClearDictionary = new Command(this.musicClearTitle, this.musicClearCommands, this.musicClearDescription, [""], this.musicActionResolve);
     static musicLoopDictionary = new Command(this.musicLoopTitle, this.musicLoopCommands, this.musicLoopDescription, [""], this.musicActionResolve);
     static disconnectDictionary = new Command(this.disconnectTitle, this.disconnectCommands, this.disconnectDescription, [""], this.disconnectActionResolve);
-    static r6Dictionary = new Command(this.r6Title, this.r6Commands, this.r6Description, ["{username}"], (msg, cmds) => { EventManager.retrieveR6Stats(msg, cmds); });
     static covidDictionary = new Command(this.covidTitle, this.covidCommands, this.covidDescription, ["{country}"], (msg, cmds) => { EventManager.getCovidCases(msg, cmds); });
     static rhombusDictionary = new Command(this.rhombusTitle, this.rhombusCommands, this.rhombusDescription, ["{size}"], (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
     static wikiHowDictionary = new Command(this.wikiHowTitle, this.wikiHowCommands, this.wikiHowDescription, ["{search term}"], (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
@@ -167,7 +163,7 @@ export default class Commands {
     //#region DictionaryList
     static dictionaries = [this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
-        this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary, this.r6Dictionary,
+        this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary, this.wisdomDictionary, this.xxxDictionary,
         this.trackDictionary, this.replayDictionary, this.reminderDictionary,
