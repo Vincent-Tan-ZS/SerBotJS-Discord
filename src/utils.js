@@ -259,9 +259,6 @@ export default class Utils {
     static ShowModal = (interaction) => {
         switch (interaction.customId)
         {
-            case "create-tier-list":
-                interaction.showModal(modals.createTierListModal);
-                break;
             case "create-countdown":
                 interaction.showModal(modals.countdownModal);
                 break;
@@ -275,12 +272,39 @@ export default class Utils {
                 {
                     title = "Update Countdown";
                 }
+
+                const ProcessOptionalField = (fieldValue) => {
+                    let placeholderField = fieldValue;
+
+                    // 100 chars max
+                    if (placeholderField.length > 100) {
+                        placeholderField = placeholderField.substring(0, 99);
+                    }
+
+                    if (fieldValue.length <= 0) {
+                        fieldValue = "\0";
+                    }
+
+                    return [placeholderField, fieldValue];
+                }
+
+                const [placeholderDescription, description] = ProcessOptionalField(userOriCD.description);
+                const [placeholderImage, image] = ProcessOptionalField(userOriCD.image);
+                const [placeholderUrl, url] = ProcessOptionalField(userOriCD.url);
+
                 updateCDModal.setTitle(title);
 
-                updateCDModal.components[0].components[0].data.placeholder = updateCDModal.components[0].components[0].data.value = userOriCD.date;
-                updateCDModal.components[1].components[0].data.placeholder = updateCDModal.components[1].components[0].data.value = userOriCD.description;
-                updateCDModal.components[2].components[0].data.placeholder = updateCDModal.components[2].components[0].data.value = userOriCD.image;
-                updateCDModal.components[3].components[0].data.placeholder = updateCDModal.components[3].components[0].data.value = userOriCD.url;
+                updateCDModal.components[0].components[0].setPlaceholder(userOriCD.date); 
+                updateCDModal.components[0].components[0].setValue(userOriCD.date);
+                
+                updateCDModal.components[1].components[0].setPlaceholder(placeholderDescription);
+                updateCDModal.components[1].components[0].setValue(description);
+
+                updateCDModal.components[2].components[0].setPlaceholder(placeholderImage);
+                updateCDModal.components[2].components[0].setValue(image);
+
+                updateCDModal.components[3].components[0].setPlaceholder(placeholderUrl);
+                updateCDModal.components[3].components[0].setValue(url);
 
                 interaction.showModal(updateCDModal);
                 break;
@@ -312,9 +336,9 @@ export default class Utils {
                     index: oriCDIndex,
                     name: oriCD.name,
                     date: interaction.fields.getTextInputValue("countdown-date"),
-                    desc: interaction.fields.getTextInputValue("countdown-description"),
-                    image: interaction.fields.getTextInputValue("countdown-image"),
-                    url: interaction.fields.getTextInputValue("countdown-url")
+                    desc: interaction.fields.getTextInputValue("countdown-description").replace("\0", ""),
+                    image: interaction.fields.getTextInputValue("countdown-image").replace("\0", ""),
+                    url: interaction.fields.getTextInputValue("countdown-url").replace("\0", "")
                 };
 
                 updateCDObj.momentDate = moment(updateCDObj.date, "DD/MM/YYYY");

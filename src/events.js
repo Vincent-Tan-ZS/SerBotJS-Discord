@@ -12,7 +12,7 @@ import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
-import { countdownModel, reminderModel, tierListModel, tierListUserMappingModel } from './mongo/mongo-schemas.js';
+import { countdownModel, reminderModel } from './mongo/mongo-schemas.js';
 
 const seasonDates = {
     Spring: ["01/09/1990", "30/11/1990"],
@@ -567,133 +567,6 @@ export default class EventManager {
         }
     }
 
-    static async tierList(message, commands) {
-        if (message.author === undefined) return;
-        commands.shift();
-
-        const invalidEmbed = {
-            message: message,
-            title: "Tier List",
-            description: "Please use 'create' to start a new tier list or 'view [name]' to view a tier list :)"
-        };
-
-
-        if (commands.length <= 0) {
-            Utils.sendEmbed(invalidEmbed);
-            return;
-        }
-
-        let tierListName = "";
-        let tierList;
-        let userId = "";
-
-        switch (commands[0]) {
-            case "list":
-            case "l":
-                break;
-            case "create":
-            case "c":
-                message.author.send({
-                    content: 'Click below to start creating your tier list!\nNote: Due to Discord limitations, we can only have up to 4 tiers at the moment, sorry :(',
-                    components: [
-                        new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder()
-                            .setCustomId('create-tier-list')
-                            .setLabel('Start')
-                            .setStyle('Primary')
-                        )
-                    ]
-                });
-                break;
-            case "view":
-            case "v":
-                if (commands.length <= 1) {
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Tier List",
-                        description: "Please use 'view [name]' to view a tier list :)"
-                    });
-                    return;
-                }
-
-                commands.shift();
-                tierListName = commands.join(" ");
-                tierList = await tierListModel.findOne({ Name: tierListName });
-
-                if (tierList === null) {
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Tier List",
-                        description: "The tier list doesn't exist :("
-                    });
-                    return;
-                }
-
-                userId = (await tierListUserMappingModel.findOne({ TierListId: tierList._id.toString() }).select('UserId')).UserId;
-                const user = await client.users.fetch(userId);
-
-                const desc = tierList.Tiers.map(tier => {
-                    return `${tier}: ${tierList.List.filter(l => l.Tier === tier).map(l => l.Data).join(", ")}`
-                }).join("\n");
-
-                Utils.sendEmbed({
-                    message: message,
-                    title: tierListName,
-                    description: desc,
-                    author: user.username,
-                    authorIcon: user.avatarURL({ dynamic: true })
-                });
-                break;
-            case "delete":
-                if (commands.length <= 1) {
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Tier List",
-                        description: "Please use 'delete [name]' to delete a tier list :)"
-                    });
-                    return;
-                }
-
-                commands.shift();
-                tierListName = commands.join(" ");
-                tierList = await tierListModel.findOne({ Name: tierListName });
-
-                if (tierList === null) {
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Tier List",
-                        description: "The tier list doesn't exist :("
-                    });
-                    return;
-                }
-
-                let tierListId = tierList._id.toString();
-                userId = (await tierListUserMappingModel.findOne({ TierListId: tierListId }).select('UserId')).UserId;
-
-                if (userId !== message.author.id) {
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Tier List",
-                        description: "Only the list creator can delete their own lists, sorry!"
-                    });
-                    return;
-                }
-
-                await Promise.all([
-                    tierListModel.deleteOne({ Name: tierListName }),
-                    tierListUserMappingModel.deleteOne({ TierListId: tierListId })
-                ]);
-
-                message.channel.send("Tier List deleted!");
-                Utils.Log(Utils.LogType_INFO, `${message.author.username} deleted ${tierListName} Tier List`, "Tier List");
-                break;
-            default:
-                Utils.sendEmbed(invalidEmbed);
-                break;
-        }
-    }
-
     static async countdown(message, commands) {
         if (message.author === undefined) return;
         commands.shift();
@@ -716,9 +589,10 @@ export default class EventManager {
         switch (commands[0]) {
             case "list":
             case "l":
-                let allCountdowns = await countdownModel.find({});
+                let allCountdowns = await countdownModel.find({}).sort({ Id: 'asc' });
 
-                let description = allCountdowns.map(cd => `${cd.Id}. ${cd.Name}`).join("\n");
+                let description = `You can either use the Id or Name for viewing/updating!\n\n`
+                description += allCountdowns.map(cd => `${cd.Id} - ${cd.Name}`).join("\n");
     
                 Utils.sendEmbed({
                     message: message,
@@ -746,7 +620,7 @@ export default class EventManager {
                     Utils.sendEmbed({
                         message: message,
                         title: "Countdown",
-                        description: "Please use 'update [name]' to update a countdown :)"
+                        description: "Please use 'update [name]' or 'update [id]' to update a countdown :)"
                     });
                     return;
                 }

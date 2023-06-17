@@ -42,7 +42,6 @@ export default class Commands {
     static wheelTitle = "Random Wheel";
     static treeTitle = "Display A Tree";
     static psychoTitle = "American Psycho";
-    static tierListTitle = "Tier List";
     static countdownTitle = "Countdown";
     static wisdomTitle = "Wisdom Llama";
     static xxxTitle = "xxx";
@@ -78,7 +77,6 @@ export default class Commands {
     static wheelCommands = ["wheel"];
     static treeCommands = ["tree"];
     static psychoCommands = ["psycho"];
-    static tierListCommands = ["tierlist", "tl"];
     static countdownCommands = ["countdown", "cd"];
     static wisdomCommands = ["wisdom"];
     static xxxCommands = ["sex"];
@@ -114,7 +112,6 @@ export default class Commands {
     static wheelDescription = "Does a wheel spin (randomizer)";
     static treeDescription = "Generate a tree :)";
     static psychoDescription = "Let's see Paul Allen's card";
-    static tierListDescription = "Create/view Tier Lists!";
     static countdownDescription = "Create/view Countdowns!";
     static wisdomDescription = "Generate a Wisdom Llama image";
     static xxxDescription = "Tell your fortune in terms of SEX in the following week";
@@ -149,7 +146,6 @@ export default class Commands {
     static wheelDictionary = new Command(this.wheelTitle, this.wheelCommands, this.wheelDescription, ["{option1, option2, etc}"], (msg, cmds) => { EventManager.wheel(msg, cmds); });
     static treeDictionary = new Command(this.treeTitle, this.treeCommands, this.treeDescription, [""], (msg) => { EventManager.tree(msg); });
     static psychoDictionary = new Command(this.psychoTitle, this.psychoCommands, this.psychoDescription, ["", "card"], (msg, cmds) => { EventManager.psycho(msg, cmds); });
-    static tierListDictionary = new Command(this.tierListTitle, this.tierListCommands, this.tierListDescription, [""], (msg, cmds) => { EventManager.tierList(msg, cmds) });
     static countdownDictionary = new Command(this.countdownTitle, this.countdownCommands, this.countdownDescription, ["list", "create", "update", "delete", "{countdown}"], (msg, cmds) => { EventManager.countdown(msg, cmds) });
     static wisdomDictionary = new Command(this.wisdomTitle, this.wisdomCommands, this.wisdomDescription, ["{text}"], (msg, cmds) => { EventManager.wisdomLlama(msg, cmds) });
     static xxxDictionary = new Command(this.xxxTitle, this.xxxCommands, this.xxxDescription, [""], (msg) => { EventManager.xxx(msg) });
@@ -165,7 +161,7 @@ export default class Commands {
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
-        this.todayDictionary, this.tictactoeDictionary, this.tierListDictionary, this.wisdomDictionary, this.xxxDictionary,
+        this.todayDictionary, this.tictactoeDictionary, this.wisdomDictionary, this.xxxDictionary,
         this.trackDictionary, this.replayDictionary, this.reminderDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
         this.countdownDictionary, this.pingDictionary];

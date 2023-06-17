@@ -9,7 +9,7 @@ import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import moment from 'moment';
-import { tierListModel, tierListUserMappingModel, countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
+import { countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -375,23 +375,9 @@ client.on("messageReactionRemove", async(reaction, user) => {
 client.on("interactionCreate", async (interaction) => {
     let message = interaction.message;
     let embed = message.embeds[0];
-
-    // R6 Stats Select
-    if (interaction.customId == "R6SeasonChange") {
-        interaction.deferUpdate().then(() => {
-            let username = embed.author.name.substr(0, embed.author.name.indexOf(" "));
-            let titleMatch = embed.author.name.match(/\[(.*?)\]/);
-            let platform = titleMatch[1];
-            let seasonId = Number(interaction.values[0]);
-            interaction.editReply({ content: "Retrieving, please wait...", embeds: [], components: [] });
-
-            EventManager.updateR6Stats(username, platform, seasonId).then((newEmbed) => {
-                interaction.editReply(newEmbed);
-            });
-        });
-    }
+    
     // Tic-Tac-Toe
-    else if (interaction.customId.startsWith("ttt")) {
+    if (interaction.customId.startsWith("ttt")) {
         let payload = interaction.customId.slice(3);
         let gameId = payload.slice(0, 64);
         let selectedSquare = payload.slice(64);
@@ -448,59 +434,6 @@ const ModalSubmit = async (interaction) => {
 
     modal_switch:
     switch (interaction.customId) {
-        case "create-tier-list-modal":
-            const tierValues = interaction.fields.fields.map(x => x.value).filter(x => x !== null);
-
-            const tierListName = tierValues.shift();
-
-            if (tierValues.length <= 0) {
-                reply = "You need at least one tier, please try again :)";
-                break modal_switch;
-            }
-
-            if (tierValues.find(x => !x.match(/^\w*:([ ]?\w*[,]?)+$/g)) !== undefined) {
-                reply = "Please follow the correct format for a tier list. {TierName}: {item1},{item2},etc...";
-                break modal_switch;
-            }
-
-            let existing = await tierListModel.findOne({ Name: tierListName });
-
-            if (existing !== null) {
-                reply = "This tier list already exists! Name is the same as an existing one :(";
-                break modal_switch;
-            }
-
-            const tiers = tierValues.map(x => x.split(":")[0]);
-
-            const newTierList = new tierListModel({
-                Name: tierListName,
-                Tiers: tiers,
-                List: tiers.reduce((prev, tier, index, arr) => {
-                    let _data = tierValues.find(x => x.startsWith(tier)).split(":")[1].split(",").map(x => x.trim());
-
-                    arr = prev.concat(_data.map(x => {
-                        return {
-                            Tier: tier,
-                            Data: x
-                        }
-                    }))
-                    return arr;
-                }, [])
-            });
-
-            const newTierListUserMap = new tierListUserMappingModel({
-                UserId: interaction.user.id,
-                TierListId: newTierList._id.toString()
-            });
-
-            await Promise.all([
-                newTierList.save(),
-                newTierListUserMap.save()
-            ]);
-
-            reply = `Thanks for creating your tier list! You can view it by calling 'ser tierlist view ${tierListName}'!`;
-            Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${tierListName} Tier List`, "Tier List");
-            break;
         case "create-countdown-modal":
             countdown = Utils.ExtractModalValues("countdown", interaction);
 
