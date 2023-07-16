@@ -1,45 +1,52 @@
-import R6API, { utils as R6Utils, constants as R6Constants } from 'r6api.js';
 import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
-import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
+import axios from 'axios';
 
-//import { refreshLocalMusicFiles } from './local.js';
-import { distube as Distube } from './setup.js';
+import { client, distube as Distube } from './setup.js';
 import config from './config.js';
-import Commands from './commands.js';
 import Utils from './utils.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
-import Stopwatch from './stopwatch.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { MessageActionRow, MessageSelectMenu, MessageButton } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
+import { countdownModel, reminderModel } from './mongo/mongo-schemas.js';
 
-const r6api = new R6API({ email: config.r6apiEmail, password: config.r6apiPassword });
+const seasonDates = {
+    Spring: ["01/09/1990", "30/11/1990"],
+    Summer: ["01/12/1990", "28/02/1990"],
+    Autumn: ["01/03/1990", "31/05/1990"],
+    Winter: ["01/06/1990", "31/08/1990"]
+}
+
+const seasonLeaves = {
+    Spring: '🟪',
+    Summer: '🟩',
+    Autumn: '🟧',
+    Winter: '⬜',
+    Christmas: '🟩'
+}
+
+const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export default class EventManager {
     constructor() {}
 
     // Command List Action
     static sendCommandList(message) {
-        let description = "";
-        let filteredDictionaries = Commands.dictionaries.filter(x => x.Description.length > 0);
+        message.channel.send(`${process.env.SITE_LINK}/commands`);
+    }
 
-        filteredDictionaries.forEach((dictionary) => {
-            description += `${dictionary.Command.join(", ")}: ${dictionary.Description}\n`;
-        });
-
-        Utils.sendEmbed({
-            message: message,
-            title: "Command List",
-            description: description
-        });
+    // Ping
+    static ping(message) {
+        message.channel.send("Pong!");
     }
 
     // Greeting Actions
     static sendGreeting(message) {
-        let rng = Math.random();
+        let rng = Utils.RandNum();
         let channel = message.channel;
         let greeter = message.author;
 
@@ -88,80 +95,26 @@ export default class EventManager {
         });
     }
 
-    // Local Music Actions
-    static async playLocalMusic(message, commands) {
-        commands.shift();
-        let fileIndex = commands[0];
-        let musicIDList = [];
-        let songList = [];
-
-        if (fileIndex.toLowerCase() == "refresh") {
-            refreshLocalMusicFiles();
-        } else if (fileIndex == "random" || !Number.isNaN(fileIndex)) {
-            let musicTxt = path.resolve(process.cwd(), "./txt/music.txt");
-            var data = fs.readFileSync(musicTxt).toString();
-            songList = data.split("\n");
-
-            if (fileIndex == "random") {
-                fileIndex = Math.floor(Math.random() * songList.length) + 1;
-            } else {
-                fileIndex -= 1;
-            }
-
-            musicIDList.push(fileIndex);
-        } else {
-            Utils.sendEmbed({
-                message: message,
-                isError: true,
-                title: "Queue",
-                description: "Invalid command"
-            });
-        }
-
-        if (musicIDList.length > 0) {
-            for (var i = 0; i < musicIDList.length; ++i) {
-                let musicID = musicIDList[i];
-
-                if (musicID < songList.length) {
-                    await Distube.play(message, `${songList[musicID]} audio only`).then(() => {
-                        let queue = Distube.getQueue(message);
-                        let song = queue.songs[queue.songs.length - 1];
-                        let msgAuthor = message.author;
-
-                        Utils.sendEmbed({
-                            message: message,
-                            title: song.name,
-                            description: "",
-                            author: `${msgAuthor.username} Queued`,
-                            authorIcon: msgAuthor.avatarURL({ dynamic: true }),
-                            footer: ` | ${song.formattedDuration}`,
-                            footerIcon: config.embedPauseIconURL
-                        });
-                    });
-                } else {
-                    Utils.sendEmbed({
-                        message: message,
-                        isError: true,
-                        title: "Song Not Found",
-                        description: `There is only a total of ${songList.length} songs in the directory`
-                    });
-                }
-            }
-        }
-    }
-
     // Music Actions
     static playMusic(message, commands) {
         if (message.member.voice.channel == null) return;
 
         commands.shift();
-        Distube.play(message.member.voice.channel, commands.join(" "), {
+        let songTitle = commands.join(" ");
+
+        // Check if YT link is part of a playlist, only play current video if so
+        if (songTitle.includes("&list="))
+        {
+            songTitle = songTitle.split("&list=")[0];
+        }
+
+        Distube.play(message.member.voice.channel, songTitle, {
             member: message.member,
             textChannel: message.channel
         }).then(() => {
             let queue = Distube.getQueue(message);
-
-            if (queue != undefined && queue.songs.length > 1) {
+            
+            if (queue !== undefined && queue.songs.length > 1) {
                 let song = queue.songs[queue.songs.length - 1];
                 let msgAuthor = message.author;
                 Utils.sendEmbed({
@@ -173,6 +126,8 @@ export default class EventManager {
                     footerIcon: config.embedPauseIconURL
                 });
             }
+        }).catch((e) => {
+            Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
         });
     }
 
@@ -268,6 +223,7 @@ export default class EventManager {
                 } else {
                     Distube.stop(queue);
                 }
+                Utils.CurSongInfo.isSkip = true;
                 message.react('👍');
                 break;
             case "stop":
@@ -297,58 +253,6 @@ export default class EventManager {
                 });
 
                 break;
-        }
-    }
-
-    static setQueueFilter(message, commands) {
-        if (typeof(commands) == 'string') return;
-
-        let allowedCommands = Commands.distubeFilterList.concat("list", "ls");
-        commands.shift();
-        let command = commands[0];
-
-        if (commands.length > 1 || !allowedCommands.includes(command)) {
-            Utils.sendEmbed({
-                message: message,
-                isError: true,
-                title: "Queue Filter",
-                description: "Invalid command"
-            });
-        } else {
-            if (command == "list" || command == "ls") {
-                let description = Commands.distubeFilterList.join("\n");
-                Utils.sendEmbed({
-                    message: message,
-                    title: "Queue Filter List",
-                    description: description
-                });
-            } else {
-                let queue = Distube.getQueue(message);
-
-                if (!queue || !queue.playing) {
-                    Utils.sendEmbed({
-                        message: message,
-                        isError: true,
-                        title: "Queue Filter",
-                        description: "No song playing"
-                    });
-                    return;
-                }
-
-                Distube.setFilter(queue, command);
-
-                let description = queue.filters.includes(command) ?
-                    `Queue Filter ${command} disabled` :
-                    `Queue Filter ${command} enabled`;
-
-                Utils.sendEmbed({
-                    message: message,
-                    title: "Queue Filter",
-                    description: description
-                });
-
-                console.log(`${description} by ${message.author.username}`)
-            }
         }
     }
 
@@ -395,43 +299,21 @@ export default class EventManager {
         let game = TicTacToe.allGames.find(x => x._id == gameId);
         let gameMessage = game.createOrUpdateMessage();
 
-        message.channel.send(gameMessage).then((msg) => {
-            msg.react("↖");
-            msg.react("⬆");
-            msg.react("↗");
-
-            msg.react("⬅");
-            msg.react("⏺");
-            msg.react("➡");
-
-            msg.react("↙");
-            msg.react("⬇");
-            msg.react("↘");
-            msg.react("❌").then((r) => {
-                let m = r.message.content.replace("[Please wait for the reactions...]\n\n", "");
-                m += `\n${game._player1Username}'s turn`;
-                r.message.edit({
-                    content: m
-                });
-                game._messageId = r.message.id;
-            });
-        });
+        message.channel.send(gameMessage);
     }
 
-    static updateTicTacToe(reaction, user) {
-        let message = reaction.message;
-        let game = TicTacToe.allGames.find(x => x._messageId == message.id);
+    static updateTicTacToe(gameId, reactedEmoji, user, message) {
+        let game = TicTacToe.allGames.find(x => x._id == gameId);
         if (game == null) return;
         if (game._player1 != user.id && game._player2 != user.id) return;
-
-        let reactedEmoji = reaction._emoji.name;
         if (game._emojiList.includes(reactedEmoji)) return;
 
         if (reactedEmoji == "❌") {
             TicTacToe.cancelMatch(game);
-            let gameMessage = game.createOrUpdateMessage();
+            let gameMessage = game.createOrUpdateMessage(true);
             message.edit({
-                content: gameMessage + `\nMatch Cancelled [${user.username}]`.ToBold()
+                content: gameMessage.content + `Match Cancelled [${user.username}]`.ToBold(),
+                components: gameMessage.components
             });
             return;
         }
@@ -440,7 +322,6 @@ export default class EventManager {
 
         if ((game._playerTurn == 1 && !isPlayer1) ||
             (game._playerTurn == 2 && isPlayer1)) {
-            reaction.users.remove(user);
             return;
         }
 
@@ -448,7 +329,8 @@ export default class EventManager {
         let gameMessage = game.createOrUpdateMessage();
 
         message.edit({
-            content: gameMessage
+            content: gameMessage.content,
+            components: gameMessage.components
         }).then((msg) => {
             game.endOfRoundAction(msg);
         });
@@ -482,117 +364,6 @@ export default class EventManager {
         }
 
         message.reply(`Sorry ${mention}, I dm'd you this acting on a whim. However, if you do wish to ${commands.join(" ")} tomorrow, I am more than up for it.`);
-    }
-
-    // R6 functions
-    static async updateR6Stats(username, platform, newSeasonId) {
-        let platformTexts = new Array("PC", "PS", "XBOX");
-        let selectedPlatform = R6Constants.PLATFORMS[platformTexts.indexOf(platform)];
-
-        let r6user = await r6api.findByUsername(selectedPlatform, username);
-
-        let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
-        let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
-        let newStats = r6Stats.find(x => x.seasonId == newSeasonId);
-
-        let availableSeasonIds = r6Stats.map(x => x.seasonId);
-        let availableSeasons = Object.fromEntries(Object.entries(R6Constants.SEASONS).filter(([key]) => availableSeasonIds.includes(Number(key))));
-
-        let row = this.getR6InteractionRow(availableSeasons, newStats.seasonId);
-
-        return Utils.createEmbed({
-            title: `Operation ${newStats.seasonName}`,
-            description: `${"Level:".ToBold()} ${newStats.level}\n${"MMR:".ToBold()} ${newStats.seasonMMR}`,
-            author: `${username} [${platform}]`,
-            authorIcon: newStats.avatarURL,
-            thumbnail: newStats.seasonRankURL,
-            embedColor: newStats.seasonColor,
-            fields: new Array({ name: "Overall", value: `WR: ${newStats.overallWR}%\nKD: ${newStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${newStats.casualWR}%\nKD: ${newStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${newStats.rankedWR}%\nKD: ${newStats.rankedKD}`, inline: true }, { name: 'Season', value: `WR: ${newStats.seasonWR}%\nKD: ${newStats.seasonKD}` }),
-            components: row
-        });
-    }
-
-    static async retrieveR6Stats(message, commands) {
-        // Attempt retrieve message
-        let sentMessage = await message.channel.send("Attempting to retrieve, please wait...");
-
-        let username = commands[1];
-
-        let { r6user, selectedPlatform, platformText, statsFound } = await this.findR6Stats(username);
-
-        // If stats doesn't exist
-        if (!statsFound) {
-            Utils.sendEmbed({
-                message: sentMessage,
-                isEdit: true,
-                isError: true,
-                title: "R6 Stats",
-                description: `Unable to find statistics for ${username}`
-            });
-            return;
-        }
-
-        username = r6user[0].username;
-
-        let [stats, level, ranks] = await this.getR6Stats(r6user[0].id, selectedPlatform);
-
-        //No matches played at all (Casual & Ranked)
-        if (Object.keys(stats.results).length <= 0) {
-            Utils.sendEmbed({
-                message: sentMessage,
-                isEdit: true,
-                isError: true,
-                title: "R6 Stats",
-                description: `${username} has no statistics`
-            });
-            return;
-        }
-
-        let r6Stats = this.scrapeR6Stats(r6user[0], stats, level, ranks);
-        let latestStats = r6Stats[r6Stats.length - 1];
-
-        let availableSeasonIds = r6Stats.map(x => x.seasonId);
-        let availableSeasons = Object.fromEntries(Object.entries(R6Constants.SEASONS).filter(([key]) => availableSeasonIds.includes(Number(key))));
-
-        let row = this.getR6InteractionRow(availableSeasons, latestStats.seasonId);
-        let embedFields = new Array({ name: "Overall", value: `WR: ${latestStats.overallWR}%\nKD: ${latestStats.overallKD}`, inline: true }, { name: 'Casual', value: `WR: ${latestStats.casualWR}%\nKD: ${latestStats.casualKD}`, inline: true }, { name: 'Ranked', value: `WR: ${latestStats.rankedWR}%\nKD: ${latestStats.rankedKD}`, inline: true });
-
-        if (latestStats.seasonWR.length > 0) {
-            embedFields.push({ name: 'Season', value: `WR: ${latestStats.seasonWR}%\nKD: ${latestStats.seasonKD}` });
-        }
-
-        Utils.sendEmbed({
-            message: sentMessage,
-            isEdit: true,
-            title: `Operation ${latestStats.seasonName}`,
-            description: `${"Level:".ToBold()} ${latestStats.level}\n${"MMR:".ToBold()} ${latestStats.seasonMMR}`,
-            author: `${username} [${platformText}]`,
-            authorIcon: latestStats.avatarURL,
-            thumbnail: latestStats.seasonRankURL,
-            embedColor: latestStats.seasonColor,
-            fields: embedFields,
-            components: row
-        });
-    }
-
-    static sunbreakCountdown(message) {
-        let sunbreakRelease = moment("20220630");
-        let difference = sunbreakRelease.diff(moment(), 'days', true);
-
-        if (difference < 0) return;
-
-        let description = difference <= 0 ?
-            "TODAY" : difference <= 1 ?
-            "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
-
-        Utils.sendEmbed({
-            message: message,
-            title: "Monster Hunter Rise: Sunbreak",
-            embedURL: "https://www.monsterhunter.com/rise-sunbreak/en-uk/",
-            embedImage: "http://cdn.capcom-unity.com/2021/09/MHR_Sunbreak_TeaserArt-1024x576.jpg",
-            fields: new Array({ name: 'Release Date', value: `${sunbreakRelease.format("DD/MM/YYYY")}`, inline: true }, { name: 'Countdown', value: description, inline: true }),
-            setTimestamp: true
-        });
     }
 
     static createRhombus(message, commands) {
@@ -677,17 +448,12 @@ export default class EventManager {
     }
 
     static reply8Ball(message) {
-        let rng = Math.floor((Math.random() * config.eightBallReplies.length) + 1) - 1;
-
+        const rng = Utils.MaxRandNum(config.eightBallReplies.length);
         message.channel.send(config.eightBallReplies[rng]);
     }
 
     static coinFlip(message) {
-        let rng = Math.floor((Math.random() * 10));
-        let msg = rng >= 5 ?
-            "Heads" :
-            "Tails";
-
+        const msg = Utils.RandNum() >= 0.5 ? "Heads" : "Tails";
         message.channel.send(`🪙 ${msg}`);
     }
 
@@ -698,225 +464,637 @@ export default class EventManager {
         let optionStr = commands.join(' ');
         let listOfOptions = optionStr.split(",");
 
-        if (listOfOptions.length <= 0) return;
+        if (listOfOptions.length <= 1) return;
 
-        let index = Math.floor((Math.random() * listOfOptions.length));
+        const index = Utils.MaxRandNum(listOfOptions.length);
         message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
     }
 
-    // Helper functions
-    static getR6InteractionRow(availableSeasons, seasonId) {
-        let availableSeasonIds = Object.keys(availableSeasons);
+    static tree(message) {
+        let seasonStart;
+        let seasonEnd;
 
-        if (availableSeasonIds.length <= 1) return;
+        let nowMoment = moment().tz("Asia/Kuala_Lumpur");
+        let isChristmas = nowMoment.month() == 11 && nowMoment.date() == 25;
+        let season = "Christmas";
 
-        let interactionSelect = new MessageSelectMenu()
-            .setCustomId("R6SeasonChange")
-            .setDisabled(availableSeasons.length == 0);
+        if (!isChristmas) {
+            season = Object.keys(seasonDates).find(key => {
+                seasonStart = moment(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
+                seasonEnd = moment(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
 
-        availableSeasonIds.forEach(availableSeasonId => {
-            let s = availableSeasons[availableSeasonId];
+                if (seasonEnd.isBefore(seasonStart))
+                {
+                    seasonStart = seasonStart.subtract(1, 'y');
+                }
 
-            let option = {
-                label: s.name,
-                value: availableSeasonId,
-                default: Number(availableSeasonId) == seasonId
-            };
-            interactionSelect.addOptions(option);
-        });
-
-        return new MessageActionRow().addComponents(interactionSelect);
-    }
-
-    static async getR6Stats(r6UserId, platform) {
-        let seasons = Object.keys(R6Constants.SEASONS).map(x => Number(x));
-        let r6Regions = Object.keys(R6Constants.REGIONS);
-
-        let rankedPromises = seasons.filter(sId => sId >= 18).map((seasonId) => {
-            return r6api.custom(
-                R6Utils.getURL.RANKS(
-                    platform, [r6UserId], seasonId, "ncsa", "pvp_ranked"
-                )
-            );
-        });
-
-        seasons.filter(sId => sId < 18).forEach(seasonId => {
-            r6Regions.forEach(region => {
-                rankedPromises.push(r6api.custom(
-                    R6Utils.getURL.RANKS(
-                        platform, [r6UserId], seasonId, region, "pvp_ranked"
-                    )
-                ));
+                return nowMoment.isBetween(seasonStart, seasonEnd, undefined, '[]');
             });
-        });
-
-        let [customStats, customProgression, customRanks] = await Promise.all([
-            r6api.custom(
-                R6Utils.getURL.STATS(
-                    platform, [r6UserId], ['generalpvp_matchwon', 'generalpvp_matchlost', 'generalpvp_kills', 'generalpvp_death',
-                        'casualpvp_matchwon', 'casualpvp_matchlost', 'casualpvp_kills', 'casualpvp_death',
-                        'rankedpvp_matchwon', 'rankedpvp_matchlost', 'rankedpvp_kills', 'rankedpvp_death'
-                    ]
-                )
-            ),
-            r6api.custom(
-                R6Utils.getURL.PROGRESS(
-                    platform, [r6UserId]
-                )
-            ),
-            await Promise.all(rankedPromises)
-        ]);
-
-        let groupedCustomRanks = [];
-
-        customRanks.forEach((customRank) => {
-            let seasonId = `${customRank.players[r6UserId].season}`;
-
-            if (groupedCustomRanks[seasonId] == null) {
-                groupedCustomRanks[seasonId] = [];
-            }
-
-            groupedCustomRanks[seasonId].push(customRank.players[r6UserId]);
-        });
-
-        return [customStats, customProgression.player_profiles[0].level, groupedCustomRanks];
-    }
-
-    static async findR6Stats(username) {
-        let platformTexts = new Array("PC", "PS", "XBOX");
-
-        let r6user;
-        let platformText = "";
-        let selectedPlatform = "";
-        let statsFound = false;
-        let usernamePromises = [];
-
-        R6Constants.PLATFORMS.forEach(platform => {
-            usernamePromises.push(r6api.findByUsername(platform, username))
-        });
-
-        let allResults = await Promise.all(usernamePromises);
-
-        if (allResults.every(res => {
-                return res.length <= 0;
-            })) {
-            statsFound = false;
-        } else {
-            r6user = allResults.find(x => x.length > 0);
-            selectedPlatform = r6user[0].platform;
-            platformText = platformTexts[R6Constants.PLATFORMS.indexOf(selectedPlatform)];
-            statsFound = true;
         }
 
-        return { r6user, selectedPlatform, platformText, statsFound };
+        let now = nowMoment.format("DD MMMM YYYY");
+        let label = `${season} ${now} Tree`;
+
+        let leaf = seasonLeaves[season];
+        let specialLeaf = isChristmas ? '🟥' : leaf;
+        let specialLeaf2 = isChristmas ? '🟦' : leaf;
+        let trunk = '🟫';
+
+        let msg = `${label}\n`;
+        msg += `\t\t\t${leaf}\n`;
+        msg += `\t  ${specialLeaf}${leaf}${leaf}\n`;
+        msg += `${leaf}${specialLeaf2}${leaf}${specialLeaf}${leaf}\n`;
+        msg += `\t\t\t${trunk}\n`;
+        msg += `\t\t\t${trunk}\n`;
+        msg += `\t\t\t${trunk}\n`;
+
+        message.channel.send(msg);
     }
 
-    static scrapeR6Stats(r6user, stats, level, ranks) {
-        let userId = r6user.id;
-        let userAvatarURL = r6user.avatar['500'];
-        let pvpStats = stats.results[userId];
+    static async psycho(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
 
-        let seasonIds = ranks.map(x => {
-            return x[0].season;
-        }).sort((a, b) => {
-            return Number(a) - Number(b);
-        });
+        const username = message.author.username.substring(0, 24);;
+        const imgFolder = path.resolve("./img");
+        let sharpBuffer;
+        let outputBuffer;
+        let msg;
 
-        let overallWR = Utils.getRatio(pvpStats['generalpvp_matchwon:infinite'], pvpStats['generalpvp_matchwon:infinite'] + pvpStats['generalpvp_matchlost:infinite'], true).toFixed(2);
-        let overallKD = Utils.getRatio(pvpStats['generalpvp_kills:infinite'], pvpStats['generalpvp_death:infinite'], false).toFixed(2);
-        let casualWR = Utils.getRatio(pvpStats['casualpvp_matchwon:infinite'], pvpStats['casualpvp_matchwon:infinite'] + pvpStats['casualpvp_matchlost:infinite'], true).toFixed(2);
-        let casualKD = Utils.getRatio(pvpStats['casualpvp_kills:infinite'], pvpStats['casualpvp_death:infinite'], false).toFixed(2);
-        let rankedWR = Utils.getRatio(pvpStats['rankedpvp_matchwon:infinite'], pvpStats['rankedpvp_matchwon:infinite'] + pvpStats['rankedpvp_matchlost:infinite'], true).toFixed(2);
-        let rankedKD = Utils.getRatio(pvpStats['rankedpvp_kills:infinite'], pvpStats['rankedpvp_death:infinite'], false).toFixed(2);
+        try {
+            // Card
+            if (commands.length > 0 && commands[0] == "card") {
+                msg = `Let's see ${username}'s card`;
 
-        let allSeasonStats = [];
-        seasonIds.forEach((seasonId) => {
-            let seasonRanks = ranks.filter(rank => rank[0].season == seasonId)[0];
-            let season = R6Constants.SEASONS[seasonId];
+                const svgImage = `
+                    <svg width="1389" height="500">
+                        <style>
+                            .title { fill: #423e3d; font-size: 56px; font-weight: bold;}
+                        </style>
+                        <g transform="rotate(9, 0, 0)" >
+                            <rect width="320" height="60" style="fill:rgb(144, 144, 158)" x="39%" y="27%"/>
+                            <text x="51%" y="38%" text-anchor="middle" class="title">${username.toUpperCase()}</text>
+                        </g>
+                    </svg>
+                    `;
 
-            let seasonalStats = seasonRanks[0];
+                sharpBuffer = Buffer.from(svgImage);
+                outputBuffer = await sharp(`${imgFolder}/psycho-card.png`)
+                    .composite([{
+                        input: sharpBuffer
+                    }]).toBuffer();
+            }
+            // Monologue
+            else {
+                let avatarImg = await sharp((await axios({ url: message.author.avatarURL(), responseType: "arraybuffer" })).data);
+                msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
 
-            if (seasonRanks.length > 1) {
-                let region = this.getR6SeasonRegion(seasonRanks);
+                sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
+                outputBuffer = await sharp(`${imgFolder}/patrick-bateman.png`)
+                    .composite([{
+                        input: sharpBuffer
+                    }]).toBuffer();
+            }
+        } catch (e) {
+            console.log(e);
+        } finally {
+            message.channel.send({
+                content: msg,
+                files: [{
+                    attachment: outputBuffer
+                }]
+            });
+        }
+    }
 
-                if (region === "") {
+    static async countdown(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const invalidEmbed = {
+            message: message,
+            title: "Countdown",
+            description: "Commands: list, [name], create, update [name], delete [name]"
+        };
+
+        if (commands.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        let countdownName = "";
+        let countdown;
+        let userId = "";
+
+        switch (commands[0]) {
+            case "list":
+            case "l":
+                let allCountdowns = await countdownModel.find({}).sort({ Id: 'asc' });
+
+                let description = `You can either use the Id or Name for viewing/updating!\n\n`
+                description += allCountdowns.map(cd => `${cd.Id} - ${cd.Name}`).join("\n");
+    
+                Utils.sendEmbed({
+                    message: message,
+                    title: "Countdown",
+                    description: description
+                });
+                break;
+            case "create":
+            case "c":
+                message.author.send({
+                    content: 'Click below to start creating a countdown!',
+                    components: [
+                        new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId('create-countdown')
+                            .setLabel('Start')
+                            .setStyle('Primary')
+                        )
+                    ]
+                });
+                break;
+            case "update":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use 'update [name]' or 'update [id]' to update a countdown :)"
+                    });
                     return;
                 }
 
-                seasonalStats = seasonRanks.find(x => x.region == region);
+                commands.shift();
+                countdownName = commands.join(" ");
+
+                countdown = isNaN(countdownName)
+                    ? await countdownModel.findOne({ Name: countdownName })
+                    : await countdownModel.findOne({ Id: Number(countdownName) })
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                userId = countdown.UserId;
+
+                if (userId !== message.author.id) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Only the countdown creator can update their own countdowns, sorry!"
+                    });
+                    return;
+                }
+
+                let existingOriginalCountdownIndex = Utils.OriginalCountdownList.findIndex(x => x.userId === userId);
+
+                const origCD = {  
+                    name: countdown.Name,
+                    date: moment(countdown.Date).format("DD/MM/YYYY"),
+                    description: countdown.Description,
+                    image: countdown.Image,
+                    url: countdown.URL,
+                    userId: userId
+                };
+
+                if (existingOriginalCountdownIndex >= 0)
+                {
+                    Utils.OriginalCountdownList[existingOriginalCountdownIndex] = origCD;
+                }
+                else
+                {
+                    Utils.OriginalCountdownList.push(origCD)
+                }
+                
+                message.author.send({
+                    content: `Click below to start updating the ${countdown.Name} countdown!`,
+                    components: [
+                        new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId('update-countdown')
+                            .setLabel('Update Countdown')
+                            .setStyle('Primary')
+                        )
+                        .addComponents(
+                            new ButtonBuilder()
+                            .setCustomId('update-countdown-cancel')
+                            .setLabel('Cancel')
+                            .setStyle(ButtonStyle.Danger)
+                        )
+                    ]
+                });
+                break;
+            case "delete":
+                if (commands.length <= 1) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use 'delete [name]' to delete a countdown :)"
+                    });
+                    return;
+                }
+
+                commands.shift();
+                countdownName = commands.join(" ");
+                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                userId = countdown.UserId;
+
+                if (userId !== message.author.id) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Only the countdown creator can delete their own countdowns, sorry!"
+                    });
+                    return;
+                }
+
+                await Promise.all([
+                    countdownModel.deleteOne({ Name: countdownName })
+                ]);
+
+                Utils.Log(Utils.LogType_INFO, `${message.author.username} deleted ${countdownName} Countdown`, "Countdown");
+                message.channel.send("Countdown deleted!");
+                break;
+            default:
+                if (commands.length <= 0) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "Please use '[name]' to view a countdown :)"
+                    });
+                    return;
+                }
+
+                countdownName = commands.join(" ");
+
+                countdown = isNaN(countdownName)
+                ? await countdownModel.findOne({ Name: countdownName })
+                : await countdownModel.findOne({ Id: Number(countdownName) })
+
+                if (countdown === null) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: "The countdown doesn't exist :("
+                    });
+                    return;
+                }
+
+                let releaseDateMoment = moment(countdown.Date);
+                let difference = releaseDateMoment.diff(moment(), 'days', true);
+
+                if (difference < 0) {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: "Countdown",
+                        description: `${countdownName} should already be completed!`
+                    });
+                    return;
+                };
+
+                let releaseCountdown = difference <= 0 ?
+                    "TODAY" : difference <= 1 ?
+                    "TOMORROW" : `${Math.ceil(difference)} days and counting...`;
+
+                let embedObj = {
+                    message: message,
+                    title: countdown.Name,
+                    fields: [{
+                        name: "Release Date",
+                        value: moment(countdown.Date).format("DD/MM/YYYY"),
+                        inline: true
+                    }, {
+                        name: "Countdown",
+                        value: releaseCountdown,
+                        inline: true
+                    }],
+                    setTimestamp: true
+                };
+
+                if (countdown.Description !== undefined && countdown.Description.length > 0) {
+                    embedObj.description = countdown.Description;
+                }
+
+                if (countdown.Image !== undefined && countdown.Image.length > 0) {
+                    embedObj.embedImage = countdown.Image;
+                }
+
+                if (countdown.URL !== undefined && countdown.URL.length > 0) {
+                    embedObj.embedURL = countdown.URL;
+                }
+
+                Utils.sendEmbed(embedObj);
+                break;
+        }
+    }
+
+    static async wisdomLlama(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const imgFolder = path.resolve("./img");
+        let sharpBuffer;
+        let outputBuffer;
+        let msg;
+
+        let errMsg = "";
+        let isErr = false;
+
+        try {
+            if (commands.length <= 0) {
+                isErr = true;
+                errMsg = "Please provide your wisdom :)";
             }
+            else if (commands.join(" ").length > 100)
+            {
+                isErr = true;
+                errMsg = "Your wisdom is wise but too long bruv";
+            }
+            else {
+                let lineArr = [];
 
-            if (seasonalStats.wins + seasonalStats.losses + seasonalStats.abandons <= 0) return;
+                const lines = commands.reduce((prev, cur, ind, arr) => {
+                    lineArr.push(cur);
 
-            let rankIcon = R6Utils.getRankIconFromRankId(seasonalStats.rank, seasonId);
+                    if (lineArr.join(" ").length > 20)
+                    {
+                        lineArr.pop();
+                        prev.push(lineArr.join(" "));
+                        lineArr = [];
+                        lineArr.push(cur);
+                    }
 
-            let seasonStats = new Object({
-                "id": userId,
-                "avatarURL": userAvatarURL,
-                "level": level,
-                "seasonId": Number(seasonId),
-                "seasonName": season.name,
-                "seasonMMR": parseInt(seasonalStats.mmr).toLocaleString(),
-                "seasonRankURL": rankIcon,
-                "seasonColor": season.color,
-                "overallWR": overallWR,
-                "overallKD": overallKD,
-                "casualWR": casualWR,
-                "casualKD": casualKD,
-                "rankedWR": rankedWR,
-                "rankedKD": rankedKD,
-                "seasonWR": Utils.getRatio(seasonalStats.wins, seasonalStats.wins + seasonalStats.losses, true).toFixed(2),
-                "seasonKD": Utils.getRatio(seasonalStats.kills, seasonalStats.deaths, false).toFixed(2)
-            });
+                    if (ind === arr.length - 1)
+                    {
+                        prev.push(lineArr.join(" "));
+                    }
 
-            allSeasonStats.push(seasonStats);
-        });
+                    return prev;
+                }, []);
 
-        if (allSeasonStats.length <= 0) {
-            let latestSeason = Object.entries(R6Constants.SEASONS).pop();
+                const svgText = lines.map((line, ind) => {
+                        let dy = ind > 0 ? 'dy="1em"' : "";
+                        return `<tspan x="0" ${dy}>${line}</tspan>`;
+                    }).join("");
 
-            let seasonStats = new Object({
-                "id": userId,
-                "avatarURL": userAvatarURL,
-                "level": level,
-                "seasonId": Number(latestSeason[0]),
-                "seasonName": latestSeason[1].name,
-                "seasonMMR": "2,500",
-                "seasonRankURL": "",
-                "seasonColor": latestSeason[1].color,
-                "overallWR": overallWR,
-                "overallKD": overallKD,
-                "casualWR": casualWR,
-                "casualKD": casualKD,
-                "rankedWR": rankedWR,
-                "rankedKD": rankedKD,
-                "seasonWR": "",
-                "seasonKD": ""
-            });
+                const svgImage = `
+                    <svg width="522" height="269">
+                        <style>
+                            .title { fill: white; font-size: 30px; font-weight: bold;}
+                        </style>
+                        <g transform="translate(160 40)">
+                            <text text-anchor="middle" class="title">${svgText}</text>
+                        </g>
+                    </svg>`;
 
-            allSeasonStats.push(seasonStats);
+                sharpBuffer = Buffer.from(svgImage);
+                outputBuffer = await sharp(`${imgFolder}/wisdom-llama.png`)
+                    .composite([{
+                        input: sharpBuffer
+                    }]).toBuffer();
+            }
+        } catch (e) {
+            isErr = true;
+            errMsg = e;
+        } finally {
+            if (isErr !== true)
+            {
+                message.channel.send({
+                    content: "",
+                    files: [{
+                        attachment: outputBuffer
+                    }]
+                });
+            }
+            else
+            {
+                Utils.sendEmbed({
+                    message: message,
+                    isError: true,
+                    title: "Wisdom Llama",
+                    description: errMsg
+                });
+            }
+        }
+    }
+
+    static xxx(message) {
+        let { channel, author: { username } } = message;
+        const rng = Utils.RandNum();
+
+        let msg = "Lmao sexless";
+
+        if (rng > 0.5) {
+            msg = `Congratulations ${username}! You have a ${rng}% chance of getting SEX the following week!`;
+        }
+        else if (rng > 0) {
+            msg = `Ouch ${username}! Looks like you only have a ${rng}% chance of getting SEX the following week!`;
         }
 
-        return allSeasonStats;
-    }
+        channel.send(msg);
+    } 
 
-    // For seasons before Shifting Tides
-    static getR6SeasonRegion(seasonRanks) {
-        let region = "";
-        let maxMatches = 0;
+    static currentTrack(message) {
+        let { channel: { guild } } = message;
+        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
 
-        seasonRanks.forEach((seasonRank) => {
-            let regionMatches = seasonRank.wins + seasonRank.losses + seasonRank.abandons;
+        if (voiceConnection === undefined) {
+            message.channel.send("I'm not in a voice channel.");
+            return;
+        }
 
-            if (regionMatches > maxMatches) {
-                maxMatches = regionMatches;
-                region = seasonRank.region;
-            }
+        const queue = Distube.getQueue(guild.id);
+
+        if (queue === undefined) {
+            message.channel.send("Queue not found.");
+            return;
+        }
+
+        if (queue.songs.length <= 0) {
+            message.channel.send("No song is currently playing.");
+            return;
+        }
+
+        const curSong = queue.songs[0];
+
+        const name = curSong.name;
+        const duration = curSong.formattedDuration;
+        const thumbnail = curSong.thumbnail;
+        const playbackMs = Math.floor(voiceConnection.playbackDuration);
+
+        let minutesNum = Math.floor(playbackMs / 60);
+        let secondsNum = playbackMs - (minutesNum * 60);
+
+        let minutes = minutesNum < 10 ? `0${minutesNum}` : minutesNum.toString();
+        let seconds = secondsNum < 10 ? `0${secondsNum}` : secondsNum.toString();
+        
+        const desc = `${minutes}:${seconds} / ${duration}`;
+
+        Utils.sendEmbed({
+            message: message,
+            title: name,
+            description: desc,
+            thumbnail: thumbnail
         });
-
-        return region;
     }
 
+    static replayPrevTrack(message) {
+        let { channel, member } = message;
+
+        if (Utils.PreviousSong === undefined)
+        {
+            channel.send("There is no song to replay :(");
+            return;
+        }
+
+        Distube.play(member.voice.channel, Utils.PreviousSong, {
+            member: member,
+            textChannel: channel
+        });
+    }
+
+    static async createReminder(message, commands) {
+        if (message.author === undefined) return;
+        commands.shift();
+
+        const invalidEmbed = {
+            message: message,
+            title: "Reminder",
+            description: "Commands: {dd/mm/yyyy}, daily, weekly"
+        };
+
+        if (commands.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        const frequencyStr = commands[0];
+        commands.shift();
+
+        let modelFrequency = Utils.Reminder_Frequency_Single;
+        let lastMessageDate = "";
+        let remindDate = "";
+
+        switch (frequencyStr)
+        {
+            case "daily":
+                modelFrequency = Utils.Reminder_Frequency_Daily;
+                lastMessageDate = moment().format("MM/DD/YYYY");
+                break;
+            case "weekly":
+                modelFrequency = Utils.Reminder_Frequency_Weekly;
+
+                if (commands[0].startsWith("-"))
+                {
+                    const supposedDay = commands[0].substring(1).toLowerCase();
+                    const listOfDays = days.filter(d => d.startsWith(supposedDay));
+
+                    if (listOfDays.length <= 0 || listOfDays.length > 1)
+                    {
+                        invalidEmbed.description = "Please insert a proper day :(";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+
+                    const day = listOfDays[0];
+                    const todayMoment = moment();
+                    const reminderDayMoment = moment().day(day);
+
+                    const actualMoment = todayMoment.day() === reminderDayMoment.day()
+                        ? todayMoment
+                        : reminderDayMoment;
+
+                    lastMessageDate = actualMoment.format("MM/DD/YYYY");
+                    commands.shift();
+                }
+                else
+                {
+                    lastMessageDate = moment().format("MM/DD/YYYY");
+                }
+                break;
+            default:
+                let dateMoment = moment(frequencyStr, "DD/MM/YYYY");
+
+                if (!dateMoment.isValid())
+                {
+                    // Tomorrow
+                    if (dateMoment.invalidAt() < 0)
+                    {
+                        dateMoment = moment().add(1, 'day');
+                        commands.unshift(frequencyStr);
+                    }
+                    // Attempted date
+                    else
+                    {
+                        invalidEmbed.description = "Invalid date, the format is DD/MM/YYYY";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+                }
+
+                if (dateMoment.isSameOrBefore(new moment(), 'day'))
+                {
+                    invalidEmbed.description = "Date has to be after today :(";
+                    Utils.sendEmbed(invalidEmbed);
+                    return;
+                }
+
+                remindDate = dateMoment.format("MM/DD/YYYY");
+                break;
+        }
+
+        const remindMessage = commands.join(" ");
+
+        if (remindMessage === undefined || remindMessage === null || remindMessage?.length <= 0)
+        {
+            invalidEmbed.description = "Message cannot be empty :(";
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        const userId = message.author.id;
+
+        const existingReminder = await reminderModel.findOne({ UserId: userId, Frequency: modelFrequency, Message: remindMessage });
+        if (existingReminder !== null)
+        {
+            invalidEmbed.description = "Reminder already exists :(";
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        let modelObj = {
+            UserId: userId,
+            Frequency: modelFrequency,
+            Message: remindMessage,
+        };
+
+        if (remindDate.length > 0) modelObj.RemindDate = remindDate;
+        if (lastMessageDate.length > 0) modelObj.LastMessageDate = lastMessageDate;
+    
+        const newReminder = new reminderModel(modelObj);
+        newReminder.save();
+
+        message.channel.send(`Reminder added! I will do my best to remind you around 9:00AM GMT+8!`);
+    }
+
+    // Helper functions
     static songRemoveErrorHandler(queue, message, queueRemoveIndex) {
         let title = "Song Remove";
         let description = "Cannot remove song: ";

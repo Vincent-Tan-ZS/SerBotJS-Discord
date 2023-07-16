@@ -1,8 +1,9 @@
-import { Formatters } from 'discord.js';
+import { bold } from 'discord.js';
+
 
 Object.defineProperty(String.prototype, "ToBold", {
     value: function ToBold() {
-        return Formatters.bold(this);
+        return bold(this);
     },
     writable: true,
     configurable: true

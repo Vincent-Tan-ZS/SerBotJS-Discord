@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import config from './config.js';
 import "./extension.js";
 
@@ -6,16 +7,16 @@ export default class TicTacToe {
     static allGames = new Array();
     static winConditions = [
         //Row
-        ["↖", "⬆", "↗"],
-        ["⬅", "⏺", "➡"],
-        ["↙", "⬇", "↘"],
+        config.ticTacToeTopRow,
+        config.ticTacToeMidRow,
+        config.ticTacToeBotRow,
         //Column
-        ["↖", "⬅", "↙"],
-        ["⬆", "⏺", "⬇"],
-        ["↗", "➡", "↘"],
+        [config.ticTacToeTopRow[0], config.ticTacToeMidRow[0], config.ticTacToeBotRow[0]],
+        [config.ticTacToeTopRow[1], config.ticTacToeMidRow[1], config.ticTacToeBotRow[1]],
+        [config.ticTacToeTopRow[2], config.ticTacToeMidRow[2], config.ticTacToeBotRow[2]],
         //Diagonal
-        ["↖", "⏺", "↘"],
-        ["↗", "⏺", "↙"]
+        [config.ticTacToeTopRow[0], config.ticTacToeMidRow[1], config.ticTacToeBotRow[2]],
+        [config.ticTacToeBotRow[0], config.ticTacToeMidRow[1], config.ticTacToeTopRow[2]]
     ];
 
     constructor() {}
@@ -57,41 +58,55 @@ export default class TicTacToe {
     }
 
     addTicTacToeEmoji(emojiToCheck) {
-        if (!this._emojiList.includes(emojiToCheck)) return "🟦";
+        if (!this._emojiList.includes(emojiToCheck)) return emojiToCheck;
 
         let emojiIndex = this._emojiList.indexOf(emojiToCheck);
         return emojiIndex % 2 == 0 ? this._player1Emoji : this._player2Emoji;
     }
 
-    createOrUpdateMessage() {
-        let waitForReactions = "[Please wait for the reactions...]\n\n";
+    createOrUpdateMessage(winnerFound = false) {
         let message = `${this._player1Username} vs ${this._player2Username}\n\n`;
 
-        if (this._emojiList.length <= 0) {
-            message = `${waitForReactions}${message}${config.ticTacToeFormat}`;
-        } else {
-            message += this.addTicTacToeEmoji("↖");
-            message += " ";
-            message += this.addTicTacToeEmoji("⬆");
-            message += " ";
-            message += this.addTicTacToeEmoji("↗");
-            message += "\n";
+        let topRowButtons = [];
+        let midRowButtons = [];
+        let botRowButtons = [];
 
-            message += this.addTicTacToeEmoji("⬅");
-            message += " ";
-            message += this.addTicTacToeEmoji("⏺");
-            message += " ";
-            message += this.addTicTacToeEmoji("➡");
-            message += "\n";
+        let topEmoji, topLabel, topButton;
+        let midEmoji, midLabel, midButton;
+        let botEmoji, botLabel, botButton;
 
-            message += this.addTicTacToeEmoji("↙");
-            message += " ";
-            message += this.addTicTacToeEmoji("⬇");
-            message += " ";
-            message += this.addTicTacToeEmoji("↘");
+        for (let i = 0; i < 3; ++i) {
+            topEmoji = config.ticTacToeTopRow[i];
+            midEmoji = config.ticTacToeMidRow[i];
+            botEmoji = config.ticTacToeBotRow[i];
+
+            topLabel = this.addTicTacToeEmoji(topEmoji);
+            midLabel = this.addTicTacToeEmoji(midEmoji);
+            botLabel = this.addTicTacToeEmoji(botEmoji);
+
+            topButton = new ButtonBuilder().setLabel(topLabel).setCustomId(`ttt${this._id}${topEmoji}`).setStyle(ButtonStyle.Primary);
+            midButton = new ButtonBuilder().setLabel(midLabel).setCustomId(`ttt${this._id}${midEmoji}`).setStyle(ButtonStyle.Primary);
+            botButton = new ButtonBuilder().setLabel(botLabel).setCustomId(`ttt${this._id}${botEmoji}`).setStyle(ButtonStyle.Primary);
+
+            if (topLabel !== topEmoji || winnerFound) topButton.setDisabled(true);
+            if (midLabel !== midEmoji || winnerFound) midButton.setDisabled(true);
+            if (botLabel !== botEmoji || winnerFound) botButton.setDisabled(true);
+
+            topRowButtons.push(topButton);
+            midRowButtons.push(midButton);
+            botRowButtons.push(botButton);
         }
 
-        return `${"Tic-Tac-Toe".ToBold()}\n${message}`;
+        let cancelButton = new ButtonBuilder().setLabel("❌").setCustomId(`ttt${this._id}❌`).setStyle(ButtonStyle.Danger).setDisabled(winnerFound);
+
+        let topRow = new ActionRowBuilder().setComponents(topRowButtons);
+        let midRow = new ActionRowBuilder().setComponents(midRowButtons);
+        let botRow = new ActionRowBuilder().setComponents(botRowButtons);
+        let cancelRow = new ActionRowBuilder().setComponents(cancelButton);
+        return {
+            content: `${"Tic-Tac-Toe".ToBold()}\n${message}`,
+            components: [topRow, midRow, botRow, cancelRow]
+        };
     }
 
     endOfRoundAction(message) {
@@ -100,6 +115,8 @@ export default class TicTacToe {
         let player2Emojis = this._emojiList.filter((emoji, index) => index % 2 != 0);
         let winnerFound = false;
         let winner = "";
+        let gameIndex = TicTacToe.allGames.findIndex(x => x._id == this._id);
+        let game = TicTacToe.allGames[gameIndex];
 
         TicTacToe.winConditions.forEach((winCondition) => {
             if (winnerFound) return;
@@ -114,9 +131,11 @@ export default class TicTacToe {
         });
 
         if (winnerFound) {
-            TicTacToe.allGames.splice(TicTacToe.allGames.findIndex(x => x._id == this._id), 1);
+            let msgPayload = game.createOrUpdateMessage(winnerFound);
+            TicTacToe.allGames.splice(gameIndex, 1);
             message.edit({
-                content: message.content + `\n${winner} is the winner!`.ToBold()
+                content: msgPayload.content + `${winner} is the winner!`.ToBold(),
+                components: msgPayload.components
             });
             message.react("🎉");
             return;
@@ -124,7 +143,7 @@ export default class TicTacToe {
 
         // Tie
         if (this._emojiList.length == 9) {
-            TicTacToe.allGames.splice(TicTacToe.allGames.findIndex(x => x._id == this._id), 1);
+            TicTacToe.allGames.splice(gameIndex, 1);
             message.edit({
                 content: message.content + `\nGame Tied!`.ToBold()
             });

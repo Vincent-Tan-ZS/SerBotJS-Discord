@@ -1,9 +1,35 @@
-import Discord from 'discord.js';
-import { MessageActionRow } from 'discord.js';
+import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
+import schedule from 'node-schedule';
+import moment from 'moment';
+import { loggingModel } from './mongo/mongo-schemas.js';
+import {modalIds, modals} from './modals.js';
 
 export default class Utils {
     constructor() {}
+
+    static PreviousSong = undefined;
+
+    static CurSongInfo = {
+        name: "",
+        duration: 0,
+        startTime: undefined,
+        isWorkaround: false,
+        isSkip: false
+    };
+    
+    static OriginalCountdownList = [];
+
+    static LogType_INFO = "INFO";
+    static LogType_ERROR = "ERROR";
+    static LogType_DEBUG = "DEBUG";
+
+    static Reminder_Frequency_Single = 0;
+    static Reminder_Frequency_Daily = 1;
+    static Reminder_Frequency_Weekly = 2;
+
+    // TODO: Delete when '1 minute voiceconnection' issue fixed
+    static VoiceConnection = undefined;
 
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
@@ -20,10 +46,14 @@ export default class Utils {
         return num / den;
     }
 
-    static sleep(ms) {
-        return new Promise(function(resolve) {
-            setTimeout(resolve, ms);
-        });
+    static cancelTimeout(name) {
+        schedule.cancelJob(name);
+    }
+
+    static timeout(name, minutes, func) {
+        let time = moment().add(minutes, "minutes").toDate();
+
+        schedule.scheduleJob(name, time, func);
     }
 
     static createEmbed({
@@ -42,16 +72,19 @@ export default class Utils {
         fields = new Array(),
         setTimestamp = false,
         timestampOverride = '',
-        components = new MessageActionRow(),
+        components = new ActionRowBuilder(),
     }) {
         if (isError) {
             title = `Error: ${title}`;
         }
 
-        let embed = new Discord.MessageEmbed()
+        let embed = new EmbedBuilder()
             .setTitle(title)
-            .setColor(embedColor)
-            .setDescription(description);
+            .setColor(embedColor);
+        
+        if (description.length > 0) {
+            embed.setDescription(description);
+        }
 
         if (embedURL.length > 0) {
             embed.setURL(embedURL);
@@ -62,11 +95,31 @@ export default class Utils {
         }
 
         if (author.length > 0) {
-            embed.setAuthor({ name: author, url: authorURL, iconURL: authorIcon });
+            let authorData = {
+                name: author
+            };
+
+            if (authorURL.length > 0) {
+                authorData.url = authorURL
+            }
+
+            if (authorIcon.length > 0) {
+                authorData.iconURL = authorIcon;
+            }
+
+            embed.setAuthor(authorData);
         }
 
         if (footer.length > 0) {
-            embed.setFooter(footer, footerIcon);
+            let footerData = {
+                text: footer
+            };
+
+            if (footerIcon.length > 0) {
+                footerData.iconURL = footerIcon;
+            }
+
+            embed.setFooter(footerData);
         }
 
         if (thumbnail.length > 0) {
@@ -74,13 +127,12 @@ export default class Utils {
         }
 
         if (fields.length > 0) {
-            fields.forEach(field => {
-                let inline = field.inline != undefined ?
-                    field.inline :
-                    false;
-
-                embed.addField(field.name, field.value, inline);
+            let fieldsData = fields.map(field => {
+                let inline = field.inline ?? false;
+                return { name: field.name, value: field.value, inline: inline };
             });
+
+            embed.addFields(fieldsData);
         }
 
         if (setTimestamp) {
@@ -122,7 +174,7 @@ export default class Utils {
         fields = new Array(),
         setTimestamp = false,
         timestampOverride = '',
-        components = new MessageActionRow(),
+        components = new ActionRowBuilder(),
     }) {
         if (message == undefined && channel == undefined) return;
 
@@ -160,5 +212,140 @@ export default class Utils {
         let start = discordMention.FirstDigitIndex();
         let end = discordMention.lastIndexOf(">") - start;
         return discordMention.substr(start, end);
+    }
+
+    static Log = (logType, msg, type = "General") => {
+        if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO && logType !== this.LogType_DEBUG) return;
+
+        let currentTime = new Date();
+        let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
+
+        console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
+
+        if (logType !== this.LogType_DEBUG)
+        {
+            const newLog = new loggingModel({
+                Timestamp: currentTime,
+                Type: type,
+                LogType: logType,
+                Message: msg
+            });
+            newLog.save();
+        }
+    }
+
+    static ArrComp = (arr1, arr2) => {
+        return arr1.length === arr2.length && arr1.every((v, i) => arr2[i] === v);
+    }
+
+    static RandNum = (decimal = 2) => {
+        const GenNum = () => {
+            return Math.random().toFixed(decimal);
+        }
+
+        return Number(GenNum()) === 0
+            ? 1
+            : Number(GenNum());
+    }
+
+    static MaxRandNum = (max) => {
+        return Math.floor((Math.random() * max) + 1) - 1;
+    }
+
+    static IsShowModal = (modalId) => {
+        return modalIds.includes(`${modalId}-modal`);
+    }
+
+    static ShowModal = (interaction) => {
+        switch (interaction.customId)
+        {
+            case "create-countdown":
+                interaction.showModal(modals.countdownModal);
+                break;
+            case "update-countdown":
+                let updateCDModal = modals.updateCountdownModal;
+                const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
+
+                // 45 chars max
+                let title = `Update ${userOriCD.name} Countdown`;
+                if (title.length > 45)
+                {
+                    title = "Update Countdown";
+                }
+
+                const ProcessOptionalField = (fieldValue) => {
+                    let placeholderField = fieldValue;
+
+                    // 100 chars max
+                    if (placeholderField.length > 100) {
+                        placeholderField = placeholderField.substring(0, 99);
+                    }
+
+                    if (fieldValue.length <= 0) {
+                        fieldValue = "\0";
+                    }
+
+                    return [placeholderField, fieldValue];
+                }
+
+                const [placeholderDescription, description] = ProcessOptionalField(userOriCD.description);
+                const [placeholderImage, image] = ProcessOptionalField(userOriCD.image);
+                const [placeholderUrl, url] = ProcessOptionalField(userOriCD.url);
+
+                updateCDModal.setTitle(title);
+
+                updateCDModal.components[0].components[0].setPlaceholder(userOriCD.date); 
+                updateCDModal.components[0].components[0].setValue(userOriCD.date);
+                
+                updateCDModal.components[1].components[0].setPlaceholder(placeholderDescription);
+                updateCDModal.components[1].components[0].setValue(description);
+
+                updateCDModal.components[2].components[0].setPlaceholder(placeholderImage);
+                updateCDModal.components[2].components[0].setValue(image);
+
+                updateCDModal.components[3].components[0].setPlaceholder(placeholderUrl);
+                updateCDModal.components[3].components[0].setValue(url);
+
+                interaction.showModal(updateCDModal);
+                break;
+            default:
+                return false;
+        }
+    }
+
+    static ExtractModalValues = (type, interaction) => {
+        switch (type)
+        {
+            case "countdown":
+                let cdObj = {
+                    name: interaction.fields.getTextInputValue("countdown-name"),
+                    date: interaction.fields.getTextInputValue("countdown-date"),
+                    desc: interaction.fields.getTextInputValue("countdown-description"),
+                    image: interaction.fields.getTextInputValue("countdown-image"),
+                    url: interaction.fields.getTextInputValue("countdown-url")
+                };
+
+                cdObj.momentDate = moment(cdObj.date, "DD/MM/YYYY");
+
+                return cdObj;
+            case "update-countdown":
+                const oriCDIndex = this.OriginalCountdownList.findIndex(x => x.userId === interaction.user.id);
+                const oriCD = this.OriginalCountdownList[oriCDIndex];
+
+                let updateCDObj = {
+                    index: oriCDIndex,
+                    name: oriCD.name,
+                    date: interaction.fields.getTextInputValue("countdown-date"),
+                    desc: interaction.fields.getTextInputValue("countdown-description").replace("\0", ""),
+                    image: interaction.fields.getTextInputValue("countdown-image").replace("\0", ""),
+                    url: interaction.fields.getTextInputValue("countdown-url").replace("\0", "")
+                };
+
+                updateCDObj.momentDate = moment(updateCDObj.date, "DD/MM/YYYY");
+
+                return updateCDObj;
+            default:
+                break;
+        }
     }
 }
