@@ -3,16 +3,17 @@ import moment from 'moment-timezone';
 import path from 'path';
 import sharp from 'sharp';
 import axios from 'axios';
+import * as youtubesearchapi from 'youtube-search-api';
 
-import { client, distube as Distube } from './setup.js';
+import { distube as Distube } from './setup.js';
 import config from './config.js';
 import Utils from './utils.js';
 import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
-import { countdownModel, reminderModel } from './mongo/mongo-schemas.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { countdownModel, reminderModel, siteAuthModel, userSongListModel } from './mongo/mongo-schemas.js';
 
 const seasonDates = {
     Spring: ["01/09/1990", "30/11/1990"],
@@ -108,27 +109,7 @@ export default class EventManager {
             songTitle = songTitle.split("&list=")[0];
         }
 
-        Distube.play(message.member.voice.channel, songTitle, {
-            member: message.member,
-            textChannel: message.channel
-        }).then(() => {
-            let queue = Distube.getQueue(message);
-            
-            if (queue !== undefined && queue.songs.length > 1) {
-                let song = queue.songs[queue.songs.length - 1];
-                let msgAuthor = message.author;
-                Utils.sendEmbed({
-                    message: message,
-                    author: `${msgAuthor.username} Queued`,
-                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
-                    title: song.name,
-                    footer: ` | ${song.formattedDuration}`,
-                    footerIcon: config.embedPauseIconURL
-                });
-            }
-        }).catch((e) => {
-            Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
-        });
+        this.queueSong(message, songTitle);
     }
 
     static removeMusic(message, commands) {
@@ -1094,7 +1075,193 @@ export default class EventManager {
         message.channel.send(`Reminder added! I will do my best to remind you around 9:00AM GMT+8!`);
     }
 
+    static async genAuthCode(message) {
+        if (message.author === undefined) return;
+
+        const { author } = message;
+
+        const code = 'xxxxxx'
+        .replace(/x/g, function (c) {
+            const r = Math.random() * 16 | 0, 
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+
+        const existingSiteAuth = await siteAuthModel.findOne({ UserId: author.id });
+        const expiration = moment().add(10, "minutes").toDate();
+
+        // Exists
+        if (existingSiteAuth !== null && existingSiteAuth !== undefined)
+        {
+            existingSiteAuth.set({ AuthCode: code, ExpiresOn: expiration });
+            existingSiteAuth.save();
+        }
+        // New
+        else
+        {
+            const newSiteAuth = new siteAuthModel({
+                UserId: author.id,
+                UserName: author.username,
+                AuthCode: code,
+                ExpiresOn: expiration
+            });
+
+            newSiteAuth.save();
+        }
+
+        author.send(`[${moment().format("DD/MM/YYYY HH:mm")}] Authorization Code Generated: ${code}`);
+    }
+
+    static async playUserSongList(message, commands) {
+        if (message.author === undefined) return;
+        if (message.member.voice.channel == null) return;
+        commands.shift();
+
+        const { author } = message;
+
+        let invalidEmbed = {
+            message: message,
+            title: "User Song List",
+            description: "You don't have a list yet, please add it in SerBot's Site :)"
+        };
+
+        const userSongList = await userSongListModel.findOne({ UserId: author.id });
+
+        if (userSongList === null || userSongList === undefined)
+        {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        // Play song list
+        if (commands.length <= 0)
+        {
+            const oriSongList = userSongList.SongList.map((sl) => sl.song).sort((a, b) => a.id - b.id);
+
+            let songList = [];
+            let strSongs = [];
+
+            for(let i = 0; i < oriSongList.length; ++i)
+            {
+                let cur = oriSongList[i];
+
+                if (Utils.IsValidURL(cur))
+                {
+                    songList.push(cur);
+                }
+                else
+                {
+                    strSongs.push({
+                        index: i,
+                        song: cur
+                    });
+                }
+            }
+
+            if (strSongs.length > 0)
+            {
+                let strSongPromises = strSongs.map((s) => youtubesearchapi.GetListByKeyword(s.song, false, 1));
+                let foundSongs = await Promise.all(strSongPromises);
+
+                foundSongs.forEach((s, i) => {
+                    if (s.items.length > 0)
+                    {
+                        songList.splice(strSongs[i].index, 0, `https://www.youtube.com/watch?v=${s.items[0].id}`);
+                    }
+                });
+            }
+
+            if (songList.length <= 0)
+            {
+                invalidEmbed.description = "Playlist is empty :(";
+                Utils.sendEmbed(invalidEmbed);
+                return;
+            }
+
+            const playlist = await Distube.createCustomPlaylist(songList, { member: message.member });
+
+            Distube.play(message.member.voice.channel, playlist, {
+                member: message.member,
+                textChannel: message.channel
+            }).then(() => {
+                let msgAuthor = message.author;
+                let description = oriSongList.slice(0, 5).join("\r\n");
+
+                if (songList.length > 5) 
+                {
+                    description += "\r\nAnd more...";
+                }
+
+                Utils.sendEmbed({
+                    message: message,
+                    author: `${msgAuthor.username} Queued`,
+                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+                    title: 'Their Song List',
+                    description: description
+                });
+            }).catch((e) => {
+                Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
+            });
+        }
+        else
+        {
+            let songToPlay = "";
+
+            switch (commands[0])
+            {
+                case "random":
+                    const randIndex = Utils.MaxRandNum(userSongList.SongList.length);
+                    songToPlay = userSongList.SongList[randIndex].song;
+                    break;
+                default:
+                    if (isNaN(commands[0]))
+                    {
+                        invalidEmbed.description = "Commands: random, {id}";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+
+                    let foundSong = userSongList.SongList.find(s => s.id === Number(commands[0]));
+                    if (foundSong === null || foundSong === undefined)
+                    {
+                        invalidEmbed.description = "Song cannot be found :(";
+                        Utils.sendEmbed(invalidEmbed);
+                        return;
+                    }
+
+                    songToPlay = foundSong.song;
+                    break;
+            }
+
+            this.queueSong(message, songToPlay);
+        }
+    }
+
     // Helper functions
+    static queueSong(message, songToPlay) {
+        Distube.play(message.member.voice.channel, songToPlay, {
+            member: message.member,
+            textChannel: message.channel
+        }).then(() => {
+            let queue = Distube.getQueue(message);
+            
+            if (queue !== undefined && queue.songs.length > 1) {
+                let song = queue.songs[queue.songs.length - 1];
+                let msgAuthor = message.author;
+                Utils.sendEmbed({
+                    message: message,
+                    author: `${msgAuthor.username} Queued`,
+                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+                    title: song.name,
+                    footer: ` | ${song.formattedDuration}`,
+                    footerIcon: config.embedPauseIconURL
+                });
+            }
+        }).catch((e) => {
+            Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
+        });
+    }
+
     static songRemoveErrorHandler(queue, message, queueRemoveIndex) {
         let title = "Song Remove";
         let description = "Cannot remove song: ";

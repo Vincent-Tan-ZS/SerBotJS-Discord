@@ -252,6 +252,18 @@ export default class Utils {
         return Math.floor((Math.random() * max) + 1) - 1;
     }
 
+    static IsValidURL = (str) => {
+        try
+        {
+            new URL(str);
+            return true;
+        }
+        catch (e)
+        {
+            return false;
+        }
+    }
+
     static IsShowModal = (modalId) => {
         return modalIds.includes(`${modalId}-modal`);
     }

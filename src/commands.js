@@ -48,6 +48,8 @@ export default class Commands {
     static trackTitle = "Current Track";
     static replayTitle = "Replay Previous Song";
     static reminderTitle = "Create a Reminder for you";
+    static authTitle = "Authorization Code";
+    static pListTitle = "Play user song list";
     //#endregion Title
 
     //#region Commands
@@ -83,6 +85,8 @@ export default class Commands {
     static trackCommands = ["track", "song"];
     static replayCommands = ["replay"];
     static reminderCommands = ["remind"];
+    static authCommands = ["auth"];
+    static pListCommands = ["plist", "playlist"];
     //#endregion Commands
 
     //#region Commands Description
@@ -118,6 +122,8 @@ export default class Commands {
     static trackDescription = "Displays information about current song";
     static replayDescription = "Replays the previous song (if applicable)";
     static reminderDescription = "Set a reminder for you, either a set date, or daily/weekly!";
+    static authDescription = "Generates a random authorization code to be used on SerBot's Site!";
+    static pListDescription = "Plays a user's playlist, either in its entirety or any song";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -152,7 +158,9 @@ export default class Commands {
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });
     static replayDictionary = new Command(this.replayTitle, this.replayCommands, this.replayDescription, [""], (msg) => { EventManager.replayPrevTrack(msg) });
     static reminderDictionary = new Command(this.reminderTitle, this.reminderCommands, this.reminderDescription, ["{dd/mm/yyyy} {message}", "{message} (auto-remind to tomorrow)", "daily {message}", "weekly {message}", "weekly [day] {message}"], (msg, cmds) => { EventManager.createReminder(msg, cmds) });
-
+    static authDictionary = new Command(this.authTitle, this.authCommands, this.authDescription, [""], (msg) => { EventManager.genAuthCode(msg) })
+    static pListDictionary = new Command(this.pListTitle, this.pListCommands, this.pListDescription, ["", "random", "{id}"], (msg, cmds) => { EventManager.playUserSongList(msg, cmds) })
+    
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
 
@@ -162,7 +170,7 @@ export default class Commands {
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary,
         this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.todayDictionary, this.tictactoeDictionary, this.wisdomDictionary, this.xxxDictionary,
-        this.trackDictionary, this.replayDictionary, this.reminderDictionary,
+        this.trackDictionary, this.replayDictionary, this.reminderDictionary, this.authDictionary, this.pListDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
         this.countdownDictionary, this.pingDictionary];
     //#endregion DictionaryList

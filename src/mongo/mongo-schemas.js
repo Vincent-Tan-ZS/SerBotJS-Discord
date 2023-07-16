@@ -98,4 +98,38 @@ const reminderSchema = mongoose.Schema({
 });
 const reminderModel = mongoose.model('Reminders', reminderSchema, 'Reminders');
 
-export { countdownModel, loggingModel, commandModel, reminderModel };
+// Site Authorization
+const siteAuthorizationSchema = mongoose.Schema({
+    UserId: {
+        type: String,
+        required: true
+    },
+    UserName: {
+        type: String,
+        required: true
+    },
+    AuthCode: {
+        type: String,
+        required: true
+    },
+	ExpiresOn: {
+		type: Date,
+		require: true
+	}
+});
+const siteAuthModel = mongoose.model('SiteAuthorization', siteAuthorizationSchema, 'SiteAuthorizations');
+
+// UserSongList
+const userSongListSchema = mongoose.Schema({
+    UserId: {
+        type: String,
+        required: true
+    },
+    SongList: {
+        type: Array,
+        required: true
+    }
+});
+const userSongListModel = mongoose.model('UserSongList', userSongListSchema, 'UserSongLists');
+
+export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel };
