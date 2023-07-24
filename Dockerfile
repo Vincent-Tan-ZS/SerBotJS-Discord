@@ -21,6 +21,7 @@ ENV NODE_ENV production
 
 COPY . .
 
+RUN rm -rf node_modules package-lock.json
 RUN npm install
 FROM debian:bullseye
 
