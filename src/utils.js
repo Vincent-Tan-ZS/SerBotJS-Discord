@@ -8,15 +8,16 @@ import {modalIds, modals} from './modals.js';
 export default class Utils {
     constructor() {}
 
-    static PreviousSong = undefined;
+    static PreviousSong = [];
 
-    static CurSongInfo = {
-        name: "",
-        duration: 0,
-        startTime: undefined,
-        isWorkaround: false,
-        isSkip: false
-    };
+    // static CurSongInfo = {
+    //     name: "",
+    //     duration: 0,
+    //     startTime: undefined,
+    //     isWorkaround: false,
+    //     isSkip: false
+    // };
+    static CurSongInfo = [];
     
     static OriginalCountdownList = [];
 
@@ -27,6 +28,9 @@ export default class Utils {
     static Reminder_Frequency_Single = 0;
     static Reminder_Frequency_Daily = 1;
     static Reminder_Frequency_Weekly = 2;
+
+    static FeatureUpdate_Bot = "Bot";
+    static FeatureUpdate_Site = "Site";
 
     // TODO: Delete when '1 minute voiceconnection' issue fixed
     static VoiceConnection = undefined;
@@ -54,6 +58,37 @@ export default class Utils {
         let time = moment().add(minutes, "minutes").toDate();
 
         schedule.scheduleJob(name, time, func);
+    }
+
+    static GetGuildCurSong(guildId) {
+        const index = Utils.CurSongInfo.findIndex(s => s.guildId === guildId);
+        return index < 0 ? null : Utils.CurSongInfo[index];
+    }
+
+    static GetGuildPrevSong(guildId) {
+        const index = Utils.PreviousSong.findIndex(s => s.guildId === guildId);
+        return index < 0 ? null : Utils.PreviousSong[index];
+    }
+
+    static ResetGuildCurSong(guildId) {
+        const index = Utils.CurSongInfo.findIndex(s => s.guildId === guildId);
+
+        const newGuildCurSong = {
+            guildId: guildId,
+            name: "",
+            duration: 0,
+            startTime: undefined,
+            isWorkaround: false
+        };
+
+        if (index < 0)
+        {
+            Utils.CurSongInfo.push(newGuildCurSong);
+        }
+        else
+        {
+            Utils.CurSongInfo[index] = newGuildCurSong;
+        }
     }
 
     static createEmbed({
@@ -250,6 +285,10 @@ export default class Utils {
 
     static MaxRandNum = (max) => {
         return Math.floor((Math.random() * max) + 1) - 1;
+    }
+
+    static IsOwner = (user) => {
+        return user.id === process.env.SERHOLMES_ID;
     }
 
     static IsValidURL = (str) => {

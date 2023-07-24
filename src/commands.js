@@ -1,6 +1,6 @@
-import Discord, {Utils} from 'discord.js';
 import EventManager from './events.js';
 import { client } from './setup.js';
+import Utils from './utils.js';
 
 class Command {
     constructor(title, cmd, desc, usg, act) {
@@ -31,7 +31,6 @@ export default class Commands {
     static musicClearTitle = "Clear Queue";
     static musicQueueTitle = "Display Song Queue";
     static musicLoopTitle = "Loop Current Song";
-    static covidTitle = "Display Country's Covid Statistics";
     static rhombusTitle = "Rhombus";
     static wikiHowTitle = "Wikihow Article";
     static todayTitle = "Today's Date";
@@ -50,6 +49,8 @@ export default class Commands {
     static reminderTitle = "Create a Reminder for you";
     static authTitle = "Authorization Code";
     static pListTitle = "Play user song list";
+    static reportTitle = "Report Bot Issues";
+    static featureUpdateTitle = "Feature Update";
     //#endregion Title
 
     //#region Commands
@@ -68,7 +69,6 @@ export default class Commands {
     static musicClearCommands = ["clr", "clear"];
     static musicQueueCommands = ["q", "queue"];
     static musicLoopCommands = ["l", "loop"];
-    static covidCommands = ["covid"];
     static rhombusCommands = ["rhombus"];
     static wikiHowCommands = ["wikihow"];
     static todayCommands = ["today"];
@@ -87,12 +87,14 @@ export default class Commands {
     static reminderCommands = ["remind"];
     static authCommands = ["auth"];
     static pListCommands = ["plist", "playlist"];
+    static reportCommands = ["report"];
+    static featureUpdateCommands = ["feature"];
     //#endregion Commands
 
     //#region Commands Description
     static helpDescription = "Show the list of commands";
     static pingDescription = "Ping Pong!";
-    static disconnectDescription = "SerBot logs out (Administrators Only)";
+    static disconnectDescription = "SerBot logs out (Owner Only)";
     static greetingDescription = "Receive a greeting from SerBot";
     static musicJoinDescription = "Joins your voice channel";
     static musicPlayDescription = "SerBot will play your requested song";
@@ -105,7 +107,6 @@ export default class Commands {
     static musicClearDescription = "Clears current queue";
     static musicQueueDescription = "Display the song queue";
     static musicLoopDescription = "Loops/Unloops the current track";
-    static covidDescription = "Retrieves information on Covid-19 cases for a country";
     static rhombusDescription = "Creates a rhombus of size n";
     static wikiHowDescription = "Searches for a WikiHow page";
     static todayDescription = "I'll tell you what day it is today";
@@ -124,6 +125,8 @@ export default class Commands {
     static reminderDescription = "Set a reminder for you, either a set date, or daily/weekly!";
     static authDescription = "Generates a random authorization code to be used on SerBot's Site!";
     static pListDescription = "Plays a user's playlist, either in its entirety or any song";
+    static reportDescription = "Report any issues with SerBot to the owner";
+    static featureUpdateDescription = "Add a feature to the Feature Update database (Owner Only)";
     //#endregion Commands Description
 
     //#region Dictionary
@@ -141,7 +144,6 @@ export default class Commands {
     static musicClearDictionary = new Command(this.musicClearTitle, this.musicClearCommands, this.musicClearDescription, [""], this.musicActionResolve);
     static musicLoopDictionary = new Command(this.musicLoopTitle, this.musicLoopCommands, this.musicLoopDescription, [""], this.musicActionResolve);
     static disconnectDictionary = new Command(this.disconnectTitle, this.disconnectCommands, this.disconnectDescription, [""], this.disconnectActionResolve);
-    static covidDictionary = new Command(this.covidTitle, this.covidCommands, this.covidDescription, ["{country}"], (msg, cmds) => { EventManager.getCovidCases(msg, cmds); });
     static rhombusDictionary = new Command(this.rhombusTitle, this.rhombusCommands, this.rhombusDescription, ["{size}"], (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
     static wikiHowDictionary = new Command(this.wikiHowTitle, this.wikiHowCommands, this.wikiHowDescription, ["{search term}"], (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
     static todayDictionary = new Command(this.todayTitle, this.todayCommands, this.todayDescription, [""], (msg) => { EventManager.sendDay(msg); });
@@ -158,9 +160,11 @@ export default class Commands {
     static trackDictionary = new Command(this.trackTitle, this.trackCommands, this.trackDescription, [""], (msg) => { EventManager.currentTrack(msg) });
     static replayDictionary = new Command(this.replayTitle, this.replayCommands, this.replayDescription, [""], (msg) => { EventManager.replayPrevTrack(msg) });
     static reminderDictionary = new Command(this.reminderTitle, this.reminderCommands, this.reminderDescription, ["{dd/mm/yyyy} {message}", "{message} (auto-remind to tomorrow)", "daily {message}", "weekly {message}", "weekly [day] {message}"], (msg, cmds) => { EventManager.createReminder(msg, cmds) });
-    static authDictionary = new Command(this.authTitle, this.authCommands, this.authDescription, [""], (msg) => { EventManager.genAuthCode(msg) })
-    static pListDictionary = new Command(this.pListTitle, this.pListCommands, this.pListDescription, ["", "random", "{id}"], (msg, cmds) => { EventManager.playUserSongList(msg, cmds) })
-    
+    static authDictionary = new Command(this.authTitle, this.authCommands, this.authDescription, [""], (msg) => { EventManager.genAuthCode(msg) });
+    static pListDictionary = new Command(this.pListTitle, this.pListCommands, this.pListDescription, ["", "random", "{id}"], (msg, cmds) => { EventManager.playUserSongList(msg, cmds) });
+    static reportDictionary = new Command(this.reportTitle, this.reportCommands, this.reportDescription, ["{issue}"], (msg, cmds) => { EventManager.reportIssue(msg, cmds) });
+    static featureUpdateDictionary = new Command(this.featureUpdateTitle, this.featureUpdateCommands, this.featureUpdateDescription, ["{type} {message}"], (msg, cmds) => { EventManager.addFeatureUpdate(msg, cmds) });
+
     static helpDictionary = new Command(this.helpTitle, this.helpCommands, this.helpDescription, [""], (msg) => { EventManager.sendCommandList(msg); });
     //#endregion Dictionary
 
@@ -168,9 +172,9 @@ export default class Commands {
     static dictionaries = [this.greetingDictionary, this.musicJoinDictionary, this.musicPlayDictionary, this.musicPauseDictionary,
         this.musicResumeDictionary, this.musicSkipDictionary, this.musicStopDictionary, this.musicLeaveDictionary, this.musicQueueDictionary,
         this.musicRemoveDictionary, this.musicClearDictionary, this.musicLoopDictionary,
-        this.covidDictionary, this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
+        this.disconnectDictionary, this.rhombusDictionary, this.wikiHowDictionary, this.helpDictionary,
         this.todayDictionary, this.tictactoeDictionary, this.wisdomDictionary, this.xxxDictionary,
-        this.trackDictionary, this.replayDictionary, this.reminderDictionary, this.authDictionary, this.pListDictionary,
+        this.trackDictionary, this.replayDictionary, this.reminderDictionary, this.authDictionary, this.pListDictionary, this.reportDictionary, this.featureUpdateDictionary,
         this.copypastaDictionary, this._8ballDictionary, this.coinFlipDictionary, this.wheelDictionary, this.treeDictionary, this.psychoDictionary,
         this.countdownDictionary, this.pingDictionary];
     //#endregion DictionaryList
@@ -195,9 +199,9 @@ export default class Commands {
     }
 
     static disconnectActionResolve(message) {
-        if (!message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)) return;
+        if (Utils.IsOwner(message.author) !== true) return;
 
-        const msg = `${message.member.displayName} called for disconnect: Logging out...`;
+        const msg = `${message.member.username} called for disconnect: Logging out...`;
 
         Utils.Log(Utils.LogType_INFO, msg);
 

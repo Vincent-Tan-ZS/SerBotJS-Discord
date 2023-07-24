@@ -1,4 +1,3 @@
-import * as Covid from 'novelcovid';
 import moment from 'moment-timezone';
 import path from 'path';
 import sharp from 'sharp';
@@ -13,7 +12,7 @@ import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { countdownModel, reminderModel, siteAuthModel, userSongListModel } from './mongo/mongo-schemas.js';
+import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel } from './mongo/mongo-schemas.js';
 
 const seasonDates = {
     Spring: ["01/09/1990", "30/11/1990"],
@@ -62,38 +61,6 @@ export default class EventManager {
         } else if (rng > 0) {
             channel.send(`Hello ${greeter.username}!`);
         }
-    }
-
-    // Covid Actions
-    static getCovidCases(message, commands) {
-        commands.shift();
-        let countryName = commands[0];
-        let countryData = { name: countryName, flag: "" };
-        let todayData = { cases: 0, deaths: 0, recovered: 0 };
-        let yesterdayData = { cases: 0, deaths: 0, recovered: 0 };
-
-        Promise.all([
-            Covid.countries({ country: countryName }).then((result) => {
-                todayData.cases = result.todayCases;
-                todayData.deaths = result.todayDeaths;
-                todayData.recovered = result.todayRecovered;
-                countryData.name = result.country;
-                countryData.flag = result.countryInfo.flag;
-            }),
-            Covid.yesterday.countries({ country: countryName }).then((result) => {
-                yesterdayData.cases = result.todayCases;
-                yesterdayData.deaths = result.todayDeaths;
-                yesterdayData.recovered = result.todayRecovered;
-            })
-        ]).then(() => {
-            Utils.sendEmbed({
-                message: message,
-                title: countryData.name,
-                description: "Cases / Deaths / Recovered",
-                thumbnail: countryData.flag,
-                fields: new Array({ name: 'Today', value: `${todayData.cases} / ${todayData.deaths} / ${todayData.recovered}` }, { name: 'Yesterday', value: `${yesterdayData.cases} / ${yesterdayData.deaths} / ${yesterdayData.recovered}` })
-            });
-        });
     }
 
     // Music Actions
@@ -204,7 +171,7 @@ export default class EventManager {
                 } else {
                     Distube.stop(queue);
                 }
-                Utils.CurSongInfo.isSkip = true;
+                Utils.GetGuildCurSong(queue.voiceChannel.guildId).isSkip = true;
                 message.react('👍');
                 break;
             case "stop":
@@ -349,7 +316,7 @@ export default class EventManager {
 
     static createRhombus(message, commands) {
         commands.shift();
-        if (Number.isNaN(commands[0])) return;
+        if (isNaN(commands[0])) return;
 
         let rhombusSize = Number(commands[0]);
 
@@ -939,13 +906,14 @@ export default class EventManager {
     static replayPrevTrack(message) {
         let { channel, member } = message;
 
-        if (Utils.PreviousSong === undefined)
+        const guildPrevSong = Utils.GetGuildPrevSong(channel.guildId);
+        if (guildPrevSong === null)
         {
             channel.send("There is no song to replay :(");
             return;
         }
 
-        Distube.play(member.voice.channel, Utils.PreviousSong, {
+        Distube.play(member.voice.channel, guildPrevSong.song, {
             member: member,
             textChannel: channel
         });
@@ -1084,7 +1052,7 @@ export default class EventManager {
         .replace(/x/g, function (c) {
             const r = Math.random() * 16 | 0, 
                 v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
+            return v.toString(16).toUpperCase();
         });
 
         const existingSiteAuth = await siteAuthModel.findOne({ UserId: author.id });
@@ -1235,6 +1203,60 @@ export default class EventManager {
 
             this.queueSong(message, songToPlay);
         }
+    }
+
+    static async reportIssue(message, commands) {
+        commands.shift();
+
+        let invalidEmbed = {
+            message: message,
+            title: "Report Bot Issues",
+            description: "Please fill in the issue right after 'ser report'. Example: ser report Bot crashed on 24/07/2023"
+        };
+
+        const issue = commands.join(' ').trim();
+
+        if (issue.length <= 0) {
+            Utils.sendEmbed(invalidEmbed);
+            return;
+        }
+
+        const user = await message.guild.members.fetch(process.env.SERHOLMES_ID);
+        const msg = `${message.author.username} Reported an Issue: ${issue}`; 
+
+        Utils.Log(Utils.LogType_INFO, msg, "Report Issue");
+        user.send(msg);
+
+        message.channel.send(`Your issue has been reported! I'm sorry you were facing this issue but thank you for helping me! 😄`);
+    }
+
+    static addFeatureUpdate(message, commands) {
+        commands.shift();
+        if (Utils.IsOwner(message.author) !== true) return;
+
+        const preType = commands.shift();
+        let type = "";
+
+        switch (preType)
+        {
+            case Utils.FeatureUpdate_Bot:
+                type = "SerBot";
+                break;
+            case Utils.FeatureUpdate_Site:
+                type = "Site";
+                break;
+            default:
+                return;
+        }
+
+        const newFeatureUpdate = new featureUpdateModel({
+            FeatureDate: new Date(),
+            FeatureType: type,
+            FeatureUpdateMessage: commands.join(' ').trim()
+        });
+        newFeatureUpdate.save();
+
+        message.channel.send("Feature Update Added!");
     }
 
     // Helper functions

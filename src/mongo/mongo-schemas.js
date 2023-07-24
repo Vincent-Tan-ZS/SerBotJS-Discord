@@ -132,4 +132,21 @@ const userSongListSchema = mongoose.Schema({
 });
 const userSongListModel = mongoose.model('UserSongList', userSongListSchema, 'UserSongLists');
 
-export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel };
+// FeatureUpdate
+const featureUpdateSchema = mongoose.Schema({
+    FeatureDate: {
+        type: Date,
+        required: true
+    },
+    FeatureType: {
+        type: String,
+        required: true
+    },
+    FeatureUpdateMessage: {
+        type: String,
+        required: true
+    }
+});
+const featureUpdateModel = mongoose.model('FeatureUpdate', featureUpdateSchema, 'FeatureUpdate');
+
+export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel };

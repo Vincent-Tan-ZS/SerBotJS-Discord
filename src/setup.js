@@ -46,11 +46,38 @@ distube.on('playSong', (queue, song) => {
         if (queue.repeatMode === RepeatMode.DISABLED)
         {
             // Workaround for song not playing when hosted
-            Utils.CurSongInfo.name = song.name;
-            Utils.CurSongInfo.duration = song.duration - 1; // song.duration for some reason is almost always 1 second more than the supposed length 
-            Utils.CurSongInfo.startTime = new Date();
-    
-            Utils.PreviousSong = song;
+            const curSongIndex = Utils.CurSongInfo.findIndex(s => s.guildId === queue.voiceChannel.guildId);
+            const guildCurSong = {
+                guildId: queue.voiceChannel.guildId,
+                name: song.name,
+                duration: song.duration - 1, // song.duration for some reason is almost always 1 second more than the supposed length 
+                startTime: new Date()
+            }
+
+            if (curSongIndex >= 0)
+            {
+                Utils.CurSongInfo[curSongIndex] = guildCurSong;
+            }
+            else
+            {
+                Utils.CurSongInfo.push(guildCurSong);
+            }
+            
+            // Update Previous Song for replay
+            const previousSongIndex = Utils.PreviousSong.findIndex(s => s.guildId === queue.voiceChannel.guildId);
+            const guildPrevSong = {
+                guildId: queue.voiceChannel.guildId,
+                song: song
+            };
+
+            if (previousSongIndex >= 0)
+            {
+                Utils.PreviousSong[previousSongIndex] = guildPrevSong;
+            }
+            else
+            {
+                Utils.PreviousSong.push(guildPrevSong);
+            }
 
             Utils.sendEmbed({
                 channel: queue.textChannel,
@@ -63,7 +90,7 @@ distube.on('playSong', (queue, song) => {
             logMessage += "[Loop] ";
         }
 
-        logMessage += `Playing ${song.name}`;
+        logMessage += `Playing ${song.name} in ${queue.voiceChannel.guildId}`;
 
         Utils.Log(Utils.LogType_INFO, logMessage, "DistubeJS");
     })
@@ -80,10 +107,10 @@ distube.on('playSong', (queue, song) => {
         Utils.Log(Utils.LogType_ERROR, e.message, "DistubeJS");
     })
     .on('addSong', (queue, song) => {
-        Utils.cancelTimeout("leaveVC");
+        Utils.cancelTimeout(`leaveVC-${queue.voiceChannel.guildId}`);
     })
     .on('finish', (queue) => {
-        Utils.timeout("leaveVC", 5, () => {
+        Utils.timeout(`leaveVC-${queue.voiceChannel.guildId}`, 5, () => {
             let newQueue = distube.getQueue(queue);
 
             if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
@@ -93,21 +120,19 @@ distube.on('playSong', (queue, song) => {
     })
     .on('finishSong', (queue, song) => {
         if (queue.repeatMode === RepeatMode.SONG) return;
-        if (song.name !== Utils.CurSongInfo.name) 
+        if (song === undefined) return;
+        const guildCurSong = Utils.GetGuildCurSong(queue.voiceChannel.guildId);
+
+        if (guildCurSong === null || song.name !== guildCurSong.name)
         {
-            Utils.CurSongInfo = {
-                name: "",
-                duration: 0,
-                startTime: undefined,
-                isWorkaround: false
-            };
+            Utils.ResetGuildCurSong(queue.voiceChannel.guildId);
             return;
         }
 
         // Workaround for song not playing when hosted
-        let songPlayedFor = moment().diff(moment(Utils.CurSongInfo.startTime), 'seconds');
+        let songPlayedFor = moment().diff(moment(guildCurSong.startTime), 'seconds');
 
-        if (Utils.CurSongInfo.duration > songPlayedFor && Utils.CurSongInfo.isWorkaround !== true && Utils.CurSongInfo.isSkip !== true)
+        if (guildCurSong.duration > songPlayedFor && guildCurSong.isWorkaround !== true && guildCurSong.isSkip !== true)
         {
             const msg = "Song did not complete, playing workaround song";
 
@@ -119,21 +144,16 @@ distube.on('playSong', (queue, song) => {
             Utils.Log(Utils.LogType_INFO, msg, "DistubeJS");
             distube.play(queue.voiceChannel, `${song.name} lyrics soundtrack`);
 
-            Utils.CurSongInfo.isWorkaround = true;
+            guildCurSong.isWorkaround = true;
         }
         else
         {
-            if (queue.textChannel !== undefined && Utils.CurSongInfo.isWorkaround === true)
+            if (queue.textChannel !== undefined && guildCurSong.isWorkaround === true)
             {
                 queue.textChannel.send(`[Distube] Workaround cannot be played`);
             }
 
-            Utils.CurSongInfo = {
-                name: "",
-                duration: 0,
-                startTime: undefined,
-                isWorkaround: false
-            };
+            Utils.ResetGuildCurSong(queue.voiceChannel.guildId);
         }
     });
 
@@ -301,7 +321,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     let voice = distube.voices.get(newState.guild);
     if (voice == null) {
         Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
-        Utils.cancelTimeout("leaveVC");
+        Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.name}`);
         return;
     };
 
@@ -374,7 +394,6 @@ client.on("messageReactionRemove", async(reaction, user) => {
 //#region Interaction Listener
 client.on("interactionCreate", async (interaction) => {
     let message = interaction.message;
-    let embed = message.embeds[0];
     
     // Tic-Tac-Toe
     if (interaction.customId.startsWith("ttt")) {
