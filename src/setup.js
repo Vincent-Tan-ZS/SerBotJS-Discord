@@ -353,7 +353,7 @@ client.on('error', (e) => {
 client.on('messageCreate', (message) => {
     let msgContent = message.content;
 
-    if (!msgContent.startsWith(`${config.prefix} `)) return;
+    if (!msgContent.toLowerCase().startsWith(`${config.prefix} `)) return;
 
     let messageArray = msgContent.split(' ').slice(1, msgContent.split(' ').length);
     let messageCommands = messageArray.length > 1 ? messageArray : messageArray[0];
