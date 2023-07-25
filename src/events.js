@@ -463,7 +463,7 @@ export default class EventManager {
         if (message.member === undefined) return;
         commands.shift();
 
-        const username = message.member.displayName;
+        const username = message.member.displayName ?? message.author.displayName;
         const imgFolder = path.resolve("./img");
         let sharpBuffer;
         let outputBuffer;
@@ -494,7 +494,8 @@ export default class EventManager {
             }
             // Monologue
             else {
-                let avatarImg = await sharp((await axios({ url: message.member.avatarURL(), responseType: "arraybuffer" })).data);
+                const url = message.member.avatarURL() ?? message.author.avatarURL();
+                let avatarImg = await sharp((await axios({ url: url, responseType: "arraybuffer" })).data);
                 msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
 
                 sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
