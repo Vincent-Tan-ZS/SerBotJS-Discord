@@ -330,18 +330,18 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
 
     // TODO: Delete when '1 minute voiceconnection' issue fixed
-    voice.connection.on('stateChange', (oldVState, newVState) => {
-        const oldNetworking = Reflect.get(oldVState, 'networking');
-        const newNetworking = Reflect.get(newVState, 'networking');
+    // voice.connection.on('stateChange', (oldVState, newVState) => {
+    //     const oldNetworking = Reflect.get(oldVState, 'networking');
+    //     const newNetworking = Reflect.get(newVState, 'networking');
         
-        const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
-            const newUdp = Reflect.get(newNetworkState, 'udp');
-            clearInterval(newUdp?.keepAliveInterval);
-        }
+    //     const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+    //         const newUdp = Reflect.get(newNetworkState, 'udp');
+    //         clearInterval(newUdp?.keepAliveInterval);
+    //     }
         
-        oldNetworking?.off('stateChange', networkStateChangeHandler);
-        newNetworking?.on('stateChange', networkStateChangeHandler);
-    });
+    //     oldNetworking?.off('stateChange', networkStateChangeHandler);
+    //     newNetworking?.on('stateChange', networkStateChangeHandler);
+    // });
 })
 
 client.on('error', (e) => {
