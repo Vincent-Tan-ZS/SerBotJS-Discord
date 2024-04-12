@@ -5,7 +5,7 @@ import "./extension.js";
 
 export default class TicTacToe {
     static allGames = new Array();
-    static winConditions = [
+    winConditions = [
         //Row
         config.ticTacToeTopRow,
         config.ticTacToeMidRow,
@@ -118,7 +118,7 @@ export default class TicTacToe {
         let gameIndex = TicTacToe.allGames.findIndex(x => x._id == this._id);
         let game = TicTacToe.allGames[gameIndex];
 
-        TicTacToe.winConditions.forEach((winCondition) => {
+        winConditions.forEach((winCondition) => {
             if (winnerFound) return;
 
             if (winCondition.every(x => player1Emojis.includes(x))) {
