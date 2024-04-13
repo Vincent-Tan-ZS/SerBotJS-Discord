@@ -45,7 +45,7 @@ export default class Commands {
             messageCommands.toLowerCase() :
             messageCommands[0];
 
-        let dictionary = dictionaries.find(x => x.Command.includes(cmd));
+        let dictionary = this.dictionaries.find(x => x.Command.includes(cmd));
 
         if (dictionary == null || dictionary == undefined) return;
 
