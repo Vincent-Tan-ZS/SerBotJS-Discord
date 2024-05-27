@@ -1,14 +1,14 @@
-import moment from 'moment-timezone';
+import dayjs from 'dayjs';
 
 export default class Stopwatch {
     constructor() {
-        this._startTime = moment().valueOf();
-        this._endTime = moment().valueOf();
+        this._startTime = dayjs().valueOf();
+        this._endTime = dayjs().valueOf();
         this._elapsedTime = 0;
     }
 
     Stop() {
-        this._endTime = moment().valueOf();
+        this._endTime = dayjs().valueOf();
         this._elapsedTime = this._endTime - this._startTime;
     }
 
@@ -21,8 +21,8 @@ export default class Stopwatch {
     }
 
     Reset() {
-        this._startTime = moment().valueOf();
-        this._endTime = moment().valueOf();
+        this._startTime = dayjs().valueOf();
+        this._endTime = dayjs().valueOf();
         this._elapsedTime = 0;
     }
 }

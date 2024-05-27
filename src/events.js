@@ -1,8 +1,10 @@
-import moment from 'moment-timezone';
 import path from 'path';
 import sharp from 'sharp';
 import axios from 'axios';
 import * as youtubesearchapi from 'youtube-search-api';
+import dayjstz from './dayjstz.js';
+import isBetween from 'dayjs/plugin/isBetween.js';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
 
 import { distube as Distube } from './setup.js';
 import config from './config.js';
@@ -13,6 +15,9 @@ import "./extension.js";
 import { RepeatMode } from 'distube';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel } from './mongo/mongo-schemas.js';
+
+dayjstz.extend(isBetween);
+dayjstz.extend(isSameOrBefore);
 
 const seasonDates = {
     Spring: ["01/09/1990", "30/11/1990"],
@@ -205,7 +210,7 @@ export default class EventManager {
     }
 
     static sendDay(message) {
-        let today = moment().tz("Asia/Kuala_Lumpur").format("dddd");
+        let today = dayjstz.tz(new Date(), "Asia/Kuala_Lumpur").format("dddd");
         message.channel.send(`[GMT+8] ${today}`);
     }
 
@@ -422,14 +427,14 @@ export default class EventManager {
         let seasonStart;
         let seasonEnd;
 
-        let nowMoment = moment().tz("Asia/Kuala_Lumpur");
+        let nowMoment = dayjstz.tz(new Date(), "Asia/Kuala_Lumpur");
         let isChristmas = nowMoment.month() == 11 && nowMoment.date() == 25;
         let season = "Christmas";
 
         if (!isChristmas) {
             season = Object.keys(seasonDates).find(key => {
-                seasonStart = moment(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
-                seasonEnd = moment(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
+                seasonStart = dayjstz(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
+                seasonEnd = dayjstz(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
 
                 if (seasonEnd.isBefore(seasonStart))
                 {
@@ -605,7 +610,7 @@ export default class EventManager {
 
                 const origCD = {  
                     name: countdown.Name,
-                    date: moment(countdown.Date).format("DD/MM/YYYY"),
+                    date: dayjstz(countdown.Date).format("DD/MM/YYYY"),
                     description: countdown.Description,
                     image: countdown.Image,
                     url: countdown.URL,
@@ -706,8 +711,8 @@ export default class EventManager {
                     return;
                 }
 
-                let releaseDateMoment = moment(countdown.Date);
-                let difference = releaseDateMoment.diff(moment(), 'days', true);
+                let releaseDateMoment = dayjstz(countdown.Date);
+                let difference = releaseDateMoment.diff(dayjstz(), 'days', true);
 
                 if (difference < 0) {
                     Utils.sendEmbed({
@@ -727,7 +732,7 @@ export default class EventManager {
                     title: countdown.Name,
                     fields: [{
                         name: "Release Date",
-                        value: moment(countdown.Date).format("DD/MM/YYYY"),
+                        value: dayjstz(countdown.Date).format("DD/MM/YYYY"),
                         inline: true
                     }, {
                         name: "Countdown",
@@ -946,7 +951,7 @@ export default class EventManager {
         {
             case "daily":
                 modelFrequency = Utils.Reminder_Frequency_Daily;
-                lastMessageDate = moment().format("MM/DD/YYYY");
+                lastMessageDate = dayjstz().format("MM/DD/YYYY");
                 break;
             case "weekly":
                 modelFrequency = Utils.Reminder_Frequency_Weekly;
@@ -964,8 +969,8 @@ export default class EventManager {
                     }
 
                     const day = listOfDays[0];
-                    const todayMoment = moment();
-                    const reminderDayMoment = moment().day(day);
+                    const todayMoment = dayjstz();
+                    const reminderDayMoment = dayjstz().day(day);
 
                     const actualMoment = todayMoment.day() === reminderDayMoment.day()
                         ? todayMoment
@@ -976,30 +981,20 @@ export default class EventManager {
                 }
                 else
                 {
-                    lastMessageDate = moment().format("MM/DD/YYYY");
+                    lastMessageDate = dayjstz().format("MM/DD/YYYY");
                 }
                 break;
             default:
-                let dateMoment = moment(frequencyStr, "DD/MM/YYYY");
+                let dateMoment = dayjstz(frequencyStr, "DD/MM/YYYY");
 
                 if (!dateMoment.isValid())
                 {
-                    // Tomorrow
-                    if (dateMoment.invalidAt() < 0)
-                    {
-                        dateMoment = moment().add(1, 'day');
-                        commands.unshift(frequencyStr);
-                    }
-                    // Attempted date
-                    else
-                    {
-                        invalidEmbed.description = "Invalid date, the format is DD/MM/YYYY";
-                        Utils.sendEmbed(invalidEmbed);
-                        return;
-                    }
+                    invalidEmbed.description = "Invalid date, the format is DD/MM/YYYY";
+                    Utils.sendEmbed(invalidEmbed);
+                    return;
                 }
 
-                if (dateMoment.isSameOrBefore(new moment(), 'day'))
+                if (dateMoment.isSameOrBefore(new dayjstz(), 'day'))
                 {
                     invalidEmbed.description = "Date has to be after today :(";
                     Utils.sendEmbed(invalidEmbed);
@@ -1057,7 +1052,7 @@ export default class EventManager {
         });
 
         const existingSiteAuth = await siteAuthModel.findOne({ UserId: author.id });
-        const expiration = moment().add(10, "minutes").toDate();
+        const expiration = dayjstz().add(10, "minutes").toDate();
 
         // Exists
         if (existingSiteAuth !== null && existingSiteAuth !== undefined)
@@ -1078,7 +1073,7 @@ export default class EventManager {
             newSiteAuth.save();
         }
 
-        author.send(`[${moment().format("DD/MM/YYYY HH:mm")}] Authorization Code Generated: ${code}`);
+        author.send(`[${dayjstz().format("DD/MM/YYYY HH:mm")}] Authorization Code Generated: ${code}`);
     }
 
     static async playUserSongList(message, commands) {

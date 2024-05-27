@@ -1,9 +1,9 @@
 import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
-import moment from 'moment';
 import { loggingModel } from './mongo/mongo-schemas.js';
 import {modalIds, modals} from './modals.js';
+import dayjs from 'dayjs';
 
 export default class Utils {
     constructor() {}
@@ -55,7 +55,7 @@ export default class Utils {
     }
 
     static timeout(name, minutes, func) {
-        let time = moment().add(minutes, "minutes").toDate();
+        let time = dayjs().add(minutes, "minutes").toDate();
 
         schedule.scheduleJob(name, time, func);
     }
@@ -253,7 +253,7 @@ export default class Utils {
         if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO && logType !== this.LogType_DEBUG) return;
 
         let currentTime = new Date();
-        let momentTime = moment(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
+        let momentTime = dayjs(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
 
         console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
 
@@ -376,7 +376,7 @@ export default class Utils {
                     url: interaction.fields.getTextInputValue("countdown-url")
                 };
 
-                cdObj.momentDate = moment(cdObj.date, "DD/MM/YYYY");
+                cdObj.momentDate = dayjs(cdObj.date, "DD/MM/YYYY");
 
                 return cdObj;
             case "update-countdown":
@@ -392,7 +392,7 @@ export default class Utils {
                     url: interaction.fields.getTextInputValue("countdown-url").replace("\0", "")
                 };
 
-                updateCDObj.momentDate = moment(updateCDObj.date, "DD/MM/YYYY");
+                updateCDObj.momentDate = dayjs(updateCDObj.date, "DD/MM/YYYY");
 
                 return updateCDObj;
             default:

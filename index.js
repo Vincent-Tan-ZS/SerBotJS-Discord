@@ -1,13 +1,14 @@
 import http from 'http';
 import { client } from './src/setup.js';
 import config from './src/config.js';
-import moment from 'moment-timezone';
+import dayjstz from './src/dayjstz.js';
 
-const GetTime = () => {
-    let timezone = moment.tz.guess(true);
-    let time = moment().format("LT");
+const timezone = dayjstz.tz.guess();
 
-    return `${timezone} ${time}`;
+const IndexLog = (msg) => {
+    let time = dayjstz().format("LT");
+
+    return `[${timezone} ${time}] ${msg}`;
 }
 
 const server = http.createServer().listen(process.env.PORT);
@@ -17,21 +18,15 @@ server.on('request', (req, res) => {
     res.write("SerBot enabled.");
     res.end();
 
-    const time = GetTime();
-
-    console.log(`[${time}] Pinged SerBot`);
+    IndexLog("Pinged SerBot");
 });
 
 server.on('close', () => {
-    const time = GetTime();
-
-    console.log(`[${time}] SerBot closing`);
+    IndexLog("SerBot closing");
 });
 
 server.on('error', (err) => {
-    const time = GetTime();
-
-    console.log(`[${time}] SerBot closing`);
+    IndexLog(`SerBot closing with error: ${err}`);
 });
 
 client.login(config.token);

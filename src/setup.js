@@ -8,8 +8,8 @@ import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
-import moment from 'moment';
 import { countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
+import dayjs from 'dayjs';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -130,7 +130,7 @@ distube.on('playSong', (queue, song) => {
         }
 
         // Workaround for song not playing when hosted
-        let songPlayedFor = moment().diff(moment(guildCurSong.startTime), 'seconds');
+        let songPlayedFor = dayjs().diff(dayjs(guildCurSong.startTime), 'seconds');
 
         if (guildCurSong.duration > songPlayedFor && guildCurSong.isWorkaround !== true && guildCurSong.isSkip !== true)
         {
@@ -226,9 +226,9 @@ client.on('ready', async() => {
 
     schedule.scheduleJob(reminderRule, async () => {
         const allReminders = await reminderModel.find();
-        const todayDates = allReminders.filter(x => x.RemindDate !== undefined).filter(x => moment(x.RemindDate).isSame(new moment(), 'day'));
+        const todayDates = allReminders.filter(x => x.RemindDate !== undefined).filter(x => dayjs(x.RemindDate).isSame(new dayjs(), 'day'));
         const todayDaily = allReminders.filter(x => Number(x.Frequency) === Utils.Reminder_Frequency_Daily);
-        const todayWeekly = allReminders.filter(x => x.LastMessageDate !== undefined).filter(x => moment().diff(x.LastMessageDate, 'd') % 7 === 0 && Number(x.Frequency) === Utils.Reminder_Frequency_Weekly);
+        const todayWeekly = allReminders.filter(x => x.LastMessageDate !== undefined).filter(x => dayjs().diff(x.LastMessageDate, 'd') % 7 === 0 && Number(x.Frequency) === Utils.Reminder_Frequency_Weekly);
 
         const userIdSet = new Set([].concat(todayDates.map(x => x.UserId)).concat(todayDaily.map(x => x.UserId)).concat(todayWeekly.map(x => x.UserId)));
         const userIds = Array.from(userIdSet);
@@ -238,7 +238,7 @@ client.on('ready', async() => {
             const user = users.find(u => u.id === reminder.UserId);
             try
             {
-                await user.send(`[${moment(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
+                await user.send(`[${dayjs(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
                 Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
             }
             catch (e)
@@ -274,7 +274,7 @@ client.on('ready', async() => {
             }
 
             reminder.set({
-                LastMessageDate: moment().format("MM/DD/YYYY")
+                LastMessageDate: dayjs().format("MM/DD/YYYY")
             });
             reminder.save();
         });
@@ -304,7 +304,7 @@ client.on('ready', async() => {
             }
             
             reminder.set({
-                LastMessageDate: moment().format("MM/DD/YYYY")
+                LastMessageDate: dayjs().format("MM/DD/YYYY")
             });
             reminder.save();
         });
