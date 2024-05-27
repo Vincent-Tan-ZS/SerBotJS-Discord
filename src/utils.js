@@ -23,9 +23,6 @@ export default class Utils {
     static FeatureUpdate_Bot = "Bot";
     static FeatureUpdate_Site = "Site";
 
-    // TODO: Delete when '1 minute voiceconnection' issue fixed
-    // static VoiceConnection = undefined;
-
     static getRatio(numerator, denominator, percentage) {
         let num = parseFloat(numerator);
         let den = parseFloat(denominator);
