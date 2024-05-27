@@ -5,39 +5,38 @@ import Utils from './utils.js';
 const GenCommand = (title, cmd, desc, usg, act) => {
     return { Title: title, Command: cmd, Description: desc, Usage: usg, Action: act }; 
 }
+//#region Functions
+const musicActionResolve = (message, messageCommands) => {
+    // Check if user is in a voice channel
+    let userChannel = message.member.voice.channel;
+    if (userChannel == null) return;
+
+    let command = messageCommands[0];
+
+    switch (command) {
+        case "join":
+        case "leave":
+            EventManager.joinOrLeaveVC(message, command, userChannel);
+            break;
+        default:
+            EventManager.musicAction(message, command, userChannel);
+            break;
+    }
+}
+
+const disconnectActionResolve = (message) => {
+    if (Utils.IsOwner(message.author) !== true) return;
+
+    const msg = `${message.member.username} called for disconnect: Logging out...`;
+
+    Utils.Log(Utils.LogType_INFO, msg);
+
+    message.channel.send(msg)
+        .then(message => client.destroy())
+        .catch(console.error);
+}
 
 export default class Commands {
-    //#region Functions
-    musicActionResolve(message, messageCommands) {
-        // Check if user is in a voice channel
-        let userChannel = message.member.voice.channel;
-        if (userChannel == null) return;
-
-        let command = messageCommands[0];
-
-        switch (command) {
-            case "join":
-            case "leave":
-                EventManager.joinOrLeaveVC(message, command, userChannel);
-                break;
-            default:
-                EventManager.musicAction(message, command, userChannel);
-                break;
-        }
-    }
-
-    disconnectActionResolve(message) {
-        if (Utils.IsOwner(message.author) !== true) return;
-
-        const msg = `${message.member.username} called for disconnect: Logging out...`;
-
-        Utils.Log(Utils.LogType_INFO, msg);
-
-        message.channel.send(msg)
-            .then(message => client.destroy())
-            .catch(console.error);
-    }
-
     //MessageCommands will contain commands after "ser".
     //Example (square brackets == messageCommands): ser [play spiderman pizza theme]
     static resolveCommand(message, messageCommands) {
@@ -60,16 +59,16 @@ export default class Commands {
         const greetingDictionary = GenCommand("Greeting", ["hi", "hey", "hello", "sup"], "Receive a greeting from SerBot", [""], (msg) => { EventManager.sendGreeting(msg); });
         const musicPlayDictionary = GenCommand("Play Song", ["p", "play"], "SerBot will play your requested song", [""], (msg, cmds) => { EventManager.playMusic(msg, cmds); });
         const musicRemoveDictionary = GenCommand("Remove Song From Queue", ["rm", "remove"], "Removes selected song from queue", [""], (msg, cmds) => { EventManager.removeMusic(msg, cmds); });
-        const musicJoinDictionary = GenCommand("Join Voice Channel", ["join"], "Joins your voice channel", [""], this.musicActionResolve)
-        const musicPauseDictionary = GenCommand("Pause Song", ["pause"], "Pause the music player", [""], this.musicActionResolve);
-        const musicResumeDictionary = GenCommand("Resume Song", ["resume"], "Resume the music player", [""], this.musicActionResolve);
-        const musicSkipDictionary = GenCommand("Skip Current Song", ["skip"], "Skip the current song", [""], this.musicActionResolve);
-        const musicStopDictionary = GenCommand("Stop Current Song", ["stop"], "Stops the current song", [""], this.musicActionResolve);
-        const musicLeaveDictionary = GenCommand("Leave Voice Channel", ["leave"], "Leaves the current voice channel", [""], this.musicActionResolve);
+        const musicJoinDictionary = GenCommand("Join Voice Channel", ["join"], "Joins your voice channel", [""], musicActionResolve)
+        const musicPauseDictionary = GenCommand("Pause Song", ["pause"], "Pause the music player", [""], musicActionResolve);
+        const musicResumeDictionary = GenCommand("Resume Song", ["resume"], "Resume the music player", [""], musicActionResolve);
+        const musicSkipDictionary = GenCommand("Skip Current Song", ["skip"], "Skip the current song", [""], musicActionResolve);
+        const musicStopDictionary = GenCommand("Stop Current Song", ["stop"], "Stops the current song", [""], musicActionResolve);
+        const musicLeaveDictionary = GenCommand("Leave Voice Channel", ["leave"], "Leaves the current voice channel", [""], musicActionResolve);
         const musicQueueDictionary = GenCommand("Display Song Queue", ["q", "queue"], "Display the song queue", [""], (msg, cmds) => { EventManager.sendGuildQueue(msg, cmds); });
-        const musicClearDictionary = GenCommand("Clear Queue", ["clr", "clear"], "Clears current queue", [""], this.musicActionResolve);
-        const musicLoopDictionary = GenCommand("Loop Current Song", ["l", "loop"], "Loops/Unloops the current track", [""], this.musicActionResolve);
-        const disconnectDictionary = GenCommand("Disconnect", ["dc", "disconnect", "logout"], "SerBot logs out (Owner Only)", [""], this.disconnectActionResolve);
+        const musicClearDictionary = GenCommand("Clear Queue", ["clr", "clear"], "Clears current queue", [""], musicActionResolve);
+        const musicLoopDictionary = GenCommand("Loop Current Song", ["l", "loop"], "Loops/Unloops the current track", [""], musicActionResolve);
+        const disconnectDictionary = GenCommand("Disconnect", ["dc", "disconnect", "logout"], "SerBot logs out (Owner Only)", [""], disconnectActionResolve);
         const rhombusDictionary = GenCommand("Rhombus", ["rhombus"], "Creates a rhombus of size n", ["{size}"], (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
         const wikiHowDictionary = GenCommand("Wikihow Article", ["wikihow"], "Searches for a WikiHow page", ["{search term}"], (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
         const todayDictionary = GenCommand("Today's Date", ["today"], "I'll tell you what day it is today", [""], (msg) => { EventManager.sendDay(msg); });

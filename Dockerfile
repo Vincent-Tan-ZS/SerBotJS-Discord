@@ -34,4 +34,6 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV PATH /root/.volta/bin:$PATH
 
+RUN apt-get update; apt install -y ffmpeg 
+
 CMD [ "npm", "run", "start" ]
