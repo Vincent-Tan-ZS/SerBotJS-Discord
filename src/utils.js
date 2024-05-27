@@ -9,15 +9,6 @@ export default class Utils {
     constructor() {}
 
     static PreviousSong = [];
-
-    // static CurSongInfo = {
-    //     name: "",
-    //     duration: 0,
-    //     startTime: undefined,
-    //     isWorkaround: false,
-    //     isSkip: false
-    // };
-    static CurSongInfo = [];
     
     static OriginalCountdownList = [];
 
@@ -60,35 +51,9 @@ export default class Utils {
         schedule.scheduleJob(name, time, func);
     }
 
-    static GetGuildCurSong(guildId) {
-        const index = Utils.CurSongInfo.findIndex(s => s.guildId === guildId);
-        return index < 0 ? null : Utils.CurSongInfo[index];
-    }
-
     static GetGuildPrevSong(guildId) {
         const index = Utils.PreviousSong.findIndex(s => s.guildId === guildId);
         return index < 0 ? null : Utils.PreviousSong[index];
-    }
-
-    static ResetGuildCurSong(guildId) {
-        const index = Utils.CurSongInfo.findIndex(s => s.guildId === guildId);
-
-        const newGuildCurSong = {
-            guildId: guildId,
-            name: "",
-            duration: 0,
-            startTime: undefined,
-            isWorkaround: false
-        };
-
-        if (index < 0)
-        {
-            Utils.CurSongInfo.push(newGuildCurSong);
-        }
-        else
-        {
-            Utils.CurSongInfo[index] = newGuildCurSong;
-        }
     }
 
     static createEmbed({

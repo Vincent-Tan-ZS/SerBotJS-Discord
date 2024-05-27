@@ -70,7 +70,6 @@ export default class Commands {
         const musicLoopDictionary = GenCommand("Loop Current Song", ["l", "loop"], "Loops/Unloops the current track", [""], musicActionResolve);
         const disconnectDictionary = GenCommand("Disconnect", ["dc", "disconnect", "logout"], "SerBot logs out (Owner Only)", [""], disconnectActionResolve);
         const rhombusDictionary = GenCommand("Rhombus", ["rhombus"], "Creates a rhombus of size n", ["{size}"], (msg, cmds) => { EventManager.createRhombus(msg, cmds); });
-        const wikiHowDictionary = GenCommand("Wikihow Article", ["wikihow"], "Searches for a WikiHow page", ["{search term}"], (msg, cmds) => { EventManager.searchWikiHow(msg, cmds); });
         const todayDictionary = GenCommand("Today's Date", ["today"], "I'll tell you what day it is today", [""], (msg) => { EventManager.sendDay(msg); });
         const tictactoeDictionary = GenCommand("Tic-Tac-Toe", ["tictactoe"], "Play Tic-Tac-Toe with someone in the server!", ["@mention"], (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
         const copypastaDictionary = GenCommand("Game Copypasta", ["copypasta"], "Copypasta: mention a user and a game", ["@mention {game}"], (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); });
@@ -95,7 +94,7 @@ export default class Commands {
         return [greetingDictionary, musicJoinDictionary, musicPlayDictionary, musicPauseDictionary,
             musicResumeDictionary, musicSkipDictionary, musicStopDictionary, musicLeaveDictionary, musicQueueDictionary,
             musicRemoveDictionary, musicClearDictionary, musicLoopDictionary,
-            disconnectDictionary, rhombusDictionary, wikiHowDictionary, helpDictionary,
+            disconnectDictionary, rhombusDictionary, helpDictionary,
             todayDictionary, tictactoeDictionary, wisdomDictionary, xxxDictionary,
             trackDictionary, replayDictionary, reminderDictionary, authDictionary, pListDictionary, reportDictionary, featureUpdateDictionary,
             copypastaDictionary, _8ballDictionary, coinFlipDictionary, wheelDictionary, treeDictionary, psychoDictionary,

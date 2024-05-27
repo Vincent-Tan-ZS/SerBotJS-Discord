@@ -1,6 +1,5 @@
 import path from 'path';
 import sharp from 'sharp';
-import axios from 'axios';
 import * as youtubesearchapi from 'youtube-search-api';
 import dayjstz from './dayjstz.js';
 import isBetween from 'dayjs/plugin/isBetween.js';
@@ -9,7 +8,6 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
 import { distube as Distube } from './setup.js';
 import config from './config.js';
 import Utils from './utils.js';
-import { wikihow } from './wikihow.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { RepeatMode } from 'distube';
@@ -176,7 +174,6 @@ export default class EventManager {
                 } else {
                     Distube.stop(queue);
                 }
-                Utils.GetGuildCurSong(queue.voiceChannel.guildId).isSkip = true;
                 message.react('👍');
                 break;
             case "stop":
@@ -371,35 +368,6 @@ export default class EventManager {
         });
     }
 
-    static searchWikiHow(message, commands) {
-        if (Array.isArray(commands)) {
-            commands.shift();
-        }
-
-        if (commands.length <= 0 || typeof(commands) === 'string') {
-            Utils.sendEmbed({
-                message: message,
-                isError: true,
-                title: "WikiHow",
-                description: "Empty query"
-            });
-            return;
-        }
-
-        wikihow(commands.join(" ")).then((data) => {
-            if (data == null) {
-                Utils.sendEmbed({
-                    message: message,
-                    isError: true,
-                    title: "WikiHow",
-                    description: "You did it, this query does not exist in WikiHow, good job :)"
-                });
-            } else {
-                message.channel.send(data.url);
-            }
-        });
-    }
-
     static reply8Ball(message) {
         const rng = Utils.MaxRandNum(config.eightBallReplies.length);
         message.channel.send(config.eightBallReplies[rng]);
@@ -500,7 +468,9 @@ export default class EventManager {
             // Monologue
             else {
                 const url = message.member.avatarURL() ?? message.author.avatarURL();
-                let avatarImg = await sharp((await axios({ url: url, responseType: "arraybuffer" })).data);
+                const avatarFetch = await fetch(url);
+                const arrBuf = await avatarFetch.arrayBuffer();
+                let avatarImg = await sharp(arrBuf);
                 msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
 
                 sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();

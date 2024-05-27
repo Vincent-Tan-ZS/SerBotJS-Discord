@@ -2,8 +2,7 @@ FROM debian:bullseye as builder
 
 ARG NODE_VERSION=18.17.0
 
-RUN apt-get update; apt install -y curl; apt install -y ffmpeg;
-RUN whereis ffmpeg
+RUN apt-get update; apt install -y curl
 RUN curl https://get.volta.sh | bash
 ENV VOLTA_HOME /root/.volta
 ENV PATH /root/.volta/bin:$PATH
@@ -35,6 +34,6 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV PATH /root/.volta/bin:$PATH
 
-RUN apt-get update; apt install -y ffmpeg 
+RUN apt-get update; apt install -y ffmpeg
 
 CMD [ "npm", "run", "start" ]
