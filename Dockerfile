@@ -21,7 +21,7 @@ ENV NODE_ENV production
 
 COPY . .
 
-RUN rm -rf node_modules package-lock.json
+RUN rm -rf node_modules txt .dockerignore .gitignore Dockerfile README.md replace.js replace.txt package-lock.json
 RUN npm install
 FROM debian:bullseye
 

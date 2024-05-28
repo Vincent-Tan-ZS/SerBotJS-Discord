@@ -1,9 +1,11 @@
 import { ModalBuilder, TextInputBuilder } from '@discordjs/builders';
 import { ActionRowBuilder } from 'discord.js';
 
-const modals = {
-    countdownModal: new ModalBuilder()
-    .setCustomId('create-countdown-modal')
+const modalIds = ["create-countdown-modal", "update-countdown-modal"];
+
+const GenerateCountdownModal = () => {
+    return new ModalBuilder()
+    .setCustomId(modalIds[0])
     .setTitle("Countdown Creator")
     .addComponents(
         new ActionRowBuilder().addComponents(
@@ -44,9 +46,12 @@ const modals = {
             .setStyle('Short')
             .setRequired(false)
         )
-    ),
-    updateCountdownModal: new ModalBuilder()
-    .setCustomId('update-countdown-modal')
+    );
+}
+
+const GenerateUpdateCountdownModal = () => {
+    return new ModalBuilder()
+    .setCustomId(modalIds[1])
     .setTitle("Countdown Updater")
     .addComponents(
         new ActionRowBuilder().addComponents(
@@ -76,9 +81,7 @@ const modals = {
             .setStyle('Short')
             .setRequired(false)
         )
-    ),
+    );
 }
 
-const modalIds = Object.values(modals).map(x => x.data.custom_id);
-
-export { modals, modalIds };
+export { GenerateCountdownModal, GenerateUpdateCountdownModal, modalIds };

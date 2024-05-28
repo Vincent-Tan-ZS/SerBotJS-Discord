@@ -17,23 +17,6 @@ import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featur
 dayjstz.extend(isBetween);
 dayjstz.extend(isSameOrBefore);
 
-const seasonDates = {
-    Spring: ["01/09/1990", "30/11/1990"],
-    Summer: ["01/12/1990", "28/02/1990"],
-    Autumn: ["01/03/1990", "31/05/1990"],
-    Winter: ["01/06/1990", "31/08/1990"]
-}
-
-const seasonLeaves = {
-    Spring: '🟪',
-    Summer: '🟩',
-    Autumn: '🟧',
-    Winter: '⬜',
-    Christmas: '🟩'
-}
-
-const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-
 export default class EventManager {
     constructor() {}
 
@@ -400,6 +383,13 @@ export default class EventManager {
         let season = "Christmas";
 
         if (!isChristmas) {
+            const seasonDates = {
+                Spring: ["01/09/1990", "30/11/1990"],
+                Summer: ["01/12/1990", "28/02/1990"],
+                Autumn: ["01/03/1990", "31/05/1990"],
+                Winter: ["01/06/1990", "31/08/1990"]
+            }
+
             season = Object.keys(seasonDates).find(key => {
                 seasonStart = dayjstz(seasonDates[key][0], "DD/MM/YYYY").year(nowMoment.year());
                 seasonEnd = dayjstz(seasonDates[key][1], "DD/MM/YYYY").year(nowMoment.year());
@@ -416,7 +406,24 @@ export default class EventManager {
         let now = nowMoment.format("DD MMMM YYYY");
         let label = `${season} ${now} Tree`;
 
-        let leaf = seasonLeaves[season];
+        let leaf = '❎';
+        switch (season)
+        {
+            case "Spring":
+                leaf = '🟪';
+                break;
+            case "Summer":
+            case "Christmas":
+                leaf = '🟩';
+                break;
+            case "Autumn":
+                leaf = '🟧';
+                break;
+            case "Winter":
+                leaf = '⬜';
+                break;
+        }
+        
         let specialLeaf = isChristmas ? '🟥' : leaf;
         let specialLeaf2 = isChristmas ? '🟦' : leaf;
         let trunk = '🟫';
@@ -929,7 +936,7 @@ export default class EventManager {
                 if (commands[0].startsWith("-"))
                 {
                     const supposedDay = commands[0].substring(1).toLowerCase();
-                    const listOfDays = days.filter(d => d.startsWith(supposedDay));
+                    const listOfDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].filter(d => d.startsWith(supposedDay));
 
                     if (listOfDays.length <= 0 || listOfDays.length > 1)
                     {

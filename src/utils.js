@@ -2,7 +2,7 @@ import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import { loggingModel } from './mongo/mongo-schemas.js';
-import {modalIds, modals} from './modals.js';
+import {modalIds, GenerateCountdownModal, GenerateUpdateCountdownModal} from './modals.js';
 import dayjs from 'dayjs';
 
 export default class Utils {
@@ -273,10 +273,10 @@ export default class Utils {
         switch (interaction.customId)
         {
             case "create-countdown":
-                interaction.showModal(modals.countdownModal);
+                interaction.showModal(GenerateCountdownModal());
                 break;
             case "update-countdown":
-                let updateCDModal = modals.updateCountdownModal;
+                let updateCDModal = GenerateUpdateCountdownModal();
                 const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
 
                 // 45 chars max

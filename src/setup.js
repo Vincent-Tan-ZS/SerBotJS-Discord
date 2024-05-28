@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits, Partials } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits, Options, Partials } from 'discord.js';
 import { DisTube, RepeatMode } from 'distube';
 import { SpotifyPlugin } from '@distube/spotify';
 import { YtDlpPlugin } from '@distube/yt-dlp'
@@ -21,7 +21,15 @@ export const client = new Client({
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+    makeCache: Options.cacheWithLimits({
+        ...Options.DefaultMakeCacheSettings,
+        MessageManager: 50,
+        GuildMemberManager: {
+            maxSize: 10,
+            keepOverLimit: member => member.id === member.client.user.id
+        }
+    })
 });
 
 export const distube = new DisTube(client, {
