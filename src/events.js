@@ -1288,4 +1288,14 @@ export default class EventManager {
             Distube.resume(queue);
         }
     }
+
+    static capOrNoCap(message) {
+        const { author } = message;
+
+        const msg = author.id == process.env.ALWAYS_CAP_ID
+            ? "🧢 Cap"
+            : Utils.RandNum() >= 0.5 ? "🧢 Cap" : "🫵 No Cap";
+
+        message.channel.send(msg);
+    }
 }

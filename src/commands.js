@@ -88,6 +88,7 @@ export default class Commands {
         const pListDictionary = GenCommand("Play user song list", ["plist", "playlist"], "Plays a user's playlist, either in its entirety or any song", ["", "random", "{id}"], (msg, cmds) => { EventManager.playUserSongList(msg, cmds) });
         const reportDictionary = GenCommand("Report Bot Issues", ["report"], "Report any issues with SerBot to the owner", ["{issue}"], (msg, cmds) => { EventManager.reportIssue(msg, cmds) });
         const featureUpdateDictionary = GenCommand("Feature Update", ["feature"], "Add a feature to the Feature Update database (Owner Only)", ["{type} {message}"], (msg, cmds) => { EventManager.addFeatureUpdate(msg, cmds) });
+        const capDictionary = GenCommand("Cap or no cap", ["cap"], "Tells you cap or no cap", [""], (msg) => { EventManager.capOrNoCap(msg) });
     
         const helpDictionary = GenCommand("Help List", ["help"], "Show the list of commands", [""], (msg) => { EventManager.sendCommandList(msg); });
 
@@ -98,7 +99,7 @@ export default class Commands {
             todayDictionary, tictactoeDictionary, wisdomDictionary, xxxDictionary,
             trackDictionary, replayDictionary, reminderDictionary, authDictionary, pListDictionary, reportDictionary, featureUpdateDictionary,
             copypastaDictionary, _8ballDictionary, coinFlipDictionary, wheelDictionary, treeDictionary, psychoDictionary,
-            countdownDictionary, pingDictionary];
+            countdownDictionary, pingDictionary, capDictionary];
     }
     //#endregion Functions
 
