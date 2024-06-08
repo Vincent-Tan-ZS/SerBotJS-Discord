@@ -4,6 +4,9 @@ import schedule from 'node-schedule';
 import { loggingModel } from './mongo/mongo-schemas.js';
 import {modalIds, GenerateCountdownModal, GenerateUpdateCountdownModal} from './modals.js';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+
+dayjs.extend(customParseFormat);
 
 export default class Utils {
     constructor() {}
