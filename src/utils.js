@@ -144,7 +144,6 @@ export default class Utils {
         }
 
         let messageOption = {
-            content: " ",
             embeds: [embed]
         };
 
@@ -363,5 +362,15 @@ export default class Utils {
             default:
                 break;
         }
+    }
+
+    static FixInProgressCheck = (message) => {
+        if (this.IsOwner(message.author) !== true)
+        {
+            message.channel.send(`Sorry! This feature is currently unavailable and is being fixed!`);
+            return false;
+        }
+
+        return true;
     }
 }

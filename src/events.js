@@ -1,6 +1,5 @@
 import path from 'path';
 import sharp from 'sharp';
-import * as youtubesearchapi from 'youtube-search-api';
 import dayjstz from './dayjstz.js';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
@@ -22,7 +21,8 @@ export default class EventManager {
 
     // Command List Action
     static sendCommandList(message) {
-        message.channel.send(`${process.env.SITE_LINK}/commands`);
+        const commandUrl = new URL("commands", process.env.SITE_LINK);
+        message.channel.send(commandUrl.href);
     }
 
     // Ping
@@ -50,16 +50,30 @@ export default class EventManager {
     }
 
     // Music Actions
-    static playMusic(message, commands) {
+    static async playMusic(message, commands) {
         if (message.member.voice.channel == null) return;
 
         commands.shift();
         let songTitle = commands.join(" ");
 
-        // Check if YT link is part of a playlist, only play current video if so
-        if (songTitle.includes("&list="))
+        // // Check if YT link is part of a playlist, only play current video if so
+        // if (songTitle.includes("&list="))
+        // {
+        //     songTitle = songTitle.split("&list=")[0];
+        // }
+
+        // Check if Youtube link, if so, get title
+        if (songTitle.startsWith('https://www.youtube.com') === true)
         {
-            songTitle = songTitle.split("&list=")[0];
+            const url = new URL(songTitle);
+            const videoId = url.searchParams.get("v");
+
+            if (videoId?.length > 0) 
+            {
+                const res = await fetch(`https://noembed.com/embed?dataType=json&url=https://www.youtube.com/watch?v=${videoId}`);
+                const json = await res.json();
+                songTitle = json.title;
+            }
         }
 
         this.queueSong(message, songTitle);
@@ -1092,24 +1106,33 @@ export default class EventManager {
                 }
                 else
                 {
-                    strSongs.push({
+                    songList.push({
                         index: i,
                         song: cur
                     });
+                    
+                    // strSongs.push({
+                    //     index: i,
+                    //     song: cur
+                    // });
                 }
             }
 
             if (strSongs.length > 0)
             {
-                let strSongPromises = strSongs.map((s) => youtubesearchapi.GetListByKeyword(s.song, false, 1));
-                let foundSongs = await Promise.all(strSongPromises);
+                // const strSongPromises = strSongs.map((s) => Utils.FindClosestSong(s));
+                // const foundSongs = await Promise.all(strSongPromises);
 
-                foundSongs.forEach((s, i) => {
-                    if (s.items.length > 0)
-                    {
-                        songList.splice(strSongs[i].index, 0, `https://www.youtube.com/watch?v=${s.items[0].id}`);
-                    }
-                });
+                // strSongs.forEach((s, i) => {
+                //     songList.push(s);
+                // });
+
+                // foundSongs.forEach((s, i) => {
+                //     if (s.items.length > 0)
+                //     {
+                //         songList.splice(strSongs[i].index, 0, `https://www.youtube.com/watch?v=${s.items[0].id}`);
+                //     }
+                // });
             }
 
             if (songList.length <= 0)
@@ -1253,6 +1276,7 @@ export default class EventManager {
                 });
             }
         }).catch((e) => {
+            message.channel.send(`Failed to queue ${songToPlay} | ${e}`);
             Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
         });
     }

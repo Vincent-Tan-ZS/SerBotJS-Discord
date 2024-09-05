@@ -1,7 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits, Options, Partials } from 'discord.js';
-import { DisTube, RepeatMode } from 'distube';
-import { SpotifyPlugin } from '@distube/spotify';
-import { YtDlpPlugin } from '@distube/yt-dlp'
+import { DisTube, Events, RepeatMode } from 'distube';
 import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
@@ -10,6 +8,9 @@ import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import { countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
 import dayjs from 'dayjs';
+import { SpotifyPlugin } from '@distube/spotify';
+import { SoundCloudPlugin } from '@distube/soundcloud';
+import { DeezerPlugin } from '@distube/deezer';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -33,9 +34,9 @@ export const client = new Client({
 });
 
 export const distube = new DisTube(client, {
-    leaveOnStop: false,
-    youtubeCookie: config.distubeCookie,
-    plugins: [new SpotifyPlugin(), new YtDlpPlugin()]
+    // youtubeCookie: config.distubeCookie,
+    // plugins: [new SpotifyPlugin(), new YouTubePlugin({ cookies: JSON.parse(config.distubeCookie) })]
+    plugins: [new SpotifyPlugin(), new DeezerPlugin(), new SoundCloudPlugin({ clientId: process.env.SOUNDCLOUD_CLIENTID, oauthToken: process.env.SOUNDCLOUD_TOKEN })] //https://github.com/Moebits/soundcloud.ts#getting-started
 });
 
 const ReactionRoleMap = {
@@ -48,8 +49,10 @@ const ReactionRoleMap = {
 }
 
 //#region Distube EventListener
-distube.on('playSong', (queue, song) => {
+distube.on(Events.ADD_SONG, (queue, song) => {
         let logMessage = "";
+
+        Utils.cancelTimeout(`leaveVC-${queue.voiceChannel.guildId}`);
 
         if (queue.repeatMode === RepeatMode.DISABLED)
         {
@@ -84,22 +87,25 @@ distube.on('playSong', (queue, song) => {
 
         Utils.Log(Utils.LogType_INFO, logMessage, "DistubeJS");
     })
-    .on('initQueue', queue => {
+    .on(Events.INIT_QUEUE, queue => {
         queue.autoplay = false;
         queue.volume = 100;
     })
-    .on('searchNoResult', (message, query) => {
+    .on(Events.NO_RELATED, (message, query) => {
         message.channel.send(`[Distube] ${query} not found.`);
         Utils.Log(Utils.LogType_INFO, `${query} not found`, "DistubeJS");
     })
-    .on('error', (channel, e) => {
-        channel.send(`Distube Error: ${e}`);
+    .on(Events.ERROR, (e, queue, song) => {
+        queue.textChannel.send(`Distube Error: ${e}`);
         Utils.Log(Utils.LogType_ERROR, e.message, "DistubeJS");
     })
-    .on('addSong', (queue, song) => {
-        Utils.cancelTimeout(`leaveVC-${queue.voiceChannel.guildId}`);
-    })
-    .on('finish', (queue) => {
+    // .on(Events.DEBUG, (debug) => {
+    //     Utils.Log(Utils.LogType_DEBUG, debug, "DistubeJS");
+    // })
+    //.on(Events.FFMPEG_DEBUG, (debug) => {
+        //Utils.Log(Utils.LogType_DEBUG, debug, "DistubeJS");
+    //})
+    .on(Events.FINISH, (queue) => {
         Utils.timeout(`leaveVC-${queue.voiceChannel.guildId}`, 5, () => {
             let newQueue = distube.getQueue(queue);
 
