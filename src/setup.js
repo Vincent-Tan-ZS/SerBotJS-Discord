@@ -303,6 +303,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         else {
             existingMisclick.set({
                 AvatarUrl: user.avatarURL(),
+                Username: user.username,
                 Count: existingMisclick.Count + 1
             });
             existingMisclick.save();
