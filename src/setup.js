@@ -6,7 +6,7 @@ import config from './config.js';
 import EventManager from './events.js';
 import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
-import { countdownModel, commandModel, reminderModel } from './mongo/mongo-schemas.js';
+import { countdownModel, commandModel, reminderModel, misclickCountModel } from './mongo/mongo-schemas.js';
 import dayjs from 'dayjs';
 import { SpotifyPlugin } from '@distube/spotify';
 import { SoundCloudPlugin } from '@distube/soundcloud';
@@ -272,20 +272,39 @@ client.on('ready', async() => {
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});
 })
 
-client.on('voiceStateUpdate', (oldState, newState) => {
+client.on('voiceStateUpdate', async (oldState, newState) => {
     let user = oldState.member.user;
-    if (user.bot !== true && user.username !== "SerBot") return;
 
-    let voice = distube.voices.get(newState.guild);
-    if (voice == null) {
-        Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
-        Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.name}`);
-        return;
-    };
+    if (user.bot === true && user.username === "SerBot") {
+        let voice = distube.voices.get(newState.guild);
+        if (voice == null) {
+            Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
+            Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.name}`);
+            return;
+        };
+    
+        if (!voice.selfDeaf) voice.setSelfDeaf(true);
+    
+        Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
+    }
+    else if (newState.channelId == process.env.MISCLICK_VC_ID) {
+        const existingMisclick = await misclickCountModel.findOne({ UserId: user.id });
 
-    if (!voice.selfDeaf) voice.setSelfDeaf(true);
+        if (existingMisclick === null) {
+            const newMisclick = new misclickCountModel({
+                UserId: user.id,
+                Count: 1
+            });
 
-    Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
+            newMisclick.save();
+        } 
+        else {
+            existingMisclick.set({
+                Count: existingMisclick.Count + 1
+            });
+            existingMisclick.save();
+        }
+    }
 })
 
 client.on('error', (e) => {

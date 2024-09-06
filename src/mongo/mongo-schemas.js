@@ -149,4 +149,17 @@ const featureUpdateSchema = mongoose.Schema({
 });
 const featureUpdateModel = mongoose.model('FeatureUpdate', featureUpdateSchema, 'FeatureUpdate');
 
-export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel };
+// Misclick Count
+const misclickCountSchema = mongoose.Schema({
+    UserId: {
+        type: String,
+        required: true
+    },
+    Count: {
+        type: Number,
+        required: true
+    }
+});
+const misclickCountModel = mongoose.model('MisclickCount', misclickCountSchema, 'MisclickCount');
+
+export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, misclickCountModel };
