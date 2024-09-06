@@ -155,6 +155,14 @@ const misclickCountSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    Username: {
+        type: String,
+        required: true
+    },
+    AvatarUrl: {
+        type: String,
+        required: true
+    },
     Count: {
         type: Number,
         required: true

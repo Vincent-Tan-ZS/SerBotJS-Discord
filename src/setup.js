@@ -293,6 +293,8 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         if (existingMisclick === null) {
             const newMisclick = new misclickCountModel({
                 UserId: user.id,
+                Username: user.username,
+                AvatarUrl: user.avatarURL(),
                 Count: 1
             });
 
@@ -300,6 +302,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         } 
         else {
             existingMisclick.set({
+                AvatarUrl: user.avatarURL(),
                 Count: existingMisclick.Count + 1
             });
             existingMisclick.save();
