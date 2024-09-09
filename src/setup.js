@@ -106,13 +106,7 @@ distube.on(Events.ADD_SONG, (queue, song) => {
         //Utils.Log(Utils.LogType_DEBUG, debug, "DistubeJS");
     //})
     .on(Events.FINISH, (queue) => {
-        Utils.timeout(`leaveVC-${queue.voiceChannel.guildId}`, 5, () => {
-            let newQueue = distube.getQueue(queue);
-
-            if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
-                distube.voices.leave(queue);
-            }
-        });
+        Utils.QueueFinishedTimer(queue, distube);
     });
 
 //#endregion Distube EventListener

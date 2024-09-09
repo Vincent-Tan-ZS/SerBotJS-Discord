@@ -373,4 +373,14 @@ export default class Utils {
 
         return true;
     }
+
+    static QueueFinishedTimer = (queue, distube) => {
+        this.timeout(`leaveVC-${queue.voiceChannel.guildId}`, 5, () => {
+            let newQueue = distube.getQueue(queue);
+
+            if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
+                distube.voices.leave(queue);
+            }
+        });
+    }
 }

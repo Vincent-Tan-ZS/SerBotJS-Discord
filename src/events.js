@@ -169,7 +169,9 @@ export default class EventManager {
                 if (queue.songs.length > 1) {
                     Distube.skip(queue);
                 } else {
-                    Distube.stop(queue);
+                    Distube.stop(queue).then(() => {
+                        Utils.QueueFinishedTimer(queue, Distube);
+                    });
                 }
                 message.react('👍');
                 break;
