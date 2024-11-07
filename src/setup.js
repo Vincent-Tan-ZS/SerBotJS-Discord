@@ -9,8 +9,8 @@ import { ConnectDB } from './mongo/mongo-conn.js';
 import { countdownModel, commandModel, reminderModel, misclickCountModel } from './mongo/mongo-schemas.js';
 import dayjs from 'dayjs';
 import { SpotifyPlugin } from '@distube/spotify';
-import { SoundCloudPlugin } from '@distube/soundcloud';
-import { DeezerPlugin } from '@distube/deezer';
+import { YouTubePlugin } from '@distube/youtube';
+import { YtDlpPlugin } from '@distube/yt-dlp';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -35,8 +35,8 @@ export const client = new Client({
 
 export const distube = new DisTube(client, {
     // youtubeCookie: config.distubeCookie,
-    // plugins: [new SpotifyPlugin(), new YouTubePlugin({ cookies: JSON.parse(config.distubeCookie) })]
-    plugins: [new SpotifyPlugin(), new DeezerPlugin(), new SoundCloudPlugin({ clientId: process.env.SOUNDCLOUD_CLIENTID, oauthToken: process.env.SOUNDCLOUD_TOKEN })] //https://github.com/Moebits/soundcloud.ts#getting-started
+    plugins: [new SpotifyPlugin(), new YouTubePlugin({ cookies: JSON.parse(config.distubeCookie) }), new YtDlpPlugin()]
+    // plugins: [new SpotifyPlugin(), new DeezerPlugin(), new SoundCloudPlugin({ clientId: process.env.SOUNDCLOUD_CLIENTID, oauthToken: process.env.SOUNDCLOUD_TOKEN })] //https://github.com/Moebits/soundcloud.ts#getting-started
 });
 
 const ReactionRoleMap = {
