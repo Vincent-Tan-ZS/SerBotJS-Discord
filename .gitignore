@@ -4,3 +4,4 @@ node_modules/
 *.ps1
 replace.js
 replace.txt
+lavalink.yml

@@ -4,13 +4,12 @@ import dayjstz from './dayjstz.js';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
 
-import { distube as Distube } from './setup.js';
+// import { riffy as Riffy } from './setup.js';
 import config from './config.js';
 import Utils from './utils.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
-import { RepeatMode } from 'distube';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } from 'discord.js';
 import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel } from './mongo/mongo-schemas.js';
 
 dayjstz.extend(isBetween);
@@ -51,158 +50,138 @@ export default class EventManager {
 
     // Music Actions
     static async playMusic(message, commands) {
-        if (message.member.voice.channel == null) return;
+        Utils.NoMusicAllowed(message);
+        // if (message.member.voice.channel == null) return;
 
-        commands.shift();
-        let songTitle = commands.join(" ");
+        // commands.shift();
+        // let songTitle = commands.join(" ");
 
-        // // Check if YT link is part of a playlist, only play current video if so
-        // if (songTitle.includes("&list="))
-        // {
-        //     songTitle = songTitle.split("&list=")[0];
-        // }
-
-        // Check if Youtube link, if so, get title
-        if (songTitle.startsWith('https://www.youtube.com') === true)
-        {
-            const url = new URL(songTitle);
-            const videoId = url.searchParams.get("v");
-
-            if (videoId?.length > 0) 
-            {
-                const res = await fetch(`https://noembed.com/embed?dataType=json&url=https://www.youtube.com/watch?v=${videoId}`);
-                const json = await res.json();
-                songTitle = json.title;
-            }
-        }
-
-        this.queueSong(message, songTitle);
+        // this.queueSong(message, songTitle);
     }
 
     static removeMusic(message, commands) {
-        let queueRemoveIndex = parseInt(commands[1]);
-        let queue = Distube.getQueue(message);
-        let isError = this.songRemoveErrorHandler(queue, message, queueRemoveIndex);
+        Utils.NoMusicAllowed(message);
+        // const player = this.GetRiffyPlayer(message);
+        // let queueRemoveIndex = parseInt(commands[1]);
 
-        if (isError) return;
+        // let embedTitle = "Remove Song";
+        // let embedDescription = "";
 
-        --queueRemoveIndex;
-        let song = queue.songs[queueRemoveIndex];
-        queue.songs.splice(queueRemoveIndex, 1);
+        // if (player.queue.length <= 0) 
+        // {
+        //     embedDescription = "Queue is empty";
+        // }
 
-        Utils.sendEmbed({
-            message: message,
-            title: "Song Removed",
-            Description: song.name
-        });
+        // if (queueRemoveIndex > player.queue.length)
+        // {
+        //     embedDescription = `Track ${queueRemoveIndex} doesn't exist in queue`;
+        // }
+
+        // if (embedDescription.length <= 0) {
+        //     --queueRemoveIndex;
+        //     let track = player.queue.remove(queueRemoveIndex);
+            
+        //     embedTitle = "Song Removed";
+        //     embedDescription = track.info.title;
+        // }
+
+        // Utils.sendEmbed({
+        //     message: message,
+        //     title: embedTitle,
+        //     Description: song.name
+        // });
     }
 
     static sendGuildQueue(message, command) {
-        if (command != "q" && command != "queue") return;
+        Utils.NoMusicAllowed(message);
+        // const player = this.GetRiffyPlayer(message);
 
-        let queue = Distube.getQueue(message);
+        // const description = player.queue.length <= 0 
+        //     ? "No tracks in queue!"
+        //     : player.queue.map((track, index) => {
+        //         return `${index + 1}. ${track.info.title}`
+        //     }).join("\n");
 
-        let description = queue == undefined || queue.songs.length == 0 ? "No tracks in queue!" :
-            queue.songs.map((song, index) => {
-                return `${index + 1}. ${song.name}`;
-            }).join("\n");
-
-        Utils.sendEmbed({
-            message: message,
-            title: "Queue",
-            description: description
-        });
+        // Utils.sendEmbed({
+        //     message: message,
+        //     title: "Queue",
+        //     description: description
+        // });
     }
 
-    static joinOrLeaveVC(message, command, userChannel) {
-        let queue = Distube.getQueue(message);
-        let guild = message.channel.guild;
-        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
-        let isSameChannel = voiceConnection != null ?
-            voiceConnection.voiceState.channelId == userChannel.id : false;
+    static joinOrLeaveVC(message, command) {
+        Utils.NoMusicAllowed(message);
+        // const player = this.GetRiffyPlayer(message);
+        // let isSameChannel = player.voiceChannel === message.member.voice.channel.id;
 
-        switch (command) {
-            case "join":
-                if (queue == null && !isSameChannel) {
-                    Distube.voices.join(userChannel);
-                }
-                break;
-            case "leave":
-                if (isSameChannel) {
-                    // If there is a queue
-                    if (queue != null) {
-                        if (queue.playing) {
-                            Distube.stop(queue);
-                        }
+        // if (command === "leave" && isSameChannel)
+        // {
+        //     if (player.queue.length > 0) {
+        //         player.queue.clear();
+        //         player.stop();
+        //     }
 
-                        if (queue.songs.length > 0) {
-                            queue.songs = [];
-                        }
-                    }
-
-                    // Leave VC
-                    Distube.voices.leave(guild);
-                }
-                break;
-        }
+        //     Utils.DisconnectRiffyPlayer(message.guildId);
+        // }
     }
 
     static musicAction(message, command, userChannel) {
-        let queue = Distube.getQueue(message);
-        if (queue == null) return;
+        Utils.NoMusicAllowed(message);
+        // const player = this.GetRiffyPlayer(message);
+        // let isSameChannel = player.voiceChannel === message.member.voice.channel.id;
 
-        let guild = message.channel.guild;
-        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
-        let isSameChannel = voiceConnection != null ?
-            voiceConnection.voiceState.channelId == userChannel.id : false;
+        // if (!isSameChannel) return;
 
-        if (!isSameChannel) return;
+        // switch (command) {
+        //     case "pause":
+        //         player.pause(true);
+        //         break;
+        //     case "resume":
+        //         player.pause(false);
+        //         break;
+        //     case "skip":
+        //         player.stop();
+        //         if (player.queue.length <= 0)
+        //         {
+        //             Utils.QueueFinishedTimer(message.guildId);
+        //         }
+        //         message.react('👍');
+        //         break;
+        //     case "stop":
+        //         player.queue.clear();
+        //         player.stop();
+        //         break;
+        //     case "clear":
+        //         if (player.queue.length > 0)
+        //         {
+        //             player.queue.clear();
+                    
+        //             Utils.sendEmbed({
+        //                 message: message,
+        //                 title: "Queue Cleared",
+        //             });
+        //         }
+        //         break;
+        //     case "loop":
+        //     case "l":
+        //         let repeatMode = "none";
+        //         let description = "Stopped looping current track";
 
-        switch (command) {
-            case "pause":
-                this.toggleQueuePause(true, queue);
-                break;
-            case "resume":
-                this.toggleQueuePause(false, queue);
-                break;
-            case "skip":
-                if (queue.songs.length > 1) {
-                    Distube.skip(queue);
-                } else {
-                    Distube.stop(queue).then(() => {
-                        Utils.QueueFinishedTimer(queue, Distube);
-                    });
-                }
-                message.react('👍');
-                break;
-            case "stop":
-                Distube.stop(queue);
-                break;
-            case "clear":
-                if (queue.songs.length > 0) {
-                    queue.songs = [];
+        //         if (player.loop === "none")
+        //         {
+        //             repeatMode = "track";
+        //             description = "Looping current track";
+        //         }
 
-                    Utils.sendEmbed({
-                        message: message,
-                        title: "Queue Cleared",
-                    });
-                }
-                break;
-            case "loop":
-            case "l":
-                let repeatMode = queue.repeatMode == RepeatMode.DISABLED ? RepeatMode.SONG : RepeatMode.DISABLED;
-                let description = queue.repeatMode == RepeatMode.DISABLED ? "Looping current track" : "Stopped looping current track";
+        //         player.setLoop(repeatMode);
 
-                Distube.setRepeatMode(queue, repeatMode);
-
-                Utils.sendEmbed({
-                    message: message,
-                    title: "Queue Loop",
-                    description: description
-                });
-
-                break;
-        }
+        //         Utils.sendEmbed({
+        //             message: message,
+        //             title: "Queue Loop",
+        //             description: description
+        //         });
+        //         break;
+        // }
     }
 
     static sendDay(message) {
@@ -859,63 +838,47 @@ export default class EventManager {
     } 
 
     static currentTrack(message) {
-        let { channel: { guild } } = message;
-        let voiceConnection = Distube.voices.collection.find(x => x.id == guild.id);
+        Utils.NoMusicAllowed(message);
+        // if (Riffy.players.has(message.guildId) !== true)
+        // {
+        //     message.channel.send("I'm not in a voice channel.");
+        //     return;
+        // }
 
-        if (voiceConnection === undefined) {
-            message.channel.send("I'm not in a voice channel.");
-            return;
-        }
+        // const player = this.GetRiffyPlayer(message);
+        // if (player.queue.length <= 0)
+        // {
+        //     message.channel.send("No song is currently playing.");
+        //     return;
+        // }
 
-        const queue = Distube.getQueue(guild.id);
+        // const position = Utils.MillisecondsToFormattedDuration(player.position);
+        // const duration = Utils.MillisecondsToFormattedDuration(player.current.info.length);
 
-        if (queue === undefined) {
-            message.channel.send("Queue not found.");
-            return;
-        }
-
-        if (queue.songs.length <= 0) {
-            message.channel.send("No song is currently playing.");
-            return;
-        }
-
-        const curSong = queue.songs[0];
-
-        const name = curSong.name;
-        const duration = curSong.formattedDuration;
-        const thumbnail = curSong.thumbnail;
-        const playbackMs = Math.floor(voiceConnection.playbackDuration);
-
-        let minutesNum = Math.floor(playbackMs / 60);
-        let secondsNum = playbackMs - (minutesNum * 60);
-
-        let minutes = minutesNum < 10 ? `0${minutesNum}` : minutesNum.toString();
-        let seconds = secondsNum < 10 ? `0${secondsNum}` : secondsNum.toString();
-        
-        const desc = `${minutes}:${seconds} / ${duration}`;
-
-        Utils.sendEmbed({
-            message: message,
-            title: name,
-            description: desc,
-            thumbnail: thumbnail
-        });
+        // Utils.sendEmbed({
+        //     message: message,
+        //     title: player.current.info.title,
+        //     description: `${position} / ${duration}`,
+        //     thumbnail: player.current.info.thumbnail
+        // });
     }
 
     static replayPrevTrack(message) {
-        let { channel, member } = message;
+        Utils.NoMusicAllowed(message);
+        // let { channel, member } = message;
 
-        const guildPrevSong = Utils.GetGuildPrevSong(channel.guildId);
-        if (guildPrevSong === null)
-        {
-            channel.send("There is no song to replay :(");
-            return;
-        }
+        // const guildPrevSong = Utils.GetGuildPrevSong(channel.guildId);
+        // if (guildPrevSong === null)
+        // {
+        //     channel.send("There is no song to replay :(");
+        //     return;
+        // }
 
-        Distube.play(member.voice.channel, guildPrevSong.song, {
-            member: member,
-            textChannel: channel
-        });
+        // const player = this.GetRiffyPlayer(message);
+        // this.RiffyResolveTrack(guildPrevSong.song, member.author).then((track) => {
+        //     player.queue.add(track);
+        //     if (player.playing !== true) player.play();
+        // })
     }
 
     static async createReminder(message, commands) {
@@ -1070,137 +1033,102 @@ export default class EventManager {
     }
 
     static async playUserSongList(message, commands) {
-        if (message.author === undefined) return;
-        if (message.member.voice.channel == null) return;
-        commands.shift();
+        Utils.NoMusicAllowed(message);
+        // if (message.author === undefined) return;
+        // if (message.member.voice.channel == null) return;
+        // commands.shift();
 
-        const { author } = message;
+        // const { author } = message;
 
-        let invalidEmbed = {
-            message: message,
-            title: "User Song List",
-            description: "You don't have a list yet, please add it in SerBot's Site :)"
-        };
+        // let invalidEmbed = {
+        //     message: message,
+        //     title: "User Song List",
+        //     description: "You don't have a list yet, please add it in SerBot's Site :)"
+        // };
 
-        const userSongList = await userSongListModel.findOne({ UserId: author.id });
+        // const userSongList = await userSongListModel.findOne({ UserId: author.id });
 
-        if (userSongList === null || userSongList === undefined)
-        {
-            Utils.sendEmbed(invalidEmbed);
-            return;
-        }
+        // if (userSongList === null || userSongList === undefined)
+        // {
+        //     Utils.sendEmbed(invalidEmbed);
+        //     return;
+        // }
 
-        // Play song list
-        if (commands.length <= 0)
-        {
-            const oriSongList = userSongList.SongList.map((sl) => sl.song).sort((a, b) => a.id - b.id);
+        // // Play song list
+        // if (commands.length <= 0)
+        // {
+        //     const songList = userSongList.SongList.map((sl) => sl.song).sort((a, b) => a.id - b.id);
 
-            let songList = [];
-            let strSongs = [];
+        //     if (songList.length <= 0)
+        //     {
+        //         invalidEmbed.description = "Playlist is empty :(";
+        //         Utils.sendEmbed(invalidEmbed);
+        //         return;
+        //     }
 
-            for(let i = 0; i < oriSongList.length; ++i)
-            {
-                let cur = oriSongList[i];
+        //     songList.forEach(async (song) => {
+        //         const track = await this.RiffyResolveTrack(song);
+        //     })
 
-                if (Utils.IsValidURL(cur))
-                {
-                    songList.push(cur);
-                }
-                else
-                {
-                    songList.push({
-                        index: i,
-                        song: cur
-                    });
-                    
-                    // strSongs.push({
-                    //     index: i,
-                    //     song: cur
-                    // });
-                }
-            }
+        //     const tracks = await Promise.all(
+        //         songList.map((song) => this.RiffyResolveTrack(song))
+        //     );
 
-            if (strSongs.length > 0)
-            {
-                // const strSongPromises = strSongs.map((s) => Utils.FindClosestSong(s));
-                // const foundSongs = await Promise.all(strSongPromises);
+        //     const player = this.GetRiffyPlayer(message);
 
-                // strSongs.forEach((s, i) => {
-                //     songList.push(s);
-                // });
+        //     tracks.forEach((track) => {
+        //         player.queue.add(track);
+        //         if (player.playing !== true) player.play();
+        //     });
 
-                // foundSongs.forEach((s, i) => {
-                //     if (s.items.length > 0)
-                //     {
-                //         songList.splice(strSongs[i].index, 0, `https://www.youtube.com/watch?v=${s.items[0].id}`);
-                //     }
-                // });
-            }
+        //     let msgAuthor = message.author;
+        //     let description = songList.slice(0, 5).join("\r\n");
 
-            if (songList.length <= 0)
-            {
-                invalidEmbed.description = "Playlist is empty :(";
-                Utils.sendEmbed(invalidEmbed);
-                return;
-            }
+        //     if (songList.length > 5) 
+        //     {
+        //         description += "\r\nAnd more...";
+        //     }
 
-            const playlist = await Distube.createCustomPlaylist(songList, { member: message.member });
+        //     Utils.sendEmbed({
+        //         message: message,
+        //         author: `${msgAuthor.username} Queued`,
+        //         authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+        //         title: 'Their Song List',
+        //         description: description
+        //     });
+        // }
+        // else
+        // {
+        //     let songToPlay = "";
 
-            Distube.play(message.member.voice.channel, playlist, {
-                member: message.member,
-                textChannel: message.channel
-            }).then(() => {
-                let msgAuthor = message.author;
-                let description = oriSongList.slice(0, 5).join("\r\n");
+        //     switch (commands[0])
+        //     {
+        //         case "random":
+        //             const randIndex = Utils.MaxRandNum(userSongList.SongList.length);
+        //             songToPlay = userSongList.SongList[randIndex].song;
+        //             break;
+        //         default:
+        //             if (isNaN(commands[0]))
+        //             {
+        //                 invalidEmbed.description = "Commands: random, {id}";
+        //                 Utils.sendEmbed(invalidEmbed);
+        //                 return;
+        //             }
 
-                if (songList.length > 5) 
-                {
-                    description += "\r\nAnd more...";
-                }
+        //             let foundSong = userSongList.SongList.find(s => s.id === Number(commands[0]));
+        //             if (foundSong === null || foundSong === undefined)
+        //             {
+        //                 invalidEmbed.description = "Song cannot be found :(";
+        //                 Utils.sendEmbed(invalidEmbed);
+        //                 return;
+        //             }
 
-                Utils.sendEmbed({
-                    message: message,
-                    author: `${msgAuthor.username} Queued`,
-                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
-                    title: 'Their Song List',
-                    description: description
-                });
-            }).catch((e) => {
-                Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
-            });
-        }
-        else
-        {
-            let songToPlay = "";
+        //             songToPlay = foundSong.song;
+        //             break;
+        //     }
 
-            switch (commands[0])
-            {
-                case "random":
-                    const randIndex = Utils.MaxRandNum(userSongList.SongList.length);
-                    songToPlay = userSongList.SongList[randIndex].song;
-                    break;
-                default:
-                    if (isNaN(commands[0]))
-                    {
-                        invalidEmbed.description = "Commands: random, {id}";
-                        Utils.sendEmbed(invalidEmbed);
-                        return;
-                    }
-
-                    let foundSong = userSongList.SongList.find(s => s.id === Number(commands[0]));
-                    if (foundSong === null || foundSong === undefined)
-                    {
-                        invalidEmbed.description = "Song cannot be found :(";
-                        Utils.sendEmbed(invalidEmbed);
-                        return;
-                    }
-
-                    songToPlay = foundSong.song;
-                    break;
-            }
-
-            this.queueSong(message, songToPlay);
-        }
+        //     this.queueSong(message, songToPlay);
+        // }
     }
 
     static async reportIssue(message, commands) {
@@ -1259,60 +1187,26 @@ export default class EventManager {
 
     // Helper functions
     static queueSong(message, songToPlay) {
-        Distube.play(message.member.voice.channel, songToPlay, {
-            member: message.member,
-            textChannel: message.channel
-        }).then(() => {
-            let queue = Distube.getQueue(message);
-            
-            if (queue !== undefined && queue.songs.length > 1) {
-                let song = queue.songs[queue.songs.length - 1];
-                let msgAuthor = message.author;
-                Utils.sendEmbed({
-                    message: message,
-                    author: `${msgAuthor.username} Queued`,
-                    authorIcon: msgAuthor.avatarURL({ dynamic: true }),
-                    title: song.name,
-                    footer: ` | ${song.formattedDuration}`,
-                    footerIcon: config.embedPauseIconURL
-                });
-            }
-        }).catch((e) => {
-            message.channel.send(`Failed to queue ${songToPlay} | ${e}`);
-            Utils.Log(Utils.LogType_ERROR, e, "DistubeJS");
-        });
-    }
+        Utils.NoMusicAllowed(message);
+        // this.RiffyResolveTrack(songToPlay, message.author).then((track) => {
+        //     const player = this.GetRiffyPlayer(message);
+        //     player.queue.add(track);
+        //     if (player.playing !== true) player.play();
 
-    static songRemoveErrorHandler(queue, message, queueRemoveIndex) {
-        let title = "Song Remove";
-        let description = "Cannot remove song: ";
-        let isError = false;
+        //     let msgAuthor = message.author;
 
-        if (queue == undefined || queue.songs.length <= 0) {
-            description += "queue is empty";
-            isError = true;
-        } else if (queueRemoveIndex > queue.songs.length) {
-            description += "INDEX OUT OF BOUNDS EXCEPTION REEEEEEE";
-            isError = true;
-        }
-
-        if (isError) {
-            Utils.sendEmbed({
-                message: message,
-                title: title,
-                description: description
-            });
-        }
-
-        return isError;
-    }
-
-    static toggleQueuePause(isPause, queue) {
-        if (isPause && !queue.paused) {
-            Distube.pause(queue);
-        } else if (!isPause && queue.paused) {
-            Distube.resume(queue);
-        }
+        //     Utils.sendEmbed({
+        //         message: message,
+        //         author: `${msgAuthor.username} Queued`,
+        //         authorIcon: msgAuthor.avatarURL({ dynamic: true }),
+        //         title: track.info.title,
+        //         footer: ` | ${Utils.MillisecondsToFormattedDuration(track.info.length)}`,
+        //         footerIcon: config.embedPauseIconURL
+        //     });
+        // }).catch((e) => {
+        //     message.channel.send(`Failed to queue ${songToPlay} | ${e}`);
+        //     Utils.Log(Utils.LogType_ERROR, e, "Riffy");
+        // })
     }
 
     static capOrNoCap(message) {
@@ -1323,5 +1217,38 @@ export default class EventManager {
             : Utils.RandNum() >= 0.5 ? "🧢 Cap" : "🫵 No Cap";
 
         message.channel.send(msg);
+    }
+
+    // Riffy Helpers
+    static GetRiffyPlayer(message) {
+        Utils.NoMusicAllowed(message);
+        // const guildId = message.guildId;
+
+        // if (Riffy.players.has(guildId) === true)
+        // {
+        //     return Riffy.players.get(guildId);
+        // }
+
+        // return Riffy.createConnection({
+        //     guildId: guildId,
+        //     voiceChannel: message.member.voice.channel.id,
+        //     textChannel: message.channel.id,
+        //     deaf: true
+        // });
+    }
+
+    static async RiffyResolveTrack(query, author) {
+        return null;
+        // const resolve = await Riffy.resolve({ query: query, requester: author });
+        // const { loadType, tracks } = resolve;
+
+        // if (loadType === "search" || loadType === "track")
+        // {
+        //     const track = tracks.shift();
+        //     track.info.requester = author;
+        //     return track;
+        // }
+
+        // return null;
     }
 }

@@ -5,6 +5,7 @@ import { loggingModel } from './mongo/mongo-schemas.js';
 import {modalIds, GenerateCountdownModal, GenerateUpdateCountdownModal} from './modals.js';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+// import { riffy as Riffy } from "./setup.js";
 
 dayjs.extend(customParseFormat);
 
@@ -374,13 +375,30 @@ export default class Utils {
         return true;
     }
 
-    static QueueFinishedTimer = (queue, distube) => {
-        this.timeout(`leaveVC-${queue.voiceChannel.guildId}`, 5, () => {
-            let newQueue = distube.getQueue(queue);
+    static NoMusicAllowed = (message) => {
+        message.channel.send(`Youtube has updated several things on their end, preventing bots from streaming music. If an alternative pops up in the future, I will look into it. Thanks Youtube :)`);
+    }
 
-            if ((newQueue === undefined) || (newQueue.songs.length <= 0 && newQueue.repeatMode == 0)) {
-                distube.voices.leave(queue);
-            }
+    static DisconnectRiffyPlayer = (guildId) => {
+        // if (Riffy.players.has(guildId) !== true) return;
+
+        // const player = Riffy.players.get(guildId);
+        // player.disconnect();
+        // player.destroy();
+
+        // Riffy.players.delete(guildId);
+    } 
+
+    static QueueFinishedTimer = (guildId) => {
+        this.timeout(`leaveVC-${guildId}`, 5, () => {
+            this.DisconnectRiffyPlayer(guildId);
         });
+    }
+
+    static MillisecondsToFormattedDuration = (ms) => {
+        let minutes = Math.floor(ms / 60000);
+        let seconds = ((ms % 60000) / 1000).toFixed(0);
+
+        return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
     }
 }

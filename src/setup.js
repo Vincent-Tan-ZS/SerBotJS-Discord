@@ -1,5 +1,4 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits, Options, Partials } from 'discord.js';
-import { DisTube, Events, RepeatMode } from 'distube';
 import Utils from './utils.js';
 import Commands from './commands.js';
 import config from './config.js';
@@ -8,9 +7,6 @@ import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import { countdownModel, commandModel, reminderModel, misclickCountModel } from './mongo/mongo-schemas.js';
 import dayjs from 'dayjs';
-import { SpotifyPlugin } from '@distube/spotify';
-import { SoundCloudPlugin } from '@distube/soundcloud';
-import { DeezerPlugin } from '@distube/deezer';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -33,11 +29,23 @@ export const client = new Client({
     })
 });
 
-export const distube = new DisTube(client, {
-    // youtubeCookie: config.distubeCookie,
-    // plugins: [new SpotifyPlugin(), new YouTubePlugin({ cookies: JSON.parse(config.distubeCookie) })]
-    plugins: [new SpotifyPlugin(), new DeezerPlugin(), new SoundCloudPlugin({ clientId: process.env.SOUNDCLOUD_CLIENTID, oauthToken: process.env.SOUNDCLOUD_TOKEN })] //https://github.com/Moebits/soundcloud.ts#getting-started
-});
+// const nodes = [
+//     {
+//         host: "localhost",
+//         password: "youshallnotpass",
+//         port: 2333,
+//         secure: false,
+//     },
+// ];
+
+// export const riffy = new Riffy(client, nodes, {
+//     send: (payload) => {
+//         const guild = client.guilds.cache.get(payload.d.guild_id);
+//         if (guild) guild.shard.send(payload);
+//     },
+//     defaultSearchPlatform: "spsearch",
+//     restVersion: "v4", // Or "v3" based on your Lavalink version.
+// })
 
 const ReactionRoleMap = {
     amongus: "767007058712592415",
@@ -48,72 +56,81 @@ const ReactionRoleMap = {
     weirdchamp: "978622725469921320" //League of Legends
 }
 
-//#region Distube EventListener
-distube.on(Events.ADD_SONG, (queue, song) => {
-        let logMessage = "";
+//#region Riffy EventListener
+// riffy.on("trackStart", (player, track, payload) => {
+//         let logMessage = "";
 
-        Utils.cancelTimeout(`leaveVC-${queue.voiceChannel.guildId}`);
+//         Utils.cancelTimeout(`leaveVC-${player.guildId}`);
 
-        if (queue.repeatMode === RepeatMode.DISABLED)
-        {
-            // Update Previous Song for replay
-            const previousSongIndex = Utils.PreviousSong.findIndex(s => s.guildId === queue.voiceChannel.guildId);
-            const guildPrevSong = {
-                guildId: queue.voiceChannel.guildId,
-                song: song
-            };
+//         if (player.loop === "none")
+//         {
+//             // Update Previous Song for replay
+//             const previousSongIndex = Utils.PreviousSong.findIndex(s => s.guildId === player.guildId);
+//             const guildPrevSong = {
+//                 guildId: player.guildId,
+//                 song: track.info.title
+//             };
 
-            if (previousSongIndex >= 0)
-            {
-                Utils.PreviousSong[previousSongIndex] = guildPrevSong;
-            }
-            else
-            {
-                Utils.PreviousSong.push(guildPrevSong);
-            }
+//             if (previousSongIndex >= 0)
+//             {
+//                 Utils.PreviousSong[previousSongIndex] = guildPrevSong;
+//             }
+//             else
+//             {
+//                 Utils.PreviousSong.push(guildPrevSong);
+//             }
 
-            Utils.sendEmbed({
-                channel: queue.textChannel,
-                title: "Now Playing",
-                description: song.name
-            });
-        }
-        else
-        {
-            logMessage += "[Loop] ";
-        }
+//             Utils.sendEmbed({
+//                 channel: client.channels.resolve(player.textChannel),
+//                 title: "Now Playing",
+//                 description: track.info.title
+//             });
+//         }
+//         else
+//         {
+//             logMessage += "[Loop] ";
+//         }
 
-        logMessage += `Playing ${song.name} in ${queue.voiceChannel.guildId}`;
+//         logMessage += `Playing ${track.info.title} in ${player.guildId}`;
 
-        Utils.Log(Utils.LogType_INFO, logMessage, "DistubeJS");
-    })
-    .on(Events.INIT_QUEUE, queue => {
-        queue.autoplay = false;
-        queue.volume = 100;
-    })
-    .on(Events.NO_RELATED, (message, query) => {
-        message.channel.send(`[Distube] ${query} not found.`);
-        Utils.Log(Utils.LogType_INFO, `${query} not found`, "DistubeJS");
-    })
-    .on(Events.ERROR, (e, queue, song) => {
-        queue.textChannel.send(`Distube Error: ${e}`);
-        Utils.Log(Utils.LogType_ERROR, e.message, "DistubeJS");
-    })
-    // .on(Events.DEBUG, (debug) => {
-    //     Utils.Log(Utils.LogType_DEBUG, debug, "DistubeJS");
-    // })
-    //.on(Events.FFMPEG_DEBUG, (debug) => {
-        //Utils.Log(Utils.LogType_DEBUG, debug, "DistubeJS");
-    //})
-    .on(Events.FINISH, (queue) => {
-        Utils.QueueFinishedTimer(queue, distube);
-    });
-
-//#endregion Distube EventListener
+//         Utils.Log(Utils.LogType_INFO, logMessage, "Riffy");
+//     })
+//     .on("trackError", (player, track, payload) => {
+//         client.channels.resolve(player.textChannel).send(`Riffy Track Error: ${payload.exception.message}`);
+//         Utils.Log(Utils.LogType_ERROR, JSON.stringify(payload), "Riffy");
+//     })
+//     .on("queueEnd", (player) => {
+//         Utils.QueueFinishedTimer(player.guildId);
+//     })
+//     .on("debug", (message) => {
+//         Utils.Log(Utils.LogType_DEBUG, message, "Riffy");
+//     })
+//     .on("nodeError", (node, error) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Node ${node.name} Error: ${error.message}`, "Riffy");
+//     })
+//     .on("nodeDisconnect", (node, reason) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Node ${node.name} Disconnect: ${reason}`, "Riffy");
+//     })
+//     .on("nodeReconnect", (node) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Node ${node.name} Reconnected`, "Riffy");
+//     })
+//     .on("trackStuck", (player, track, payload) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Track Stuck: ${JSON.stringify(payload)}`, "Riffy");
+//     })
+//     .on("socketClosed", (player, payload) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Socket Closed: ${JSON.stringify(payload)}`, "Riffy");
+//     })
+//     .on("trackEnd", (player, track, payload) => {
+//         Utils.Log(Utils.LogType_DEBUG, `Track Ended: ${JSON.stringify(payload)}`, "Riffy");
+//     })
+//#endregion Riffy EventListener
 
 //#region Discord Client EventListeners
 client.on('ready', async() => {
     Utils.Log(Utils.LogType_INFO, "SerBot is now online!");
+
+    // Riffy
+    // riffy.init(client.user.id);
 
     // MongoDB
     await ConnectDB();
@@ -270,15 +287,13 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     let user = oldState.member.user;
 
     if (user.bot === true && user.username === "SerBot") {
-        let voice = distube.voices.get(newState.guild);
-        if (voice == null) {
-            Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
-            Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.name}`);
-            return;
-        };
-    
-        if (!voice.selfDeaf) voice.setSelfDeaf(true);
-    
+        // if (riffy.players.has(newState.guild.id) !== true)
+        // {
+        //     Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
+        //     Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.id}`);
+        //     return;
+        // }
+        
         Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
     }
     else if (newState.channelId == process.env.MISCLICK_VC_ID) {
