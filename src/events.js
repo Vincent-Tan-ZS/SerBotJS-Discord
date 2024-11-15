@@ -622,14 +622,17 @@ export default class EventManager {
                     Utils.sendEmbed({
                         message: message,
                         title: "Countdown",
-                        description: "Please use 'delete [name]' to delete a countdown :)"
+                        description: "Please use 'delete [name]' or 'delete [id]' to delete a countdown :)"
                     });
                     return;
                 }
 
                 commands.shift();
                 countdownName = commands.join(" ");
-                countdown = await countdownModel.findOne({ Name: countdownName });
+
+                countdown = isNaN(countdownName)
+                    ? await countdownModel.findOne({ Name: countdownName })
+                    : await countdownModel.findOne({ Id: Number(countdownName) })
 
                 if (countdown === null) {
                     Utils.sendEmbed({
