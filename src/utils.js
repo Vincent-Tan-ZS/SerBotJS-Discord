@@ -376,7 +376,7 @@ export default class Utils {
     }
 
     static NoMusicAllowed = (message) => {
-        message.channel.send(`Youtube has updated several things on their end, preventing bots from streaming music. If an alternative pops up in the future, I will look into it. Thanks Youtube :)`);
+        message.channel.send(`Youtube and other music streaming platforms have updated several things on their end, preventing bots from streaming music. If an alternative pops up in the future, I will look into it.`);
     }
 
     static DisconnectRiffyPlayer = (guildId) => {
