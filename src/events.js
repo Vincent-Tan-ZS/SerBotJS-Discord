@@ -1261,7 +1261,7 @@ export default class EventManager {
         }
         else
         {
-            const meals = await chefMealModel.find({}, 'Id Name');
+            const meals = await chefMealModel.find({});
             
             if (idOrText !== "random" || idOrText === undefined)
             {
