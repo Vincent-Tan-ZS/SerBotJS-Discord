@@ -170,4 +170,29 @@ const misclickCountSchema = mongoose.Schema({
 });
 const misclickCountModel = mongoose.model('MisclickCount', misclickCountSchema, 'MisclickCount');
 
-export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, misclickCountModel };
+// Chef Meal Count
+const chefMealSchema = mongoose.Schema({
+    Id: {
+        type: Number,
+        required: true
+    },
+    Name: {
+        type: String,
+        required: true
+    },
+    Ingredients: {
+        type: Array,
+        required: true
+    },
+    Steps: {
+        type: Array,
+        required: true
+    },
+    AddedBy: {
+        type: String,
+        required: true
+    }
+});
+const chefMealModel = mongoose.model('ChefMeal', chefMealSchema, 'ChefMeals');
+
+export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, misclickCountModel, chefMealModel };

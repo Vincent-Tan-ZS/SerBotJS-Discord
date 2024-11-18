@@ -89,6 +89,7 @@ export default class Commands {
         const reportDictionary = GenCommand("Report Bot Issues", ["report"], "Report any issues with SerBot to the owner", ["{issue}"], (msg, cmds) => { EventManager.reportIssue(msg, cmds) });
         const featureUpdateDictionary = GenCommand("Feature Update", ["feature"], "Add a feature to the Feature Update database (Owner Only)", ["{type} {message}"], (msg, cmds) => { EventManager.addFeatureUpdate(msg, cmds) });
         const capDictionary = GenCommand("Cap or no cap", ["cap"], "Tells you cap or no cap", [""], (msg) => { EventManager.capOrNoCap(msg) });
+        const chefDictionary = GenCommand("Meals", ["chef"], "Lists all meals and the steps to make them", ["", "meal", "meal {id}", "meal random", "meal {filter text}"], (msg, cmds) => { EventManager.chef(msg, cmds) });
     
         const helpDictionary = GenCommand("Help List", ["help"], "Show the list of commands", [""], (msg) => { EventManager.sendCommandList(msg); });
 
@@ -99,7 +100,7 @@ export default class Commands {
             todayDictionary, tictactoeDictionary, wisdomDictionary, xxxDictionary,
             trackDictionary, replayDictionary, reminderDictionary, authDictionary, pListDictionary, reportDictionary, featureUpdateDictionary,
             copypastaDictionary, _8ballDictionary, coinFlipDictionary, wheelDictionary, treeDictionary, psychoDictionary,
-            countdownDictionary, pingDictionary, capDictionary];
+            countdownDictionary, pingDictionary, capDictionary, chefDictionary];
     }
     //#endregion Functions
 

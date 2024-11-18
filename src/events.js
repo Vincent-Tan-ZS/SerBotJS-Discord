@@ -9,8 +9,8 @@ import config from './config.js';
 import Utils from './utils.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } from 'discord.js';
-import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel } from './mongo/mongo-schemas.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, chefMealModel } from './mongo/mongo-schemas.js';
 
 dayjstz.extend(isBetween);
 dayjstz.extend(isSameOrBefore);
@@ -1220,6 +1220,111 @@ export default class EventManager {
             : Utils.RandNum() >= 0.5 ? "🧢 Cap" : "🫵 No Cap";
 
         message.channel.send(msg);
+    }
+
+    static async chef(message, commands) {
+        commands.shift();
+
+        const defaultTitle = "Chef SerBot 🧑‍🍳";
+        
+        if (commands.length <= 0)
+        {
+            Utils.sendEmbed({
+                message: message,
+                title: defaultTitle,
+                description: "Ahh oui oui, you have come to ze right place my friend. I, monsieur SerBot, will be your chef zonight. Please enjoy ze meals I have by doing 'ser chef meal'"
+            });
+            return;
+        }
+        
+        if (commands[0] !== "meal")
+        {
+            Utils.sendEmbed({
+                message: message,
+                title: defaultTitle,
+                description: `Monsieur/mademoiselle, it iz 'ser chef meal', not 'ser chef ${commands.join(" ")}'`
+            });
+            return;
+        }
+
+        commands.shift();
+        const idOrText = commands[0];
+
+        let chefMeal = null;
+
+        // Id
+        if (isNaN(idOrText) !== true)
+        {
+            const chefMealId = Number(idOrText);
+
+            chefMeal = await chefMealModel.findOne({ Id: chefMealId })
+        }
+        else
+        {
+            const meals = await chefMealModel.find({}, 'Id Name');
+            
+            if (idOrText !== "random" || idOrText === undefined)
+            {
+                let filteredMeals = meals;
+
+                if (idOrText !== undefined)
+                {
+                    filteredMeals = filteredMeals.filter(x => commands.some((filter) => x.Name.toLowerCase().includes(filter.toLowerCase())));
+                }
+
+                if (filteredMeals.length > 0)
+                {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: defaultTitle,
+                        description: "Oui oui, we found you some delectable mealz monsieur/mademoiselle, please enjoy ze meals by using 'ser chef meal {id}'",
+                        fields: [{
+                            name: "Results",
+                            value: filteredMeals.map((meal) => `${meal.Id}. ${meal.Name}`).join("\n")
+                        }],
+                    });
+                }
+                else
+                {
+                    Utils.sendEmbed({
+                        message: message,
+                        title: defaultTitle,
+                        description: "Ah my apologiez monsieur/mademoiselle, it would zeem ze kitchen has ran out of delectable mealz"
+                    });
+                }
+                
+                return;
+            }
+
+            const randomMealIndex = Utils.MaxRandNum(meals.length);
+            chefMeal = meals[randomMealIndex];
+        }
+
+        if (chefMeal === null || chefMeal === undefined)
+        {
+            Utils.sendEmbed({
+                message: message,
+                title: defaultTitle,
+                description: "Ah monsieur/mademoiselle, you might have to check ze menu once more. We do not zerve this meal you are requesting"
+            });
+            return;
+        }
+        
+        const ingredientsField = {
+            name: "🧂 Ingredients",
+            value: chefMeal.Ingredients.map((ing) => `- ${ing}`).join("\n")
+        };
+
+        const stepsField = {
+            name: "🥄 Steps",
+            value: chefMeal.Steps.map((step, ind) => `${ind + 1}. ${step}`).join("\n")
+        };
+
+        Utils.sendEmbed({
+            message: message,
+            title: chefMeal.Name,
+            fields: [ ingredientsField, stepsField ]
+        });
     }
 
     // Riffy Helpers
