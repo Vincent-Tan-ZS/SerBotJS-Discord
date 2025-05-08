@@ -450,7 +450,7 @@ const ModalSubmit = async (interaction) => {
             }
 
             let topIdCD = await countdownModel.find().sort({ "Id" : -1 }).limit(1);
-            const newId = Number(topIdCD[0].Id) + 1;
+            const newId = topIdCD.length > 0 ? Number(topIdCD[0].Id) + 1 : 1;
 
             const newCountdown = new countdownModel({
                 Name: countdown.name,
