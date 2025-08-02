@@ -10,9 +10,6 @@ import dayjs from 'dayjs';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildEmojisAndStickers,
-        GatewayIntentBits.GuildIntegrations,
-        GatewayIntentBits.GuildInvites,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMessageReactions,
@@ -21,7 +18,7 @@ export const client = new Client({
     partials: [Partials.Message, Partials.Channel, Partials.Reaction],
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
-        MessageManager: 50,
+        MessageManager: 20,
         GuildMemberManager: {
             maxSize: 10,
             keepOverLimit: member => member.id === member.client.user.id
