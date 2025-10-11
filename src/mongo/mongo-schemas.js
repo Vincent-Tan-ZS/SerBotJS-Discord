@@ -120,17 +120,17 @@ const siteAuthorizationSchema = mongoose.Schema({
 const siteAuthModel = mongoose.model('SiteAuthorization', siteAuthorizationSchema, 'SiteAuthorizations');
 
 // UserSongList
-const userSongListSchema = mongoose.Schema({
-    UserId: {
-        type: String,
-        required: true
-    },
-    SongList: {
-        type: Array,
-        required: true
-    }
-});
-const userSongListModel = mongoose.model('UserSongList', userSongListSchema, 'UserSongLists');
+// const userSongListSchema = mongoose.Schema({
+//     UserId: {
+//         type: String,
+//         required: true
+//     },
+//     SongList: {
+//         type: Array,
+//         required: true
+//     }
+// });
+// const userSongListModel = mongoose.model('UserSongList', userSongListSchema, 'UserSongLists');
 
 // FeatureUpdate
 const featureUpdateSchema = mongoose.Schema({
@@ -195,4 +195,4 @@ const chefMealSchema = mongoose.Schema({
 });
 const chefMealModel = mongoose.model('ChefMeal', chefMealSchema, 'ChefMeals');
 
-export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, misclickCountModel, chefMealModel };
+export { countdownModel, loggingModel, commandModel, reminderModel, siteAuthModel, featureUpdateModel, misclickCountModel, chefMealModel };

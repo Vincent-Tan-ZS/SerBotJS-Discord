@@ -10,7 +10,7 @@ import Utils from './utils.js';
 import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { countdownModel, reminderModel, siteAuthModel, userSongListModel, featureUpdateModel, chefMealModel } from './mongo/mongo-schemas.js';
+import { countdownModel, reminderModel, siteAuthModel, featureUpdateModel, chefMealModel } from './mongo/mongo-schemas.js';
 
 dayjstz.extend(isBetween);
 dayjstz.extend(isSameOrBefore);
