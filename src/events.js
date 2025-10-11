@@ -359,12 +359,22 @@ export default class EventManager {
     static wheel(message, commands) {
         if (commands.length <= 0) return;
 
-        let listOfOptions = commands[0].split(",");
+        let listOfOptions = commands
+            .join(',') // Yucky
+            .split(',') // In case a space is missed between options
+            .map(z => z.trim().replace(',', ''))
+            .filter(z => z.length > 0);
+        let noOfTimes = listOfOptions[listOfOptions.length - 1];
         if (listOfOptions.length <= 1) return;
 
-        const results = Utils.NumberOfTimesAction(commands[1], message.channel, () => {
+        if (!isNaN(noOfTimes))
+        {
+            listOfOptions.pop();
+        }
+
+        const results = Utils.NumberOfTimesAction(noOfTimes, message.channel, () => {
             let index = Utils.MaxRandNum(listOfOptions.length);
-            return listOfOptions[index].trim();
+            return listOfOptions[index];
          });
 
          if (results.length <= 0) return;
