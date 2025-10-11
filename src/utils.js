@@ -414,13 +414,16 @@ export default class Utils {
             return [];
         }
         
-        let results = [];
+        let results = {};
 
         for (let i = 0; i < noOfTimes; ++i)
         {
-            results.push(elementAction());
+            var elRes = elementAction();
+            
+            if (!results[elRes]) results[elRes] = 0;
+            results[elRes]++;
         }
 
-        return results;
+        return Object.entries(results);
     }
 }

@@ -352,8 +352,25 @@ export default class EventManager {
     static coinFlip(message, commands) {
         const results = Utils.NumberOfTimesAction(commands[0], message.channel, () => Utils.RandNum() >= 0.5 ? "Heads" : "Tails");
          if (results.length <= 0) return;
-        
-        message.channel.send(`🪙 ${results.join(',')}`);
+
+        if (results.length === 1)
+        {
+            var res = results[0];
+            message.channel.send(`🪙 ${res[0]}`);
+        }
+        else
+        {
+            var msg = results.reduce((prev, [k, v]) => {
+                prev += `${k} x${v}\n`
+                return prev;
+            }, '').trim();
+
+            Utils.sendEmbed({
+                message: message,
+                title: "🪙 Coin Flip",
+                description: msg
+            });
+        }
     }
 
     static wheel(message, commands) {
@@ -377,9 +394,26 @@ export default class EventManager {
             return listOfOptions[index];
          });
 
-         if (results.length <= 0) return;
+        if (results.length <= 0) return;
 
-        message.channel.send(`🎡 ${results.join(',')}`);
+        if (results.length === 1)
+        {
+            var res = results[0];
+            message.channel.send(`🎡 ${res[0]}`);
+        }
+        else
+        {
+            var msg = results.reduce((prev, [k, v]) => {
+                prev += `${k} x${v}\n`
+                return prev;
+            }, '').trim();
+
+            Utils.sendEmbed({
+                message: message,
+                title: "🎡 Wheel",
+                description: msg
+            });
+        }
     }
 
     static tree(message) {
