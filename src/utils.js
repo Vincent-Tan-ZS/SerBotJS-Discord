@@ -239,17 +239,13 @@ export default class Utils {
     }
 
     static RandNum = (decimal = 2) => {
-        const GenNum = () => {
-            return Math.random().toFixed(decimal);
-        }
-
-        return Number(GenNum()) === 0
-            ? 1
-            : Number(GenNum());
+        let num = Number(Math.random().toFixed(decimal));
+        if (num === 0) num = Math.pow(10, -decimal);
+        return num;
     }
 
     static MaxRandNum = (max) => {
-        return Math.floor((Math.random() * max) + 1) - 1;
+        return Math.floor(Math.random() * max);
     }
 
     static IsOwner = (user) => {
@@ -400,5 +396,31 @@ export default class Utils {
         let seconds = ((ms % 60000) / 1000).toFixed(0);
 
         return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+    }
+
+    static NumberOfTimesAction(num, channel, elementAction)
+    {
+        const noOfTimes = isNaN(num) ? 1 : Number.parseInt(num);
+        
+        if (noOfTimes <= 0)
+        {
+            channel.send("What");
+            return [];
+        }
+
+        if (noOfTimes > 10)
+        {
+            channel.send("Imma stop you right there chief, I'm limiting this to 10 max");
+            return [];
+        }
+        
+        let results = [];
+
+        for (let i = 0; i < noOfTimes; ++i)
+        {
+            results.push(elementAction());
+        }
+
+        return results;
     }
 }

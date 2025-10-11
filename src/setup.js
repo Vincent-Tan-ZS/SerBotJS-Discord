@@ -170,7 +170,7 @@ client.on('ready', async() => {
 
     // Remove DB Commands that aren't in use anymore 
     dbCommandList.filter(command => Commands.dictionaries.find(d => d.Title === command.Title) === undefined).forEach((command) => {
-        dbCommandPromises.push(command.remove());
+        dbCommandPromises.push(command.deleteOne());
     });
 
     try
@@ -318,6 +318,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 })
 
 client.on('error', (e) => {
+    console.log(e);
     Utils.Log(Utils.LogType_ERROR, e.message, "DiscordJS");
 })
 //#endregion Discord Client EventListeners

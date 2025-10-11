@@ -40,7 +40,8 @@ export default class Commands {
     //MessageCommands will contain commands after "ser".
     //Example (square brackets == messageCommands): ser [play spiderman pizza theme]
     static resolveCommand(message, messageCommands) {
-        let cmd = typeof(messageCommands) == 'string' ?
+        let cmdsIsString = typeof(messageCommands) == 'string';
+        let cmd = cmdsIsString ?
             messageCommands.toLowerCase() :
             messageCommands[0];
 
@@ -48,9 +49,7 @@ export default class Commands {
 
         if (dictionary == null || dictionary == undefined) return;
 
-        let commands = typeof(messageCommands) == 'string' ? [messageCommands] :
-            messageCommands;
-
+        let commands = cmdsIsString ? [] : messageCommands.slice(1);
         dictionary.Action(message, commands);
     }
 
@@ -74,8 +73,8 @@ export default class Commands {
         const tictactoeDictionary = GenCommand("Tic-Tac-Toe", ["tictactoe"], "Play Tic-Tac-Toe with someone in the server!", ["@mention"], (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); });
         const copypastaDictionary = GenCommand("Game Copypasta", ["copypasta"], "Copypasta: mention a user and a game", ["@mention {game}"], (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); });
         const _8ballDictionary = GenCommand("8-Ball", ["8ball", "8b"], "8-ball lmao", [""], (msg) => { EventManager.reply8Ball(msg); })
-        const coinFlipDictionary = GenCommand("Coin Flip", ["coin", "coinflip"], "Does a random coin flip", [""], (msg) => { EventManager.coinFlip(msg); });
-        const wheelDictionary = GenCommand("Random Wheel", ["wheel"], "Does a wheel spin (randomizer)", ["{option1, option2, etc}"], (msg, cmds) => { EventManager.wheel(msg, cmds); });
+        const coinFlipDictionary = GenCommand("Coin Flip", ["coin", "coinflip"], "Does a random coin flip", ["", "{number of times (optional}"], (msg, cmds) => { EventManager.coinFlip(msg, cmds); });
+        const wheelDictionary = GenCommand("Random Wheel", ["wheel"], "Does a wheel spin (randomizer)", ["{option1, option2, etc} {number of times (optional}"], (msg, cmds) => { EventManager.wheel(msg, cmds); });
         const treeDictionary = GenCommand("Display A Tree", ["tree"], "Generate a tree :)", [""], (msg) => { EventManager.tree(msg); });
         const psychoDictionary = GenCommand("American Psycho", ["psycho"], "Let's see Paul Allen's card", ["", "card"], (msg, cmds) => { EventManager.psycho(msg, cmds); });
         const countdownDictionary = GenCommand("Countdown", ["countdown", "cd"], "Create/view Countdowns!", ["list", "create", "update", "delete", "{countdown}"], (msg, cmds) => { EventManager.countdown(msg, cmds) });

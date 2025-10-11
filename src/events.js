@@ -194,7 +194,7 @@ export default class EventManager {
         if (typeof(commands) == 'string') return;
 
         let player = message.author.id;
-        let otherPlayer = Utils.getUserIdFromMention(commands[1]);
+        let otherPlayer = Utils.getUserIdFromMention(commands[0]);
 
         if (otherPlayer === config.botId) {
             message.channel.send("I'm touched but I cannot play Tic-Tac-Toe :(");
@@ -265,9 +265,8 @@ export default class EventManager {
     }
 
     static replyCopypasta(message, commands) {
-        if (commands.length < 3) return;
-        commands.shift();
-
+        if (commands.length < 2) return;
+        
         let mention = commands.shift();
         let userId = Utils.getUserIdFromMention(mention);
 
@@ -295,7 +294,6 @@ export default class EventManager {
     }
 
     static createRhombus(message, commands) {
-        commands.shift();
         if (isNaN(commands[0])) return;
 
         let rhombusSize = Number(commands[0]);
@@ -351,22 +349,27 @@ export default class EventManager {
         message.channel.send(config.eightBallReplies[rng]);
     }
 
-    static coinFlip(message) {
-        const msg = Utils.RandNum() >= 0.5 ? "Heads" : "Tails";
-        message.channel.send(`🪙 ${msg}`);
+    static coinFlip(message, commands) {
+        const results = Utils.NumberOfTimesAction(commands[0], message.channel, () => Utils.RandNum() >= 0.5 ? "Heads" : "Tails");
+         if (results.length <= 0) return;
+        
+        message.channel.send(`🪙 ${results.join(',')}`);
     }
 
     static wheel(message, commands) {
-        commands.shift();
         if (commands.length <= 0) return;
 
-        let optionStr = commands.join(' ');
-        let listOfOptions = optionStr.split(",");
-
+        let listOfOptions = commands[0].split(",");
         if (listOfOptions.length <= 1) return;
 
-        const index = Utils.MaxRandNum(listOfOptions.length);
-        message.channel.send(`🎡 ${listOfOptions[index].trim()}`);
+        const results = Utils.NumberOfTimesAction(commands[1], message.channel, () => {
+            let index = Utils.MaxRandNum(listOfOptions.length);
+            return listOfOptions[index].trim();
+         });
+
+         if (results.length <= 0) return;
+
+        message.channel.send(`🎡 ${results.join(',')}`);
     }
 
     static tree(message) {
@@ -436,7 +439,6 @@ export default class EventManager {
 
     static async psycho(message, commands) {
         if (message.member === undefined) return;
-        commands.shift();
 
         const username = message.member.displayName ?? message.author.displayName;
         const imgFolder = path.resolve("./img");
@@ -495,7 +497,6 @@ export default class EventManager {
 
     static async countdown(message, commands) {
         if (message.author === undefined) return;
-        commands.shift();
 
         const invalidEmbed = {
             message: message,
@@ -517,9 +518,14 @@ export default class EventManager {
             case "l":
                 let allCountdowns = await countdownModel.find({}).sort({ Id: 'asc' });
 
-                let description = `You can either use the Id or Name for viewing/updating!\n\n`
-                description += allCountdowns.map(cd => `${cd.Id} - ${cd.Name}`).join("\n");
-    
+                let description = "Looks like there are no countdowns to show.";
+
+                if (allCountdowns.length > 0)
+                {
+                    description = `You can either use the Id or Name for viewing/updating!\n\n`
+                    description += allCountdowns.map(cd => `${cd.Id} - ${cd.Name}`).join("\n");
+                }
+                
                 Utils.sendEmbed({
                     message: message,
                     title: "Countdown",
@@ -736,12 +742,10 @@ export default class EventManager {
 
     static async wisdomLlama(message, commands) {
         if (message.author === undefined) return;
-        commands.shift();
 
         const imgFolder = path.resolve("./img");
         let sharpBuffer;
         let outputBuffer;
-        let msg;
 
         let errMsg = "";
         let isErr = false;
@@ -886,7 +890,6 @@ export default class EventManager {
 
     static async createReminder(message, commands) {
         if (message.author === undefined) return;
-        commands.shift();
 
         const invalidEmbed = {
             message: message,
@@ -1135,8 +1138,6 @@ export default class EventManager {
     }
 
     static async reportIssue(message, commands) {
-        commands.shift();
-
         let invalidEmbed = {
             message: message,
             title: "Report Bot Issues",
@@ -1160,7 +1161,6 @@ export default class EventManager {
     }
 
     static addFeatureUpdate(message, commands) {
-        commands.shift();
         if (Utils.IsOwner(message.author) !== true) return;
 
         const preType = commands.shift();
@@ -1223,8 +1223,6 @@ export default class EventManager {
     }
 
     static async chef(message, commands) {
-        commands.shift();
-
         const defaultTitle = "Chef SerBot 🧑‍🍳";
         
         if (commands.length <= 0)
