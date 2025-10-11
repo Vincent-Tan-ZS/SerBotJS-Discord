@@ -245,7 +245,7 @@ export default class Utils {
     }
 
     static MaxRandNum = (max) => {
-        return Math.floor(Math.random() * max);
+        return Math.floor((Math.random() * max) + 1) - 1;
     }
 
     static IsOwner = (user) => {
