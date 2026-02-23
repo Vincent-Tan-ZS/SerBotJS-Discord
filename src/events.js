@@ -1079,7 +1079,7 @@ export default class EventManager {
             newSiteAuth.save();
         }
 
-        author.send(`[${dayjstz().format("DD/MM/YYYY HH:mm")}] Authorization Code Generated: ${code}`);
+        author.send(`[${dayjstz().format("DD/MM/YYYY HH:mm")}] Authorization Code Generated: ${code}. The code expires in 10 minutes.`);
     }
 
     static async playUserSongList(message, commands) {
