@@ -68,6 +68,9 @@ const commandSchema = mongoose.Schema({
     Usage: {
         type: Array,
         required: true
+    },
+    CanDM: {
+        type: Boolean
     }
 });
 const commandModel = mongoose.model('Commands', commandSchema, 'Commands');
