@@ -88,7 +88,7 @@ export default class Commands {
         const authDictionary = GenCommand("Authorization Code", ["auth"], "Generates a random authorization code to be used on SerBot's Site!", [""], (msg) => { EventManager.genAuthCode(msg) }, true);
         const pListDictionary = GenCommand("Play user song list", ["plist", "playlist"], "Plays a user's playlist, either in its entirety or any song", ["", "random", "{id}"], (msg, cmds) => { EventManager.playUserSongList(msg, cmds) }, false);
         const reportDictionary = GenCommand("Report Bot Issues", ["report"], "Report any issues with SerBot to the owner", ["{issue}"], (msg, cmds) => { EventManager.reportIssue(msg, cmds) }, false);
-        const featureUpdateDictionary = GenCommand("Feature Update", ["feature"], "Add a feature to the Feature Update database (Owner Only)", ["{type} {message}"], (msg, cmds) => { EventManager.addFeatureUpdate(msg, cmds) }, true);
+        const featureUpdateDictionary = GenCommand("Feature Update", ["feature"], "Add a feature to the Feature Update database (Owner Only)", ["[type] {message}"], (msg, cmds) => { EventManager.addFeatureUpdate(msg, cmds) }, true);
         const capDictionary = GenCommand("Cap or no cap", ["cap"], "Tells you cap or no cap", [""], (msg) => { EventManager.capOrNoCap(msg) }, true);
         const chefDictionary = GenCommand("Meals", ["chef"], "Lists all meals and the steps to make them", ["", "meal", "meal {id}", "meal random", "meal {filter text}"], (msg, cmds) => { EventManager.chef(msg, cmds) }, true);
     
