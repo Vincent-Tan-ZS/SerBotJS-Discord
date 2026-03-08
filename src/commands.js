@@ -75,8 +75,8 @@ export default class Commands {
         const tictactoeDictionary = GenCommand("Tic-Tac-Toe", ["tictactoe"], "Play Tic-Tac-Toe with someone in the server!", ["@mention"], (msg, cmds) => { EventManager.playTicTacToe(msg, cmds); }, false);
         const copypastaDictionary = GenCommand("Game Copypasta", ["copypasta"], "Copypasta: mention a user and a game", ["@mention {game}"], (msg, cmds) => { EventManager.replyCopypasta(msg, cmds); }, false);
         const _8ballDictionary = GenCommand("8-Ball", ["8ball", "8b"], "8-ball lmao", [""], (msg) => { EventManager.reply8Ball(msg); }, true)
-        const coinFlipDictionary = GenCommand("Coin Flip", ["coin", "coinflip"], "Does a random coin flip", ["", "{number of times} (optional)"], (msg, cmds) => { EventManager.coinFlip(msg, cmds); }, true);
-        const wheelDictionary = GenCommand("Random Wheel", ["wheel"], "Does a wheel spin (randomizer)", ["{option1, option2, etc} {number of times} (optional)"], (msg, cmds) => { EventManager.wheel(msg, cmds); }, true);
+        const coinFlipDictionary = GenCommand("Coin Flip", ["coin", "coinflip"], "Does a random coin flip", ["", "{number of times}"], (msg, cmds) => { EventManager.coinFlip(msg, cmds); }, true);
+        const wheelDictionary = GenCommand("Random Wheel", ["wheel"], "Does a wheel spin (randomizer)", ["{option1, option2, etc}", "{option1, option2, etc} {number of times}"], (msg, cmds) => { EventManager.wheel(msg, cmds); }, true);
         const treeDictionary = GenCommand("Display A Tree", ["tree"], "Generate a tree :)", [""], (msg) => { EventManager.tree(msg); }, true);
         const psychoDictionary = GenCommand("American Psycho", ["psycho"], "Let's see Paul Allen's card", ["", "card"], (msg, cmds) => { EventManager.psycho(msg, cmds); }, true);
         const countdownDictionary = GenCommand("Countdown", ["countdown", "cd"], "Create/view Countdowns!", ["list", "create", "update", "delete", "{countdown}"], (msg, cmds) => { EventManager.countdown(msg, cmds) }, true);
