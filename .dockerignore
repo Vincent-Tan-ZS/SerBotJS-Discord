@@ -10,3 +10,4 @@ replace.js
 replace.txt
 package-lock.json
 .env
+package.json

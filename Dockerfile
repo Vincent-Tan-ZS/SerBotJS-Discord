@@ -17,6 +17,9 @@ WORKDIR /app
 
 COPY . .
 
+# Use slim package.json, removing voice-related stuff to reduce memory usage even when idle
+RUN mv package-slim.json package.json
+
 RUN npm install
 RUN npm run build
 

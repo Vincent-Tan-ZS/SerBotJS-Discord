@@ -13,16 +13,22 @@ export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+    partials: [Partials.Message, Partials.Channel],
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
-        MessageManager: 20,
+        MessageManager: 1,
+        ReactionManager: 0,
+        UserManager: 1,
+        GuildManager: 1,
+        ChannelManager: 1,
+        InviteManager: 0,
+        StageInstanceManager: 0,
+        VoiceStateManager: 0,
         GuildMemberManager: {
-            maxSize: 10,
+            maxSize: 1,
             keepOverLimit: member => member.id === member.client.user.id
         }
     })
@@ -45,15 +51,6 @@ export const client = new Client({
 //     defaultSearchPlatform: "spsearch",
 //     restVersion: "v4", // Or "v3" based on your Lavalink version.
 // })
-
-const ReactionRoleMap = {
-    amongus: "767007058712592415",
-    gtav: "767007142615711755",
-    csgo: "767007162538262528",
-    r6s: "767007020946948147",
-    rocketleague: "767006976097386517",
-    weirdchamp: "978622725469921320" //League of Legends
-}
 
 //#region Riffy EventListener
 // riffy.on("trackStart", (player, track, payload) => {
@@ -340,34 +337,6 @@ client.on('messageCreate', (message) => {
 })
 
 //#endregion Message Listener
-
-//#region Reaction Listener
-client.on("messageReactionAdd", async(reaction, user) => {
-    if (reaction.message.id == config.enrollmentMessageId) {
-        let guild = reaction.message.guild;
-
-        let [member, role] = await Promise.all([
-            guild.members.fetch(user),
-            guild.roles.fetch(ReactionRoleMap[reaction.emoji.name])
-        ]);
-
-        member.roles.add(role);
-    }
-});
-
-client.on("messageReactionRemove", async(reaction, user) => {
-    if (reaction.message.id == config.enrollmentMessageId) {
-        let guild = reaction.message.guild;
-
-        let [member, role] = await Promise.all([
-            guild.members.fetch(user),
-            guild.roles.fetch(ReactionRoleMap[reaction.emoji.name])
-        ]);
-
-        member.roles.remove(role);
-    }
-});
-//#endregion Region Listener
 
 //#region Interaction Listener
 client.on("interactionCreate", async (interaction) => {
