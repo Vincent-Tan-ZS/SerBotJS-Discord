@@ -147,6 +147,7 @@ client.on('ready', async() => {
             // If any different
             if (!Utils.ArrComp(existing.List, dict.Command) || existing.Description !== dict.Description || !Utils.ArrComp(existing.Usage, dict.Usage))
             {
+                Utils.Log(Utils.LogType_INFO, `Updating Command: ${dict.Title}`);
                 dbCommandPromises.push(
                     commandModel.replaceOne({_id: existing._id}, { 
                         List: dict.Command,
@@ -165,6 +166,7 @@ client.on('ready', async() => {
                 Usage: dict.Usage
             });
 
+            Utils.Log(Utils.LogType_INFO, `Adding New Command: ${dict.Title}`);
             dbCommandPromises.push(newCommand.save());
         }
     });
