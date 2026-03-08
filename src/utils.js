@@ -2,7 +2,7 @@ import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import { loggingModel } from './mongo/mongo-schemas.js';
-import {modalIds, GenerateCountdownModal, GenerateUpdateCountdownModal} from './modals.js';
+import {modalIds, CreateCountdownModal, UpdateCountdownModal} from './modals.js';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 // import { riffy as Riffy } from "./setup.js";
@@ -272,10 +272,10 @@ export default class Utils {
         switch (interaction.customId)
         {
             case "create-countdown":
-                interaction.showModal(GenerateCountdownModal());
+                interaction.showModal(CreateCountdownModal);
                 break;
             case "update-countdown":
-                let updateCDModal = GenerateUpdateCountdownModal();
+                let updateCDModal = UpdateCountdownModal;
                 const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
 
                 // 45 chars max
@@ -306,17 +306,17 @@ export default class Utils {
 
                 updateCDModal.setTitle(title);
 
-                updateCDModal.components[0].components[0].setPlaceholder(userOriCD.date); 
-                updateCDModal.components[0].components[0].setValue(userOriCD.date);
+                updateCDModal.components[0].data.component.setPlaceholder(userOriCD.date); 
+                updateCDModal.components[0].data.component.setValue(userOriCD.date);
                 
-                updateCDModal.components[1].components[0].setPlaceholder(placeholderDescription);
-                updateCDModal.components[1].components[0].setValue(description);
+                updateCDModal.components[1].data.component.setPlaceholder(placeholderDescription);
+                updateCDModal.components[1].data.component.setValue(description);
 
-                updateCDModal.components[2].components[0].setPlaceholder(placeholderImage);
-                updateCDModal.components[2].components[0].setValue(image);
+                updateCDModal.components[2].data.component.setPlaceholder(placeholderImage);
+                updateCDModal.components[2].data.component.setValue(image);
 
-                updateCDModal.components[3].components[0].setPlaceholder(placeholderUrl);
-                updateCDModal.components[3].components[0].setValue(url);
+                updateCDModal.components[3].data.component.setPlaceholder(placeholderUrl);
+                updateCDModal.components[3].data.component.setValue(url);
 
                 interaction.showModal(updateCDModal);
                 break;
