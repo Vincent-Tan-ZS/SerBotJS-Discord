@@ -1,9 +1,12 @@
-## Install node_modules
-FROM debian:bullseye as builder
+## BUILDER - Install node_modules and esbuild the whole thing
+FROM debian:bullseye-slim as builder
 
-ARG NODE_VERSION=18.20.4
+ARG NODE_VERSION=22.22.1
 
-RUN apt-get update; apt install -y curl
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
 RUN curl https://get.volta.sh | bash
 ENV VOLTA_HOME /root/.volta
 ENV PATH /root/.volta/bin:$PATH
@@ -12,15 +15,17 @@ RUN volta install node@${NODE_VERSION}
 RUN mkdir /app
 WORKDIR /app
 
-# NPM will not install any package listed in "devDependencies" when NODE_ENV is set to "production",
-# to install all modules: "npm install --production=false".
-# Ref: https://docs.npmjs.com/cli/v9/commands/npm-install#description
-ENV NODE_ENV production
-
 COPY . .
 
-RUN rm -rf node_modules txt .dockerignore .gitignore Dockerfile README.md replace.js replace.txt package-lock.json
 RUN npm install
+RUN npm run build
+
+# Prune files from node_modules
+RUN rm -rf node_modules/*/test \
+    node_modules/*/tests \
+    node_modules/*/docs \
+    node_modules/*/example* \
+    node_modules/.bin
 
 # RUN mv lavalink.yml application.yml
 # RUN apt-get update && \
@@ -28,17 +33,16 @@ RUN npm install
 
 # RUN wget https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar -O LavaLink.jar
 
-## Setup and run
-FROM debian:bullseye
+## RUNTIME - Setup and run
+FROM gcr.io/distroless/nodejs22-debian12
 
 LABEL fly_launch_runtime="nodejs"
 
-COPY --from=builder /root/.volta /root/.volta
-COPY --from=builder /app /app
-
 WORKDIR /app
+COPY --from=builder /app/dist/bot.js ./bot.js
+COPY --from=builder /app/node_modules ./node_modules
+
 ENV NODE_ENV production
-ENV PATH /root/.volta/bin:$PATH
 
 # Setup LavaLink
 # RUN apt-get update && \
@@ -47,4 +51,4 @@ ENV PATH /root/.volta/bin:$PATH
 # EXPOSE 2333
 # RUN apt-get update; apt install -y ffmpeg
 
-CMD npm run start
+CMD ["bot.js"]

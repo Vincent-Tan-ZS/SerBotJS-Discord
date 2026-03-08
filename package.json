@@ -6,7 +6,8 @@
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node --optimize_for_size index.js"
+        "start": "node --optimize_for_size index.js",
+        "build": "esbuild index.js --bundle --platform=node --minify --outfile=dist/bot.js"
     },
     "keywords": [],
     "author": "",
@@ -26,6 +27,7 @@
         "sodium-native": "^4.1.1"
     },
     "devDependencies": {
-        "discord-api-types": "^0.38.41"
+        "discord-api-types": "^0.38.41",
+        "esbuild": "^0.27.3"
     }
 }

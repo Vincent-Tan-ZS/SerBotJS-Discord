@@ -4,3 +4,9 @@ node_modules
 .git
 lavalink.yml
 src/stopwatch.js
+README.md
+.gitignore
+replace.js
+replace.txt
+package-lock.json
+.env
