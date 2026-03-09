@@ -24,7 +24,7 @@ import Utils from './utils.js';
 const disconnectActionResolve = (message) => {
     if (Utils.IsOwner(message.author) !== true) return;
 
-    const msg = `${message.member.username} called for disconnect: Logging out...`;
+    const msg = `${message.author.username} called for disconnect: Logging out...`;
 
     Utils.Log(Utils.LogType_INFO, msg);
 

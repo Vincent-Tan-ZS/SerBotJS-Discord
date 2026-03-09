@@ -9,7 +9,8 @@ export const ConnectDB = async() => {
         await mongoose.connect(
             `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_CLUSTER}/?retryWrites=true&w=majority`, {
                 dbName: "SerBot",
-                maxPoolSize: 5
+                maxPoolSize: 3,
+                maxIdleTimeMS: 5 * 60 * 1000
             }
         );
 

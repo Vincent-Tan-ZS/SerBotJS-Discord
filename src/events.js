@@ -1,5 +1,4 @@
 import path from 'path';
-import sharp from 'sharp';
 import dayjstz from './dayjstz.js';
 import isBetween from 'dayjs/plugin/isBetween.js';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
@@ -482,9 +481,11 @@ export default class EventManager {
     }
 
     static async psycho(message, commands) {
-        if (message.member === undefined) return;
-
-        const username = message.member.displayName ?? message.author.displayName;
+        if (message.author === undefined) return;
+        const sharp = (await import('sharp')).default; // Lazily import sharp
+        sharp.cache(false); // Disable cache to not store in memory
+        
+        const globalName = message.author.globalName;
         const imgFolder = path.resolve("./img");
         let sharpBuffer;
         let outputBuffer;
@@ -493,7 +494,7 @@ export default class EventManager {
         try {
             // Card
             if (commands.length > 0 && commands[0] == "card") {
-                msg = `Let's see ${username}'s card`;
+                msg = `Let's see ${globalName}'s card`;
 
                 const svgImage = `
                     <svg width="1389" height="500">
@@ -502,7 +503,7 @@ export default class EventManager {
                         </style>
                         <g transform="rotate(9, 0, 0)" >
                             <rect width="320" height="60" style="fill:rgb(144, 144, 158)" x="39%" y="27%"/>
-                            <text x="51%" y="38%" text-anchor="middle" class="title">${username.toUpperCase()}</text>
+                            <text x="51%" y="38%" text-anchor="middle" class="title">${globalName.toUpperCase()}</text>
                         </g>
                     </svg>
                     `;
@@ -515,11 +516,11 @@ export default class EventManager {
             }
             // Monologue
             else {
-                const url = message.member.avatarURL() ?? message.author.avatarURL();
+                const url = message.author.avatarURL();
                 const avatarFetch = await fetch(url);
                 const arrBuf = await avatarFetch.arrayBuffer();
                 let avatarImg = await sharp(arrBuf);
-                msg = `There is an idea of a ${username}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
+                msg = `There is an idea of a ${globalName}. Some kind of abstraction. But there is no real me. Only an entity. Something illusory. And though I can hide my cold gaze, and you can shake my hand and feel flesh gripping yours, and maybe you can even sense our lifestyles are probably comparable, I simply am not there.`;
 
                 sharpBuffer = await avatarImg.resize({ width: 500, height: 500 }).toBuffer();
                 outputBuffer = await sharp(`${imgFolder}/patrick-bateman.png`)
