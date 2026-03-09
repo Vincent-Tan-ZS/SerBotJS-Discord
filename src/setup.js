@@ -141,15 +141,15 @@ client.on("clientReady", async() => {
 
     // Add New Commands
     Commands.SetupCommands();
-    Commands.dictionaries.forEach((dict) => {
-       const existing = dbCommandList.find(l => l.Title === dict.Title);
+    Object.entries(Commands.fullDictionaries).forEach(([title, dict]) => {
+       const existing = dbCommandList.find(l => l.Title === title);
 
        if (existing !== undefined)
        {
             // If any different
             if (!Utils.ArrComp(existing.List, dict.Command) || existing.Description !== dict.Description || !Utils.ArrComp(existing.Usage, dict.Usage))
             {
-                Utils.Log(Utils.LogType_INFO, `Updating Command: ${dict.Title}`);
+                Utils.Log(Utils.LogType_INFO, `Updating Command: ${title}`);
                 dbCommandPromises.push(
                     commandModel.replaceOne({_id: existing._id}, { 
                         List: dict.Command,
@@ -162,19 +162,19 @@ client.on("clientReady", async() => {
        else
        {
             const newCommand = new commandModel({
-                Title: dict.Title,
+                Title: title,
                 List: dict.Command,
                 Description: dict.Description,
                 Usage: dict.Usage
             });
 
-            Utils.Log(Utils.LogType_INFO, `Adding New Command: ${dict.Title}`);
+            Utils.Log(Utils.LogType_INFO, `Adding New Command: ${title}`);
             dbCommandPromises.push(newCommand.save());
         }
     });
 
     // Remove DB Commands that aren't in use anymore 
-    dbCommandList.filter(command => Commands.dictionaries.find(d => d.Title === command.Title) === undefined).forEach((command) => {
+    dbCommandList.filter(command => Commands.fullDictionaries[command.Title] === undefined).forEach((command) => {
         dbCommandPromises.push(command.deleteOne());
     });
 
@@ -186,6 +186,10 @@ client.on("clientReady", async() => {
     catch (e)
     {
         Utils.Log(Utils.LogType_ERROR, `Error Initializing Commands List: ${e.message}`);
+    }
+    finally
+    {
+        Commands.ClearFullDictionary();
     }
 
     // Daily Reminder Check
