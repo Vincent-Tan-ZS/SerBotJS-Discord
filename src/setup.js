@@ -11,7 +11,7 @@ import { CreateCountdownModalId, UpdateCountdownModalId } from './modals.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates,
+        // GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages
@@ -20,12 +20,15 @@ export const client = new Client({
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
         MessageManager: 1,
-        ReactionManager: 0,
+        DMMessageManager: 1,
         UserManager: 1,
-        GuildManager: 1,
-        ChannelManager: 1,
+        ReactionManager: 0,
         InviteManager: 0,
         StageInstanceManager: 0,
+        PresenceManager: 0,
+        ThreadManager: 0,
+        GuildBanManager: 0,
+        GuildEmojiManager: 0,
         VoiceStateManager: 0,
         GuildMemberManager: {
             maxSize: 1,
@@ -122,7 +125,7 @@ export const client = new Client({
 //#endregion Riffy EventListener
 
 //#region Discord Client EventListeners
-client.on('ready', async() => {
+client.on("clientReady", async() => {
     Utils.Log(Utils.LogType_INFO, "SerBot is now online!");
 
     // Riffy
@@ -137,6 +140,7 @@ client.on('ready', async() => {
     const dbCommandPromises = [];
 
     // Add New Commands
+    Commands.SetupCommands();
     Commands.dictionaries.forEach((dict) => {
        const existing = dbCommandList.find(l => l.Title === dict.Title);
 
