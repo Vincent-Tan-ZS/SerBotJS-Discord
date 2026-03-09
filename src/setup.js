@@ -11,7 +11,7 @@ import { CreateCountdownModalId, UpdateCountdownModalId } from './modals.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
-        // GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages
@@ -22,6 +22,7 @@ export const client = new Client({
         MessageManager: 1,
         DMMessageManager: 1,
         UserManager: 1,
+        VoiceStateManager: 1,
         ReactionManager: 0,
         InviteManager: 0,
         StageInstanceManager: 0,
@@ -29,7 +30,6 @@ export const client = new Client({
         ThreadManager: 0,
         GuildBanManager: 0,
         GuildEmojiManager: 0,
-        VoiceStateManager: 0,
         GuildMemberManager: {
             maxSize: 1,
             keepOverLimit: member => member.id === member.client.user.id
