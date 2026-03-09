@@ -7,7 +7,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node --optimize_for_size index.js",
-        "build": "esbuild index.js --bundle --platform=node --minify --outfile=dist/bot.js"
+        "build": "esbuild index.js --bundle --platform=node --minify --external:discord.js --external:mongoose --external:sharp --outfile=dist/bot.js"
     },
     "keywords": [],
     "author": "",
