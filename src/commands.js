@@ -7,23 +7,23 @@ const GenCommand = (title, cmd, desc, usg, act, canDm) => {
     return { Title: title, Command: cmd, Description: desc, Usage: usg, Action: act, CanDM: canDm }; 
 }
 //#region Functions
-const musicActionResolve = (message, messageCommands) => {
-    // Check if user is in a voice channel
-    let userChannel = message.member.voice.channel;
-    if (userChannel == null) return;
+// const musicActionResolve = (message, messageCommands) => {
+//     // Check if user is in a voice channel
+//     let userChannel = message.member.voice.channel;
+//     if (userChannel == null) return;
 
-    let command = messageCommands[0];
+//     let command = messageCommands[0];
 
-    switch (command) {
-        case "join":
-        case "leave":
-            EventManager.joinOrLeaveVC(message, command, userChannel);
-            break;
-        default:
-            EventManager.musicAction(message, command, userChannel);
-            break;
-    }
-}
+//     switch (command) {
+//         case "join":
+//         case "leave":
+//             EventManager.joinOrLeaveVC(message, command, userChannel);
+//             break;
+//         default:
+//             EventManager.musicAction(message, command, userChannel);
+//             break;
+//     }
+// }
 
 const disconnectActionResolve = (message) => {
     if (Utils.IsOwner(message.author) !== true) return;
