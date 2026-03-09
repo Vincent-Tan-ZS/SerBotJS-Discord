@@ -2,7 +2,7 @@ import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import { loggingModel } from './mongo/mongo-schemas.js';
-import {modalIds, CreateCountdownModal, UpdateCountdownModal} from './modals.js';
+import { ModalIds } from './modals.js';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 // import { riffy as Riffy } from "./setup.js";
@@ -265,7 +265,7 @@ export default class Utils {
     }
 
     static IsShowModal = (modalId) => {
-        return modalIds.includes(`${modalId}-modal`);
+        return Object.keys(ModalIds).includes(`${modalId}-modal`);
     }
 
     static ShowModal = (interaction) => {

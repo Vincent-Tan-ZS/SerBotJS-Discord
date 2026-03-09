@@ -7,7 +7,7 @@ import schedule from 'node-schedule';
 import { ConnectDB } from './mongo/mongo-conn.js';
 import { countdownModel, commandModel, reminderModel, misclickCountModel } from './mongo/mongo-schemas.js';
 import dayjs from 'dayjs';
-import { CreateCountdownModalId, UpdateCountdownModalId } from './modals.js';
+import { ModalIds } from './modals.js';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -408,7 +408,7 @@ const ModalSubmit = async (interaction) => {
 
     modal_switch:
     switch (interaction.customId) {
-        case CreateCountdownModalId:
+        case ModalIds.CreateCountdownModalId:
             countdown = Utils.ExtractModalValues("countdown", interaction);
 
             if (countdown.name.length <= 0) {
@@ -446,7 +446,7 @@ const ModalSubmit = async (interaction) => {
             reply = `Thanks for creating your countdown! You can view it by calling 'ser countdown ${countdown.name}' or 'ser countdown ${newId}'!`;
             Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdown.name} Countdown`, "Countdown");
             break;
-        case UpdateCountdownModalId:
+        case ModalIds.UpdateCountdownModalId:
             countdown = Utils.ExtractModalValues("update-countdown", interaction);
 
             if (countdown.date.length <= 0 || countdown.momentDate.isValid() !== true) {

@@ -1,12 +1,12 @@
 import { LabelBuilder, ModalBuilder, TextInputBuilder } from '@discordjs/builders';
 
-const CreateCountdownModalId = "create-countdown-modal";
-const UpdateCountdownModalId = "update-countdown-modal";
-
-const modalIds = [CreateCountdownModalId, UpdateCountdownModalId];
+const ModalIds = {
+    CreateCountdownModalId: "create-countdown-modal",
+    UpdateCountdownModalId: "update-countdown-modal",
+}
 
 const CreateCountdownModal = new ModalBuilder()
-    .setCustomId(CreateCountdownModalId)
+    .setCustomId(ModalIds.CreateCountdownModalId)
     .setTitle("Countdown Creator")
     .addLabelComponents(
         new LabelBuilder()
@@ -55,7 +55,7 @@ const CreateCountdownModal = new ModalBuilder()
     );
 
 const UpdateCountdownModal = new ModalBuilder()
-    .setCustomId(UpdateCountdownModalId)
+    .setCustomId(ModalIds.UpdateCountdownModalId)
     .setTitle("Countdown Updater")
     .addLabelComponents(
         new LabelBuilder()
@@ -91,4 +91,4 @@ const UpdateCountdownModal = new ModalBuilder()
             ),
     );
 
-export { CreateCountdownModal, UpdateCountdownModal, modalIds, CreateCountdownModalId, UpdateCountdownModalId };
+export { CreateCountdownModal, UpdateCountdownModal, ModalIds };
