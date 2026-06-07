@@ -386,15 +386,15 @@ client.on("interactionCreate", async (interaction) => {
             Utils.Log(Utils.LogType_ERROR, e, "Reminder");
         });
     }
-    // Show Modals
-    else if (Utils.IsShowModal(interaction.customId))
-    {
-        Utils.ShowModal(interaction);
-    }
     // Modal Submits
     else if (interaction.isModalSubmit())
     {
         await ModalSubmit(interaction);
+    }
+    // Show Modals
+    else if (Utils.IsShowModal(interaction.customId))
+    {
+        Utils.ShowModal(interaction);
     }
 });
 //#endregion Interaction Listener
@@ -409,7 +409,7 @@ const ModalSubmit = async (interaction) => {
     modal_switch:
     switch (interaction.customId) {
         case ModalIds.CreateCountdownModalId:
-            countdown = Utils.ExtractModalValues("countdown", interaction);
+            countdown = Utils.ExtractModalValues(interaction);
 
             if (countdown.name.length <= 0) {
                 reply = "Please give this countdown a name!";
@@ -447,7 +447,7 @@ const ModalSubmit = async (interaction) => {
             Utils.Log(Utils.LogType_INFO, `${interaction.user.username} created ${countdown.name} Countdown`, "Countdown");
             break;
         case ModalIds.UpdateCountdownModalId:
-            countdown = Utils.ExtractModalValues("update-countdown", interaction);
+            countdown = Utils.ExtractModalValues(interaction);
 
             if (countdown.date.length <= 0 || countdown.momentDate.isValid() !== true) {
                 reply = "Please insert a valid date!";

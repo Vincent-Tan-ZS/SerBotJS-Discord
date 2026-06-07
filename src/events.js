@@ -10,6 +10,7 @@ import TicTacToe from './tictactoe.js';
 import "./extension.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { countdownModel, reminderModel, siteAuthModel, featureUpdateModel, chefMealModel } from './mongo/mongo-schemas.js';
+import { ModalIds } from './modals.js';
 
 dayjstz.extend(isBetween);
 dayjstz.extend(isSameOrBefore);
@@ -585,7 +586,7 @@ export default class EventManager {
                         new ActionRowBuilder()
                         .addComponents(
                             new ButtonBuilder()
-                            .setCustomId('create-countdown')
+                            .setCustomId(ModalIds.CreateCountdownModalId)
                             .setLabel('Start')
                             .setStyle('Primary')
                         )
@@ -655,7 +656,7 @@ export default class EventManager {
                         new ActionRowBuilder()
                         .addComponents(
                             new ButtonBuilder()
-                            .setCustomId('update-countdown')
+                            .setCustomId(ModalIds.UpdateCountdownModalId)
                             .setLabel('Update Countdown')
                             .setStyle('Primary')
                         )

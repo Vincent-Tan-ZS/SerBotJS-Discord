@@ -2,7 +2,7 @@ import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import schedule from 'node-schedule';
 import { loggingModel } from './mongo/mongo-schemas.js';
-import { ModalIds } from './modals.js';
+import { CountdownInputIds, CreateCountdownModal, ModalIds, UpdateCountdownModal } from './modals.js';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 // import { riffy as Riffy } from "./setup.js";
@@ -265,16 +265,16 @@ export default class Utils {
     }
 
     static IsShowModal = (modalId) => {
-        return Object.keys(ModalIds).includes(`${modalId}-modal`);
+        return Object.values(ModalIds).includes(modalId);
     }
 
     static ShowModal = (interaction) => {
         switch (interaction.customId)
         {
-            case "create-countdown":
+            case ModalIds.CreateCountdownModalId:
                 interaction.showModal(CreateCountdownModal);
                 break;
-            case "update-countdown":
+            case ModalIds.UpdateCountdownModalId:
                 let updateCDModal = UpdateCountdownModal;
                 const userOriCD = this.OriginalCountdownList.find(x => x.userId === interaction.user.id);
 
@@ -325,32 +325,32 @@ export default class Utils {
         }
     }
 
-    static ExtractModalValues = (type, interaction) => {
-        switch (type)
+    static ExtractModalValues = (interaction) => {
+        switch (interaction.customId)
         {
-            case "countdown":
+            case ModalIds.CreateCountdownModalId:
                 let cdObj = {
-                    name: interaction.fields.getTextInputValue("countdown-name"),
-                    date: interaction.fields.getTextInputValue("countdown-date"),
-                    desc: interaction.fields.getTextInputValue("countdown-description"),
-                    image: interaction.fields.getTextInputValue("countdown-image"),
-                    url: interaction.fields.getTextInputValue("countdown-url")
+                    name: interaction.fields.getTextInputValue(CountdownInputIds.Name),
+                    date: interaction.fields.getTextInputValue(CountdownInputIds.Date),
+                    desc: interaction.fields.getTextInputValue(CountdownInputIds.Description),
+                    image: interaction.fields.getTextInputValue(CountdownInputIds.Image),
+                    url: interaction.fields.getTextInputValue(CountdownInputIds.Url)
                 };
 
                 cdObj.momentDate = dayjs(cdObj.date, "DD/MM/YYYY");
 
                 return cdObj;
-            case "update-countdown":
+            case ModalIds.UpdateCountdownModalId:
                 const oriCDIndex = this.OriginalCountdownList.findIndex(x => x.userId === interaction.user.id);
                 const oriCD = this.OriginalCountdownList[oriCDIndex];
 
                 let updateCDObj = {
                     index: oriCDIndex,
                     name: oriCD.name,
-                    date: interaction.fields.getTextInputValue("countdown-date"),
-                    desc: interaction.fields.getTextInputValue("countdown-description").replace("\0", ""),
-                    image: interaction.fields.getTextInputValue("countdown-image").replace("\0", ""),
-                    url: interaction.fields.getTextInputValue("countdown-url").replace("\0", "")
+                    date: interaction.fields.getTextInputValue(CountdownInputIds.Date),
+                    desc: interaction.fields.getTextInputValue(CountdownInputIds.Description).replace("\0", ""),
+                    image: interaction.fields.getTextInputValue(CountdownInputIds.Image).replace("\0", ""),
+                    url: interaction.fields.getTextInputValue(CountdownInputIds.Url).replace("\0", "")
                 };
 
                 updateCDObj.momentDate = dayjs(updateCDObj.date, "DD/MM/YYYY");

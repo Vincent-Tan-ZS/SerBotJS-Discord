@@ -3,7 +3,15 @@ import { LabelBuilder, ModalBuilder, TextInputBuilder } from '@discordjs/builder
 const ModalIds = {
     CreateCountdownModalId: "create-countdown-modal",
     UpdateCountdownModalId: "update-countdown-modal",
-}
+};
+
+const CountdownInputIds = {
+    Name: 'countdown-name',
+    Date: 'countdown-date',
+    Description: 'countdown-description',
+    Image: 'countdown-image',
+    Url: 'countdown-url'
+};
 
 const CreateCountdownModal = new ModalBuilder()
     .setCustomId(ModalIds.CreateCountdownModalId)
@@ -13,7 +21,7 @@ const CreateCountdownModal = new ModalBuilder()
             .setLabel('Countdown Name')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-name')
+                    .setCustomId(CountdownInputIds.Name)
                     .setPlaceholder('The hit TV Series Bimpson')
                     .setStyle('Short')
             ),
@@ -21,7 +29,7 @@ const CreateCountdownModal = new ModalBuilder()
             .setLabel('Release Date')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-date')
+                    .setCustomId(CountdownInputIds.Date)
                     .setPlaceholder('DD/MM/YYYY')
                     .setStyle('Short')
             ),
@@ -29,7 +37,7 @@ const CreateCountdownModal = new ModalBuilder()
             .setLabel('Description')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-description')
+                    .setCustomId(CountdownInputIds.Description)
                     .setPlaceholder('Bimpson is the best tv series')
                     .setStyle('Short')
                     .setRequired(false)
@@ -38,7 +46,7 @@ const CreateCountdownModal = new ModalBuilder()
             .setLabel('Image URL')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-image')
+                    .setCustomId(CountdownInputIds.Image)
                     .setPlaceholder('https://image.com/something.png')
                     .setStyle('Short')
                     .setRequired(false)
@@ -47,7 +55,7 @@ const CreateCountdownModal = new ModalBuilder()
             .setLabel('Countdown URL')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-url')
+                    .setCustomId(CountdownInputIds.Url)
                     .setPlaceholder('https://countdown-news.com')
                     .setStyle('Short')
                     .setRequired(false)
@@ -62,14 +70,14 @@ const UpdateCountdownModal = new ModalBuilder()
             .setLabel('Release Date')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-date')
+                    .setCustomId(CountdownInputIds.Date)
                     .setStyle('Short')
             ),
         new LabelBuilder()
             .setLabel('Description')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-description')
+                    .setCustomId(CountdownInputIds.Description)
                     .setStyle('Short')
                     .setRequired(false)
             ),
@@ -77,7 +85,7 @@ const UpdateCountdownModal = new ModalBuilder()
             .setLabel('Image URL')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-image')
+                    .setCustomId(CountdownInputIds.Image)
                     .setStyle('Short')
                     .setRequired(false)
             ),
@@ -85,10 +93,10 @@ const UpdateCountdownModal = new ModalBuilder()
             .setLabel('Countdown URL')
             .setTextInputComponent(
                 new TextInputBuilder()
-                    .setCustomId('countdown-url')
+                    .setCustomId(CountdownInputIds.Url)
                     .setStyle('Short')
                     .setRequired(false)
             ),
     );
 
-export { CreateCountdownModal, UpdateCountdownModal, ModalIds };
+export { CreateCountdownModal, UpdateCountdownModal, ModalIds, CountdownInputIds };
