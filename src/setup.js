@@ -126,7 +126,8 @@ export const client = new Client({
 
 //#region Discord Client EventListeners
 client.on("clientReady", async() => {
-    Utils.Log(Utils.LogType_INFO, "SerBot is now online!");
+    let logs = [];
+    logs.push(Utils.CreateLog(Utils.LogType_INFO, "SerBot is now online!"));
 
     // Riffy
     // riffy.init(client.user.id);
@@ -135,7 +136,7 @@ client.on("clientReady", async() => {
     await ConnectDB();
 
     // Save Commands in MongoDB
-    Utils.Log(Utils.LogType_INFO, "Initializing Commands List");
+    logs.push(Utils.CreateLog(Utils.LogType_DEBUG, "Initializing Commands List"));
     const dbCommandList = await commandModel.find({});
     const dbCommandPromises = [];
 
@@ -149,7 +150,7 @@ client.on("clientReady", async() => {
             // If any different
             if (!Utils.ArrComp(existing.List, dict.Command) || existing.Description !== dict.Description || !Utils.ArrComp(existing.Usage, dict.Usage))
             {
-                Utils.Log(Utils.LogType_INFO, `Updating Command: ${title}`);
+                logs.push(Utils.CreateLog(Utils.LogType_DEBUG, `Updating Command: ${title}`));
                 dbCommandPromises.push(
                     commandModel.replaceOne({_id: existing._id}, { 
                         List: dict.Command,
@@ -168,7 +169,7 @@ client.on("clientReady", async() => {
                 Usage: dict.Usage
             });
 
-            Utils.Log(Utils.LogType_INFO, `Adding New Command: ${title}`);
+            logs.push(Utils.CreateLog(Utils.LogType_DEBUG, `Adding New Command: ${title}`));
             dbCommandPromises.push(newCommand.save());
         }
     });
@@ -181,16 +182,18 @@ client.on("clientReady", async() => {
     try
     {
         await Promise.all(dbCommandPromises);
-        Utils.Log(Utils.LogType_INFO, "Done Initializing Commands List");
+        logs.push(Utils.CreateLog(Utils.LogType_INFO, "Done Initializing Commands List"));
     }
     catch (e)
     {
-        Utils.Log(Utils.LogType_ERROR, `Error Initializing Commands List: ${e.message}`);
+        logs.push(Utils.CreateLog(Utils.LogType_ERROR, `Error Initializing Commands List: ${e.message}`));
     }
     finally
     {
         Commands.ClearFullDictionary();
     }
+
+    await Utils.BulkLog(logs);
 
     // Daily Reminder Check
     let reminderRule = new schedule.RecurrenceRule();
@@ -200,6 +203,7 @@ client.on("clientReady", async() => {
     reminderRule.hour = 9;
 
     schedule.scheduleJob(reminderRule, async () => {
+        let reminderLogs = [];
         const allReminders = await reminderModel.find();
         const todayDates = allReminders.filter(x => x.RemindDate !== undefined).filter(x => dayjs(x.RemindDate).isSame(new dayjs(), 'day'));
         const todayDaily = allReminders.filter(x => Number(x.Frequency) === Utils.Reminder_Frequency_Daily);
@@ -209,19 +213,20 @@ client.on("clientReady", async() => {
         const userIds = Array.from(userIdSet);
         const users = await Promise.all(userIds.map(x => client.users.fetch(x)));
 
+        let reminderPromises = [];
+
         todayDates.forEach(async (reminder) => {
             const user = users.find(u => u.id === reminder.UserId);
             try
             {
                 await user.send(`[${dayjs(reminder.RemindDate).format("DD/MM/YYYY")} Reminder] ${reminder.Message}`);
-                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder"));
+                reminderPromises.push(reminderModel.deleteOne({ _id: reminder.id }));
             }
             catch (e)
             {
-                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_ERROR, e, "Reminder"));
             }
-
-            await reminderModel.deleteOne({ _id: reminder.id });
         });
 
         todayDaily.forEach(async (reminder) => {
@@ -241,17 +246,17 @@ client.on("clientReady", async() => {
                     ]
                 });
 
-                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder"));
+                
+                reminder.set({
+                    LastMessageDate: dayjs().format("MM/DD/YYYY")
+                });
+                reminderPromises.push(reminder.save());
             }
             catch (e)
             {
-                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_ERROR, e, "Reminder"));
             }
-
-            reminder.set({
-                LastMessageDate: dayjs().format("MM/DD/YYYY")
-            });
-            reminder.save();
         });
 
         todayWeekly.forEach(async (reminder) => {
@@ -271,58 +276,57 @@ client.on("clientReady", async() => {
                     ]
                 });
 
-                Utils.Log(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_INFO, `Reminded ${user.username} - ${reminder.Message}`, "Reminder"));
+
+                reminder.set({
+                    LastMessageDate: dayjs().format("MM/DD/YYYY")
+                });
+                reminderPromises.push(reminder.save());
             }
             catch (e)
             {
-                Utils.Log(Utils.LogType_ERROR, e, "Reminder");
+                reminderLogs.push(Utils.CreateLog(Utils.LogType_ERROR, e, "Reminder"));
             }
-            
-            reminder.set({
-                LastMessageDate: dayjs().format("MM/DD/YYYY")
-            });
-            reminder.save();
         });
+
+        await Promise.all(reminderPromises);
+        await Utils.BulkLog(reminderLogs);
     });
 
     // node-schedule refer
     // schedule.scheduleJob({ year, month, date, hour, minute, second, tz: "Asia/Kuala_Lumpur" }, () => {});
 })
 
+const MISCLICK_VC_ID = process.env.MISCLICK_VC_ID;
+
 client.on('voiceStateUpdate', async (oldState, newState) => {
-    let user = oldState.member.user;
+    if (newState.channelId === oldState.channelId) return;
 
-    if (user.bot === true && user.username === "SerBot") {
-        // if (riffy.players.has(newState.guild.id) !== true)
-        // {
-        //     Utils.Log(Utils.LogType_INFO, `SerBot left ${oldState.channel.name}`, "Voice State");
-        //     Utils.cancelTimeout(`leaveVC-${oldState.channel.guild.id}`);
-        //     return;
-        // }
-        
-        Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel.name}`, "Voice State");
-    }
-    else if (newState.channelId == process.env.MISCLICK_VC_ID) {
-        const existingMisclick = await misclickCountModel.findOne({ UserId: user.id });
+    const member = newState.member ?? oldState.member;
+    if (!member?.user) return;
 
-        if (existingMisclick === null) {
-            const newMisclick = new misclickCountModel({
-                UserId: user.id,
-                Username: user.username,
-                AvatarUrl: user.avatarURL(),
-                Count: 1
-            });
+    const user = member.user;
 
-            newMisclick.save();
-        } 
-        else {
-            existingMisclick.set({
-                AvatarUrl: user.avatarURL(),
-                Username: user.username,
-                Count: existingMisclick.Count + 1
-            });
-            existingMisclick.save();
+    if (user.bot && user.username === "SerBot") {
+        if (newState.channelId) {
+            Utils.Log(Utils.LogType_INFO, `SerBot joined ${newState.channel?.name ?? 'unknown channel'}`, "Voice State");
         }
+        return;
+    }
+
+    if (!MISCLICK_VC_ID || newState.channelId !== MISCLICK_VC_ID) return;
+
+    try {
+        await misclickCountModel.findOneAndUpdate(
+            { UserId: user.id },
+            {
+                $set: { Username: user.username, AvatarUrl: user.displayAvatarURL() },
+                $inc: { Count: 1 }
+            },
+            { upsert: true }
+        );
+    } catch (e) {
+        Utils.Log(Utils.LogType_ERROR, `Misclick count failed: ${e.message}`, "Voice State");
     }
 })
 

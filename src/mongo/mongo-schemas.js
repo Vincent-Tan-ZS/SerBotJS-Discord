@@ -32,10 +32,6 @@ const countdownModel = mongoose.model('Countdown', countdownSchema, 'Countdown')
 
 // Logging
 const loggingSchema = mongoose.Schema({
-    Timestamp: {
-        type: Date,
-        required: true
-    },
     Type: {
         type: String,
         required: true,
@@ -49,6 +45,21 @@ const loggingSchema = mongoose.Schema({
         required: true
     }
 });
+
+loggingSchema.statics.saveLogs = async function(logs) {
+    if (!logs?.length) return;
+
+    const docs = logs
+        .filter(l => l.logType !== 'DEBUG')
+        .map(l => ({
+            Type: l.type ?? 'General',
+            LogType: l.logType,
+            Message: String(l.msg ?? '')
+        }));
+
+    if (docs.length) await this.insertMany(docs);
+};
+
 const loggingModel = mongoose.model('Logging', loggingSchema, 'Logging');
 
 // Commands
@@ -156,7 +167,8 @@ const featureUpdateModel = mongoose.model('FeatureUpdate', featureUpdateSchema, 
 const misclickCountSchema = mongoose.Schema({
     UserId: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
     Username: {
         type: String,

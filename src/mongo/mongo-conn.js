@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 import Utils from "../utils.js";
 
 export const ConnectDB = async() => {
-    Utils.Log(Utils.LogType_INFO, "Connecting to MongoDB", "Database");
+    let logs = [];
+    logs.push(Utils.CreateLog(Utils.LogType_INFO, "Connecting to MongoDB", "Database"));
 
     try
     {
@@ -14,10 +15,12 @@ export const ConnectDB = async() => {
             }
         );
 
-        Utils.Log(Utils.LogType_INFO, "Connected to MongoDB");
+        logs.push(Utils.CreateLog(Utils.LogType_INFO, "Connected to MongoDB"));
     }
     catch (e)
     {
-        Utils.Log(Utils.LogType_ERROR, `Failed to Connect to MongoDB: ${e.message}`, "Database");
+        logs.push(Utils.CreateLog(Utils.LogType_ERROR, `Failed to Connect to MongoDB: ${e.message}`, "Database"));
     }
+
+    await Utils.BulkLog(logs);
 }

@@ -215,23 +215,30 @@ export default class Utils {
     }
 
     static Log = (logType, msg, type = "General") => {
-        if (logType !== this.LogType_ERROR && logType !== this.LogType_INFO && logType !== this.LogType_DEBUG) return;
-
-        let currentTime = new Date();
-        let momentTime = dayjs(currentTime).format("DD/MM/YYYY HH:mm:ss Z");
+        if (!this.IsLogTypeValid(logType)) return;
+        
+        let momentTime = dayjs(new Date()).format("DD/MM/YYYY HH:mm:ss Z");
 
         console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
 
         if (logType !== this.LogType_DEBUG)
         {
             const newLog = new loggingModel({
-                Timestamp: currentTime,
                 Type: type,
                 LogType: logType,
                 Message: msg
             });
             newLog.save();
         }
+    }
+
+    static BulkLog = async (logs) => {
+        if (!logs?.length) return;
+
+        const validLogs = logs.filter((l) => this.IsLogTypeValid(l?.logType));
+        if (!validLogs.length) return;
+
+        await loggingModel.saveLogs(validLogs);
     }
 
     static ArrComp = (arr1, arr2) => {
@@ -425,5 +432,15 @@ export default class Utils {
         }
 
         return Object.entries(results);
+    }
+
+    static IsLogTypeValid(logType) {
+        return logType === this.LogType_ERROR || logType === this.LogType_INFO || logType === this.LogType_DEBUG;
+    }
+
+    static CreateLog = (logType, msg, type = "General") => {
+        let momentTime = dayjs(new Date()).format("DD/MM/YYYY HH:mm:ss Z");
+        console.log(`[${momentTime}] [${type}] ${logType}: ${msg}`);
+        return { logType, msg, type };
     }
 }

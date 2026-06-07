@@ -483,8 +483,7 @@ export default class EventManager {
 
     static async psycho(message, commands) {
         if (message.author === undefined) return;
-        const sharp = (await import('sharp')).default; // Lazily import sharp
-        sharp.cache(false); // Disable cache to not store in memory
+        const sharp = await this.GetSharp();
         
         const globalName = message.author.globalName;
         const imgFolder = path.resolve("./img");
@@ -842,6 +841,8 @@ export default class EventManager {
                             <text text-anchor="middle" class="title">${svgText}</text>
                         </g>
                     </svg>`;
+
+                const sharp = await this.GetSharp();
 
                 sharpBuffer = Buffer.from(svgImage);
                 outputBuffer = await sharp(`${imgFolder}/wisdom-llama.png`)
@@ -1402,5 +1403,11 @@ export default class EventManager {
         // }
 
         // return null;
+    }
+
+    static async GetSharp() {
+        const sharp = (await import('sharp')).default; // Lazily import sharp
+        sharp.cache(false); // Disable cache to not store in memory
+        return sharp;
     }
 }
