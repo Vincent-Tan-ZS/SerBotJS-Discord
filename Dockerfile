@@ -5,12 +5,17 @@ ARG NODE_VERSION=22.22.1
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates \
+  fontconfig \
+  fonts-dejavu-core \
+  libpango-1.0-0 \
+  libcairo2 \
  && rm -rf /var/lib/apt/lists/*
 
 RUN curl https://get.volta.sh | bash
 ENV VOLTA_HOME /root/.volta
 ENV PATH /root/.volta/bin:$PATH
 RUN volta install node@${NODE_VERSION}
+RUN fc-cache -f
 
 RUN mkdir /app
 WORKDIR /app
@@ -45,6 +50,12 @@ WORKDIR /app
 COPY --from=builder /app/dist/bot.js ./bot.js
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/img ./img
+
+# Sharp SVG text runtime deps
+COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
+COPY --from=builder /usr/share/fonts /usr/share/fonts
+COPY --from=builder /etc/fonts /etc/fonts
+COPY --from=builder /var/cache/fontconfig /var/cache/fontconfig
 
 ENV NODE_ENV production
 
