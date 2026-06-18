@@ -561,7 +561,9 @@ export default class EventManager {
         switch (commands[0]) {
             case "list":
             case "l":
-                let allCountdowns = await countdownModel.find({}).sort({ Id: 'asc' });
+                let allCountdowns = await countdownModel
+                    .find({}, { Id: 1, Name: 1 })
+                    .sort({ Id: 'asc' });
 
                 let description = "Looks like there are no countdowns to show.";
 
@@ -682,8 +684,8 @@ export default class EventManager {
                 countdownName = commands.join(" ");
 
                 countdown = isNaN(countdownName)
-                    ? await countdownModel.findOne({ Name: countdownName })
-                    : await countdownModel.findOne({ Id: Number(countdownName) })
+                    ? await countdownModel.findOne({ Name: countdownName }, { UserId: 1 })
+                    : await countdownModel.findOne({ Id: Number(countdownName) }, { UserId: 1 })
 
                 if (countdown === null) {
                     Utils.sendEmbed({
@@ -705,9 +707,11 @@ export default class EventManager {
                     return;
                 }
 
-                await Promise.all([
-                    countdownModel.deleteOne({ Name: countdownName })
-                ]);
+                let deleteOne = isNaN(countdownName)
+                    ? countdownModel.deleteOne({ Name: countdownName })
+                    : countdownModel.deleteOne({ Id: Number(countdownName) });
+
+                await Promise.all([deleteOne]);
 
                 Utils.Log(Utils.LogType_INFO, `${message.author.username} deleted ${countdownName} Countdown`, "Countdown");
                 message.channel.send("Countdown deleted!");
@@ -717,7 +721,7 @@ export default class EventManager {
                     Utils.sendEmbed({
                         message: message,
                         title: "Countdown",
-                        description: "Please use '[name]' to view a countdown :)"
+                        description: "Please use '[name]' or '[id]' to view a countdown :)"
                     });
                     return;
                 }
@@ -725,8 +729,8 @@ export default class EventManager {
                 countdownName = commands.join(" ");
 
                 countdown = isNaN(countdownName)
-                ? await countdownModel.findOne({ Name: countdownName })
-                : await countdownModel.findOne({ Id: Number(countdownName) })
+                    ? await countdownModel.findOne({ Name: countdownName })
+                    : await countdownModel.findOne({ Id: Number(countdownName) })
 
                 if (countdown === null) {
                     Utils.sendEmbed({
@@ -1025,7 +1029,7 @@ export default class EventManager {
 
         const userId = message.author.id;
 
-        const existingReminder = await reminderModel.findOne({ UserId: userId, Frequency: modelFrequency, Message: remindMessage });
+        const existingReminder = await reminderModel.exists({ UserId: userId, Frequency: modelFrequency, Message: remindMessage });
         if (existingReminder !== null)
         {
             invalidEmbed.description = "Reminder already exists :(";

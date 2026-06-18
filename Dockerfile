@@ -44,6 +44,7 @@ LABEL fly_launch_runtime="nodejs"
 WORKDIR /app
 COPY --from=builder /app/dist/bot.js ./bot.js
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/img ./img
 
 ENV NODE_ENV production
 
