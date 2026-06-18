@@ -839,7 +839,7 @@ export default class EventManager {
                 const svgImage = `
                     <svg width="522" height="269">
                         <style>
-                            .title { fill: white; font-size: 30px; font-weight: bold;}
+                            .title { fill: white; font-size: 26px; font-weight: bold;}
                         </style>
                         <g transform="translate(160 40)">
                             <text text-anchor="middle" class="title">${svgText}</text>
